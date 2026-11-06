@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: db:3306
--- Generation Time: Nov 06, 2026 at 05:57 AM
+-- Generation Time: Nov 06, 2026 at 06:35 AM
 -- Server version: 8.4.11
 -- PHP Version: 8.3.35
 
@@ -43,6 +43,20 @@ CREATE TABLE `booking_request` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `club_leaders`
+--
+
+CREATE TABLE `club_leaders` (
+  `leader_id` int NOT NULL,
+  `club_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `leader_role` enum('captain','vice_captain') NOT NULL,
+  `appointed_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `club_membership`
 --
 
@@ -53,6 +67,22 @@ CREATE TABLE `club_membership` (
   `status` enum('pending','approved','rejected') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pending',
   `joined_date` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `club_news`
+--
+
+CREATE TABLE `club_news` (
+  `news_id` int NOT NULL,
+  `club_id` int NOT NULL,
+  `title` varchar(160) NOT NULL,
+  `summary` text NOT NULL,
+  `status` enum('draft','published') NOT NULL DEFAULT 'draft',
+  `published_at` datetime DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -81,6 +111,22 @@ CREATE TABLE `matches` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `match_registration`
+--
+
+CREATE TABLE `match_registration` (
+  `match_reg_id` int NOT NULL,
+  `m_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `registration_status` enum('pending','approved','rejected','withdrawn') NOT NULL DEFAULT 'pending',
+  `requested_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `reviewed_by` int DEFAULT NULL,
+  `reviewed_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `resources`
 --
 
@@ -103,7 +149,8 @@ CREATE TABLE `sports_clubs` (
   `club_name` varchar(150) COLLATE utf8mb4_general_ci NOT NULL,
   `sport` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
   `description` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `club_email` varchar(255) COLLATE utf8mb4_general_ci NOT NULL
+  `club_email` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `status` enum('active','archived') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'active'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -121,6 +168,22 @@ CREATE TABLE `sport_staff` (
   `status` enum('active','inactive') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'active',
   `assigned_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_profiles`
+--
+
+CREATE TABLE `student_profiles` (
+  `user_id` int NOT NULL,
+  `student_number` varchar(32) DEFAULT NULL,
+  `phone` varchar(24) DEFAULT NULL,
+  `study_program` varchar(120) DEFAULT NULL,
+  `academic_year` enum('Year 1','Year 2','Year 3','Year 4','Other') DEFAULT NULL,
+  `about` varchar(300) DEFAULT NULL,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -278,12 +341,28 @@ ALTER TABLE `booking_request`
   ADD KEY `fk_booking_reviewer` (`reviewed_by`);
 
 --
+-- Indexes for table `club_leaders`
+--
+ALTER TABLE `club_leaders`
+  ADD PRIMARY KEY (`leader_id`),
+  ADD UNIQUE KEY `uq_club_leader_role` (`club_id`,`leader_role`),
+  ADD KEY `idx_club_leader_user` (`user_id`);
+
+--
 -- Indexes for table `club_membership`
 --
 ALTER TABLE `club_membership`
   ADD PRIMARY KEY (`mem_id`),
   ADD UNIQUE KEY `uq_user_club` (`user_id`,`club_id`),
   ADD KEY `fk_membership_club` (`club_id`);
+
+--
+-- Indexes for table `club_news`
+--
+ALTER TABLE `club_news`
+  ADD PRIMARY KEY (`news_id`),
+  ADD KEY `idx_news_status` (`status`,`published_at`),
+  ADD KEY `fk_club_news_club` (`club_id`);
 
 --
 -- Indexes for table `matches`
@@ -295,6 +374,16 @@ ALTER TABLE `matches`
   ADD KEY `t_id` (`t_id`),
   ADD KEY `away_u_id` (`away_u_id`),
   ADD KEY `home_u_id` (`home_u_id`);
+
+--
+-- Indexes for table `match_registration`
+--
+ALTER TABLE `match_registration`
+  ADD PRIMARY KEY (`match_reg_id`),
+  ADD UNIQUE KEY `uq_match_student` (`m_id`,`user_id`),
+  ADD KEY `idx_match_student` (`user_id`),
+  ADD KEY `idx_match_status` (`registration_status`),
+  ADD KEY `fk_match_reg_reviewer` (`reviewed_by`);
 
 --
 -- Indexes for table `resources`
@@ -316,6 +405,12 @@ ALTER TABLE `sport_staff`
   ADD PRIMARY KEY (`staff_id`),
   ADD UNIQUE KEY `uq_staff_club_user_role` (`club_id`,`user_id`,`staff_role`),
   ADD KEY `user_id` (`user_id`);
+
+--
+-- Indexes for table `student_profiles`
+--
+ALTER TABLE `student_profiles`
+  ADD PRIMARY KEY (`user_id`);
 
 --
 -- Indexes for table `teams`
@@ -377,7 +472,8 @@ ALTER TABLE `training_sessions`
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
-  ADD PRIMARY KEY (`user_id`);
+  ADD PRIMARY KEY (`user_id`),
+  ADD UNIQUE KEY `uq_users_email` (`email`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -390,16 +486,34 @@ ALTER TABLE `booking_request`
   MODIFY `b_id` int NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `club_leaders`
+--
+ALTER TABLE `club_leaders`
+  MODIFY `leader_id` int NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `club_membership`
 --
 ALTER TABLE `club_membership`
   MODIFY `mem_id` int NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `club_news`
+--
+ALTER TABLE `club_news`
+  MODIFY `news_id` int NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `matches`
 --
 ALTER TABLE `matches`
   MODIFY `m_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `match_registration`
+--
+ALTER TABLE `match_registration`
+  MODIFY `match_reg_id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `resources`
@@ -477,11 +591,24 @@ ALTER TABLE `booking_request`
   ADD CONSTRAINT `fk_booking_reviewer` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`user_id`) ON DELETE SET NULL;
 
 --
+-- Constraints for table `club_leaders`
+--
+ALTER TABLE `club_leaders`
+  ADD CONSTRAINT `fk_leader_club` FOREIGN KEY (`club_id`) REFERENCES `sports_clubs` (`club_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_leader_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`);
+
+--
 -- Constraints for table `club_membership`
 --
 ALTER TABLE `club_membership`
   ADD CONSTRAINT `club_membership_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
   ADD CONSTRAINT `fk_membership_club` FOREIGN KEY (`club_id`) REFERENCES `sports_clubs` (`club_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `club_news`
+--
+ALTER TABLE `club_news`
+  ADD CONSTRAINT `fk_club_news_club` FOREIGN KEY (`club_id`) REFERENCES `sports_clubs` (`club_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `matches`
@@ -494,11 +621,25 @@ ALTER TABLE `matches`
   ADD CONSTRAINT `matches_ibfk_5` FOREIGN KEY (`home_u_id`) REFERENCES `users` (`user_id`);
 
 --
+-- Constraints for table `match_registration`
+--
+ALTER TABLE `match_registration`
+  ADD CONSTRAINT `fk_match_reg_match` FOREIGN KEY (`m_id`) REFERENCES `matches` (`m_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_match_reg_reviewer` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`user_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_match_reg_student` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`);
+
+--
 -- Constraints for table `sport_staff`
 --
 ALTER TABLE `sport_staff`
   ADD CONSTRAINT `sport_staff_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
   ADD CONSTRAINT `sport_staff_ibfk_2` FOREIGN KEY (`club_id`) REFERENCES `sports_clubs` (`club_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `student_profiles`
+--
+ALTER TABLE `student_profiles`
+  ADD CONSTRAINT `fk_student_profile_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `teams`
