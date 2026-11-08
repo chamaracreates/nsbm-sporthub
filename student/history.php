@@ -226,18 +226,25 @@ try {
 
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-    <title>Participation History | NSBM SportsHub</title>
-</head>
-<body>
 
-<h1>NSBM SportsHub</h1>
-<h2>My Sports Participation History</h2>
+<?php require __DIR__ . '/../includes/header.php'; ?>
+
+<link rel="stylesheet" href="/assets/css/student-accounts.css">
+
+<main class="student-history-page">
+    <div class="shell history-layout">
+
+        <header class="history-heading">
+            <p class="history-eyebrow">STUDENT ACTIVITY</p>
+
+            <h1>My Sports Participation History</h1>
+
+            <p class="history-subtitle">
+                Track your sports activities, registrations
+                and achievements.
+            </p>
+        </header>
+
 
 <p>User ID (Internal): <?= (int) $userId ?></p>
 
@@ -253,7 +260,14 @@ try {
 
 <?php else: ?>
 
-    <h3>Student Information</h3>
+    <section class="history-student-card"
+         aria-labelledby="history-student-title">
+
+    <h3 id="history-student-title">
+        Student Information
+    </h3>
+
+    <div class="history-student-grid">
 
     <p>
         Student Name:
@@ -272,38 +286,65 @@ try {
             'UTF-8'
         ) ?>
     </p>
+        </div>
 
-    <h3>Participation Overview</h3>
+</section>
 
-    <ul>
-        <li>
-            Clubs Joined:
-            <?= (int) $summary['total_clubs_joined'] ?>
-        </li>
 
-        <li>
-            Training Sessions Attended:
-            <?= (int) $summary['training_sessions_attended'] ?>
-        </li>
+<section class="history-overview"
+         aria-labelledby="participation-overview-title">
 
-        <li>
-            Tournaments Registered:
-            <?= (int) $summary['tournaments_registered'] ?>
-        </li>
+    <h3 id="participation-overview-title">
+        Participation Overview
+    </h3>
 
-        <li>
-            Facility Bookings Made:
-            <?= (int) $summary['facility_bookings_made'] ?>
-        </li>
-    </ul>
+    <div class="history-stats-grid">
+
+        <article class="history-stat-card">
+            <span class="history-stat-number">
+                <?= (int) $summary['total_clubs_joined'] ?>
+            </span>
+            <p>Clubs Joined</p>
+        </article>
+
+        <article class="history-stat-card">
+            <span class="history-stat-number">
+                <?= (int) $summary['training_sessions_attended'] ?>
+            </span>
+            <p>Training Sessions Attended</p>
+        </article>
+
+        <article class="history-stat-card">
+            <span class="history-stat-number">
+                <?= (int) $summary['tournaments_registered'] ?>
+            </span>
+            <p>Tournaments Registered</p>
+        </article>
+
+        <article class="history-stat-card">
+            <span class="history-stat-number">
+                <?= (int) $summary['facility_bookings_made'] ?>
+            </span>
+            <p>Facility Bookings Made</p>
+        </article>
+
+    </div>
+
+</section>
+
 
 <?php endif; ?>
 
-<h3>My Club Membership History</h3>
+
+<section class="history-section history-membership-section"
+         aria-labelledby="membership-history-title">
+
+    <h3 id="membership-history-title">
+        My Club Membership History
+    </h3>
 
 <?php if ($membershipError): ?>
-
-    <p role="alert">
+<p class="history-section-error" role="alert">
         <?= htmlspecialchars(
             $membershipError,
             ENT_QUOTES,
@@ -312,12 +353,25 @@ try {
     </p>
 
 <?php elseif (empty($memberships)): ?>
-
+<div class="history-empty-state">
     <p>You have not applied to any sports clubs yet.</p>
+
+    <p class="history-empty-hint">
+        Your club applications will appear here.
+    </p>
+</div>
+
 
 <?php else: ?>
 
-    <table border="1" cellpadding="8">
+
+<div class="history-table-scroll"
+     role="region"
+     aria-label="Club membership records"
+     tabindex="0">
+
+    <table class="history-table">
+
         <thead>
             <tr>
                 <th>Club Name</th>
@@ -365,24 +419,48 @@ try {
             <?php endforeach; ?>
         </tbody>
     </table>
+    </div>
 
 <?php endif; ?>
+</section>
 
-<h3>My Training Attendance History</h3>
+
+<section class="history-section history-training-section"
+         aria-labelledby="training-history-title">
+
+    <h3 id="training-history-title">
+        My Training Attendance History
+    </h3>
+
 
 <?php if ($trainingError): ?>
 
-    <p role="alert">
+    <p class="history-section-error" role="alert">
         <?= htmlspecialchars($trainingError, ENT_QUOTES, 'UTF-8') ?>
     </p>
 
 <?php elseif (empty($trainingHistory)): ?>
 
+
+<div class="history-empty-state">
     <p>You have no recorded training attendance yet.</p>
+
+    <p class="history-empty-hint">
+        Your training attendance records will appear here.
+    </p>
+</div>
+
 
 <?php else: ?>
 
-    <table border="1" cellpadding="8">
+
+<div class="history-table-scroll"
+     role="region"
+     aria-label="Training attendance records"
+     tabindex="0">
+
+    <table class="history-table">
+
         <thead>
             <tr>
                 <th>Training Session</th>
@@ -442,14 +520,23 @@ try {
             <?php endforeach; ?>
         </tbody>
     </table>
+</div>
 
 <?php endif; ?>
+</section>
 
-<h3>My Tournament Registration History</h3>
+
+<section class="history-section history-tournament-section"
+         aria-labelledby="tournament-history-title">
+
+    <h3 id="tournament-history-title">
+        My Tournament Registration History
+    </h3>
+
 
 <?php if ($tournamentError): ?>
 
-    <p role="alert">
+    <p class="history-section-error" role="alert">
         <?= htmlspecialchars(
             $tournamentError,
             ENT_QUOTES,
@@ -459,11 +546,25 @@ try {
 
 <?php elseif (empty($tournamentHistory)): ?>
 
+
+<div class="history-empty-state">
     <p>You have not registered for any tournaments yet.</p>
+
+    <p class="history-empty-hint">
+        Your tournament registrations will appear here.
+    </p>
+</div>
 
 <?php else: ?>
 
-    <table border="1" cellpadding="8">
+
+<div class="history-table-scroll"
+     role="region"
+     aria-label="Tournament registration records"
+     tabindex="0">
+
+    <table class="history-table">
+
         <thead>
             <tr>
                 <th>Tournament Name</th>
@@ -533,15 +634,24 @@ try {
             <?php endforeach; ?>
         </tbody>
     </table>
+</div>
 
 <?php endif; ?>
+</section>
 
 
-<h3>My Match Registration History</h3>
+
+<section class="history-section history-match-section"
+         aria-labelledby="match-history-title">
+
+    <h3 id="match-history-title">
+        My Match Registration History
+    </h3>
+
 
 <?php if ($matchError): ?>
 
-    <p role="alert">
+    <p class="history-section-error" role="alert">
         <?= htmlspecialchars(
             $matchError,
             ENT_QUOTES,
@@ -551,11 +661,28 @@ try {
 
 <?php elseif (empty($matchHistory)): ?>
 
+
+<div class="history-empty-state">
+
     <p>You have not registered for any matches yet.</p>
+
+    <p class="history-empty-hint">
+        Your match registrations and results will appear here.
+    </p>
+
+</div>
+
 
 <?php else: ?>
 
-    <table border="1" cellpadding="8">
+
+<div class="history-table-scroll"
+     role="region"
+     aria-label="Match registration records"
+     tabindex="0">
+
+    <table class="history-table">
+
         <thead>
             <tr>
                 <th>Match Title</th>
@@ -665,15 +792,22 @@ try {
                 </tr>
             <?php endforeach; ?>
         </tbody>
-    </table>
+   </table>
+</div>
 
 <?php endif; ?>
+</section>
 
-<h3>My Facility and Equipment Booking History</h3>
+<section class="history-section history-booking-section"
+         aria-labelledby="booking-history-title">
+
+    <h3 id="booking-history-title">
+        My Facility and Equipment Booking History
+    </h3>
 
 <?php if ($bookingError): ?>
 
-    <p role="alert">
+    <p class="history-section-error" role="alert">
         <?= htmlspecialchars(
             $bookingError,
             ENT_QUOTES,
@@ -683,11 +817,24 @@ try {
 
 <?php elseif (empty($bookingHistory)): ?>
 
+    <div class="history-empty-state">
+
     <p>You have no facility or equipment bookings yet.</p>
+
+    <p class="history-empty-hint">
+        Your booking requests and approval statuses will appear here.
+    </p>
+
+</div>
 
 <?php else: ?>
 
-    <table border="1" cellpadding="8">
+   <div class="history-table-scroll"
+     role="region"
+     aria-label="Facility and equipment booking records"
+     tabindex="0">
+
+    <table class="history-table">
         <thead>
             <tr>
                 <th>Resource Name</th>
@@ -738,13 +885,19 @@ try {
             <?php endforeach; ?>
         </tbody>
     </table>
-
+</div>
 <?php endif; ?>
+</section>
 
 
-<p>
-    <a href="profile.php">Back to My Profile</a>
-</p>
+<div class="history-back-action">
+    <a href="profile.php" class="history-back-link">
+        &larr; Back to My Profile
+    </a>
+</div>
 
-</body>
-</html>
+
+    </div>
+</main>
+
+<?php require __DIR__ . '/../includes/footer.php'; ?>

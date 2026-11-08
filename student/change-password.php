@@ -137,27 +137,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-    <title>Change Password | NSBM SportsHub</title>
-</head>
-<body>
 
-<h1>NSBM SportsHub</h1>
-<h2>Change My Password</h2>
+<?php require __DIR__ . '/../includes/header.php'; ?>
+
+<link rel="stylesheet" href="/assets/css/student-accounts.css">
+
+<main class="accounts-page change-password-page">
+    <section class="accounts-container shell"
+             aria-labelledby="change-password-title">
+
+        <h1 id="change-password-title">
+            Change My Password
+        </h1>
+
 
 <?php if ($success): ?>
-    <p role="status">
+    <div class="password-success" role="status">
         Password changed successfully!
-    </p>
+    </div>
 <?php endif; ?>
 
 <?php if (!empty($errors)): ?>
-    <div role="alert">
+    <div class="password-errors" role="alert">
         <p>Please correct the following errors:</p>
         <ul>
             <?php foreach ($errors as $error): ?>
@@ -176,7 +177,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <p>Update your student account password securely.</p>
 
-<form action="change-password.php" method="POST">
+<form action="change-password.php"
+      method="POST"
+      class="password-change-form">
 
     <input
         type="hidden"
@@ -192,50 +195,104 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label for="current_password">
             Current Password
         </label>
-        <input
-            type="password"
-            id="current_password"
-            name="current_password"
-            autocomplete="current-password"
-            required
-        >
+
+<div class="password-field">
+    <input
+        type="password"
+        id="current_password"
+        name="current_password"
+        autocomplete="current-password"
+        required
+    >
+
+    <button
+        type="button"
+        class="toggle-password"
+        data-password-toggle
+        aria-controls="current_password"
+        aria-label="Show password"
+        aria-pressed="false"
+    >
+        Show
+    </button>
+</div>
+
     </p>
 
     <p>
         <label for="new_password">
             New Password
         </label>
-        <input
-            type="password"
-            id="new_password"
-            name="new_password"
-            autocomplete="new-password"
-            minlength="10"
-            required
-        >
+
+<div class="password-field">
+    <input
+        type="password"
+        id="new_password"
+        name="new_password"
+        autocomplete="new-password"
+        minlength="10"
+        required
+    >
+
+    <button
+        type="button"
+        class="toggle-password"
+        data-password-toggle
+        aria-controls="new_password"
+        aria-label="Show password"
+        aria-pressed="false"
+    >
+        Show
+    </button>
+</div>
+
     </p>
 
     <p>
         <label for="confirm_password">
             Confirm New Password
         </label>
-        <input
-            type="password"
-            id="confirm_password"
-            name="confirm_password"
-            autocomplete="new-password"
-            minlength="10"
-            required
-        >
+
+<div class="password-field">
+    <input
+        type="password"
+        id="confirm_password"
+        name="confirm_password"
+        autocomplete="new-password"
+        minlength="10"
+        required
+    >
+
+    <button
+        type="button"
+        class="toggle-password"
+        data-password-toggle
+        aria-controls="confirm_password"
+        aria-label="Show password"
+        aria-pressed="false"
+    >
+        Show
+    </button>
+</div>
+
     </p>
 
-    <button type="submit">Change Password</button>
+    <button type="submit" class="accounts-submit">
+    Change Password
+</button>
 
 </form>
 
-<p>
-    <a href="profile.php">Back to My Profile</a>
+<p class="change-password-back">
+    <a href="profile.php" class="change-password-back-link">
+        &larr; Back to My Profile
+    </a>
 </p>
 
-</body>
-</html>
+
+    </section>
+</main>
+
+<script src="/assets/js/student-accounts.js" defer></script>
+
+<?php require __DIR__ . '/../includes/footer.php'; ?>

@@ -140,18 +140,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-    <title>Edit Profile | NSBM SportsHub</title>
-</head>
-<body>
 
-<h1>NSBM SportsHub</h1>
-<h2>Edit My Student Profile</h2>
+<?php require __DIR__ . '/../includes/header.php'; ?>
+
+<link rel="stylesheet" href="/assets/css/student-accounts.css">
+
+<main class="student-profile-page edit-profile-page">
+    <div class="shell profile-layout">
+
+        <header class="profile-heading">
+            <p class="profile-eyebrow">STUDENT ACCOUNT</p>
+
+            <h1>Edit My Student Profile</h1>
+
+            <p>
+                Update your personal and academic information.
+            </p>
+        </header>
+
 
 
 <?php if (!empty($errors)): ?>
@@ -171,7 +177,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 <?php endif; ?>
 
+<section class="profile-card edit-profile-identity"
+         aria-labelledby="edit-identity-title">
 
+    <h2 id="edit-identity-title">Account Identity</h2>
+
+    <div class="profile-card-grid">
 <p>User ID (Internal): <?= (int) $userId ?></p>
 
 <p>
@@ -182,11 +193,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'UTF-8'
     ) ?>
 </p>
+    </div>
 
-<p>Your account IDs cannot be changed here.</p>
-
-<form action="edit-profile.php" method="POST">
-
+<center><p class="identity-note">
+    Your account IDs cannot be changed here.
+</p></center>
+</section>
+<form action="edit-profile.php"
+      method="POST"
+      class="edit-profile-form">
     <input type="hidden" name="csrf_token"
         value="<?= htmlspecialchars(
             $_SESSION['edit_profile_csrf'],
@@ -262,13 +277,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ) ?></textarea>
     </p>
 
-    <button type="submit">Save Changes</button>
+   <button type="submit" class="accounts-submit">
+    Save Changes
+</button>
 
 </form>
 
-<p>
-    <a href="profile.php">Back to My Profile</a>
+
+<p class="edit-profile-back">
+    <a href="profile.php" class="edit-profile-back-link">
+        ← Back to My Profile
+    </a>
 </p>
 
-</body>
-</html>
+
+    </div>
+</main>
+
+<?php require __DIR__ . '/../includes/footer.php'; ?>

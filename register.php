@@ -120,17 +120,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-<!DOCKTYPE html>
-<html lang= "en">
-    <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Registration | NSBM SportsHub</title>
-</head>
-<body>
 
-<h1>NSBM SportsHub</h1>
-    <h2>Create Student Account</h2>
+<?php require __DIR__ . '/includes/header.php'; ?>
+
+<link rel="stylesheet" href="/assets/css/student-accounts.css">
+
+<main class="accounts-page">
+    <section class="accounts-container shell" aria-labelledby="register-title">
+
+        <h1 id="register-title">Create Student Account</h1>
+
 
 <?php if ($success): ?>
     <div class="form-success" role="status">
@@ -154,8 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php endif; ?>
 
 
-    <form action="register.php" method="POST">
-
+<form action="register.php" method="POST" class="accounts-form">
 <input
     type="hidden"
     name="csrf_token"
@@ -183,14 +181,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                maxlength="255" required>
 
 <label for="password">Password</label>
-        <input type="password" id="password" name="password"
-               minlength="10" required>
+
+<div class="password-field">
+    <input
+        type="password"
+        id="password"
+        name="password"
+        minlength="10"
+        required
+    >
+    <button
+        type="button"
+        class="toggle-password"
+        data-password-toggle
+        aria-controls="password"
+        aria-label="Show password"
+        aria-pressed="false"
+    >Show</button>
+</div>
+
 
 <label for="confirm_password">Confirm Password</label>
-        <input type="password" id="confirm_password"
-               name="confirm_password" minlength="10" required>
 
-        <button type="submit">Create Account</button>
+<div class="password-field">
+    <input
+        type="password"
+        id="confirm_password"
+        name="confirm_password"
+        minlength="10"
+        required
+    >
+    <button
+        type="button"
+        class="toggle-password"
+        data-password-toggle
+        aria-controls="confirm_password"
+        aria-label="Show password"
+        aria-pressed="false"
+    >Show</button>
+</div>
+
+
+        <button type="submit" class="accounts-submit">Create Account</button>
 
     </form>
 
@@ -198,5 +230,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <a href="login.php">Login here</a>
     </p>
 
-</body>
-</html>
+
+    </section>
+</main>
+<script src="/assets/js/student-accounts.js" defer></script>
+
+<?php require __DIR__ . '/includes/footer.php'; ?>

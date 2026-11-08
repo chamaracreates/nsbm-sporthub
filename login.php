@@ -93,19 +93,15 @@ if (
 
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | NSBM SportsHub</title>
-</head>
+<?php require __DIR__ . '/includes/header.php'; ?>
+<link rel="stylesheet" href="/assets/css/student-accounts.css">
 
-<body>
+<main class="accounts-page">
+    <section class="accounts-container shell" aria-labelledby="login-title">
 
-    <h1>NSBM SportsHub</h1>
-    <h2>Login to Your Account</h2>
+        <h1 id="login-title">Login to Your Account</h1>
+
 
 <?php if (!empty($_SESSION['user_id'])): ?>
     <div role="status">
@@ -118,6 +114,12 @@ if (
             <?= htmlspecialchars($_SESSION['role'], ENT_QUOTES, 'UTF-8') ?>
         </p>
 
+<?php if (current_user_role() === 'student'): ?>
+    <a href="/student/profile.php" class="accounts-profile-button">
+        Go to My Profile
+    </a>
+<?php endif; ?>
+
 <form action="/logout.php" method="POST">
     <input
         type="hidden"
@@ -125,11 +127,13 @@ if (
         value="<?= htmlspecialchars($_SESSION['logout_csrf'], ENT_QUOTES, 'UTF-8') ?>"
     >
 
-    <button type="submit">Log Out</button>
+<button type="submit" class="accounts-logout-button">
+    Log Out
+</button>
 </form>
 
-    </div>
-<?php endif; ?>
+ </div>
+<?php else: ?>
 
 
     <?php if (!empty($errors)): ?>
@@ -160,12 +164,27 @@ if (
         >
 
         <label for="password">Password</label>
-        <input
-            type="password"
-            id="password"
-            name="password"
-            required
-        >
+
+<div class="password-field">
+    <input
+        type="password"
+        id="password"
+        name="password"
+        required
+    >
+
+    <button
+        type="button"
+        class="toggle-password"
+        data-password-toggle
+        aria-controls="password"
+        aria-label="Show password"
+        aria-pressed="false"
+    >
+        Show
+    </button>
+</div>
+
 
         <button type="submit">Login</button>
 
@@ -175,6 +194,11 @@ if (
         Don't have an account?
         <a href="register.php">Create Student Account</a>
     </p>
+    <?php endif; ?>
 
-</body>
-</html>
+
+    </section>
+</main>
+
+<script src="/assets/js/student-accounts.js" defer></script>
+<?php require __DIR__ . '/includes/footer.php'; ?>

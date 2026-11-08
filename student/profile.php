@@ -50,18 +50,20 @@ $stmt = db()->prepare(
 
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-    <title>My Profile | NSBM SportsHub</title>
-</head>
-<body>
 
-    <h1>NSBM SportsHub</h1>
-    <h2>My Student Profile</h2>
+<?php require __DIR__ . '/../includes/header.php'; ?>
+
+<link rel="stylesheet" href="/assets/css/student-accounts.css">
+
+<main class="student-profile-page">
+    <div class="shell profile-layout">
+
+        <header class="profile-heading">
+            <p class="profile-eyebrow">STUDENT ACCOUNT</p>
+            <h1>My Student Profile</h1>
+            <p>Manage your personal information and SportsHub activity.</p>
+        </header>
+
 
     <p>
         Welcome,
@@ -72,11 +74,15 @@ $stmt = db()->prepare(
         ) ?>!
     </p>
 
+<section class="profile-card" aria-labelledby="identity-title">
+    <h2 id="identity-title">Account Identity</h2>
 
+    <div class="profile-card-grid">
 <p>
     User ID (Internal):
     <?= (int) $userId ?>
 </p>
+
 
 <p>
     NSBM Student ID:
@@ -86,8 +92,12 @@ $stmt = db()->prepare(
         'UTF-8'
     ) ?>
 </p>
+    </div>
+</section>
+<section class="profile-card" aria-labelledby="personal-title">
+    <h2 id="personal-title">Personal Information</h2>
 
-<h3>Personal Information</h3>
+    <div class="profile-card-grid">
 
 <p>
     Full Name:
@@ -115,9 +125,12 @@ $stmt = db()->prepare(
         'UTF-8'
     ) ?>
 </p>
+    </div>
+</section>
+<section class="profile-card" aria-labelledby="academic-title">
+    <h2 id="academic-title">Academic Information</h2>
 
-<h3>Academic Information</h3>
-
+    <div class="profile-card-grid">
 <p>
     Study Program:
     <?= htmlspecialchars(
@@ -135,8 +148,12 @@ $stmt = db()->prepare(
         'UTF-8'
     ) ?>
 </p>
+    </div>
+</section>
+<section class="profile-card" aria-labelledby="about-title">
+    <h2 id="about-title">About Me</h2>
 
-<h3>About Me</h3>
+    <div class="profile-card-grid profile-card-grid-single">
 
 <p>
     <?= htmlspecialchars(
@@ -146,8 +163,30 @@ $stmt = db()->prepare(
     ) ?>
 </p>
 
+    </div>
+</section>
 
-    <p>This is your protected student profile page.</p>
+<nav class="profile-actions" aria-label="Student account actions">
 
-</body>
-</html>
+    <a href="/student/edit-profile.php"
+       class="profile-action profile-action-primary">
+        Edit Profile
+    </a>
+
+    <a href="/student/change-password.php"
+       class="profile-action profile-action-secondary">
+        Change Password
+    </a>
+
+    <a href="/student/history.php"
+       class="profile-action profile-action-secondary">
+        Participation History
+    </a>
+
+</nav>
+
+
+    </div>
+</main>
+
+<?php require __DIR__ . '/../includes/footer.php'; ?>
