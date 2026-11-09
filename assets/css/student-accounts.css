@@ -2188,3 +2188,11 @@
     background-repeat: no-repeat;
     background-size: cover;
 }
+
+/* Match Register heading position to Login page */
+
+@media (min-width: 901px) {
+    .accounts-page.register-layout-page .register-welcome {
+        padding-top: 145px;
+    }
+}
