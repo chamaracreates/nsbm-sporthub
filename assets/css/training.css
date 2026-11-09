@@ -178,68 +178,7 @@
     line-height: 1.8;
 }
 
-/* Adapt the layout for tablets. */
-@media (max-width: 800px) {
-    .training-page {
-        padding: 65px 0 85px;
-    }
-
-    .training-introduction {
-        margin-bottom: 65px;
-    }
-
-    .training-grid {
-        gap: 16px;
-    }
-
-    .training-card {
-        padding: 24px;
-    }
-}
-
-/* Adapt the layout for smaller screens. */
-@media (max-width: 600px) {
-    .training-page {
-        padding: 48px 0 70px;
-    }
-
-    .training-container {
-        width: min(100% - 32px, 1180px);
-    }
-
-    .training-introduction {
-        margin-bottom: 50px;
-    }
-
-    .training-introduction h1 {
-        font-size: 38px;
-        letter-spacing: -1px;
-    }
-
-    .training-intro-text {
-        font-size: 15px;
-    }
-
-    .training-section-heading {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .training-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .training-card-title {
-        font-size: 23px;
-    }
-
-    .training-notice {
-        padding: 42px 22px;
-    }
-}
-
-/* Display training sessions available to authorized staff. */
+/* Display sessions available to authorized staff. */
 .training-attendance-sessions {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -293,6 +232,7 @@
     gap: 12px;
 }
 
+/* Arrange student names, attendance states, and actions. */
 .training-attendance-row {
     display: grid;
     grid-template-columns: minmax(160px, 1fr) 160px 170px;
@@ -304,25 +244,14 @@
     background: var(--color-surface);
 }
 
-.training-attendance-label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
+/* Display the student's current attendance state. */
+.training-attendance-current {
+    color: var(--color-muted);
+    font-size: 14px;
+    font-weight: 500;
 }
 
-.training-attendance-row select {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid var(--color-border);
-    border-radius: 9px;
-    background: var(--color-background);
-    color: var(--color-text);
-    font: inherit;
-}
-
+/* Style the Mark Present action. */
 .training-attendance-row button {
     padding: 12px;
     border: none;
@@ -334,10 +263,25 @@
     cursor: pointer;
 }
 
-.training-attendance-row button:hover {
+/* Apply hover feedback only to enabled buttons. */
+.training-attendance-row button:not(:disabled):hover {
     background: var(--color-accent-hover);
 }
 
+/* Prevent repeated attendance submissions. */
+.training-attendance-row button:disabled {
+    cursor: default;
+    opacity: 0.55;
+}
+
+/* Provide visible keyboard focus for attendance actions. */
+.training-attendance-row button:focus-visible,
+.training-attendance-session:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+}
+
+/* Display attendance recording feedback. */
 .training-attendance-feedback {
     margin-bottom: 30px;
     padding: 16px 20px;
@@ -347,6 +291,26 @@
     color: var(--color-text);
 }
 
+/* Adapt the training layout for tablets. */
+@media (max-width: 800px) {
+    .training-page {
+        padding: 65px 0 85px;
+    }
+
+    .training-introduction {
+        margin-bottom: 65px;
+    }
+
+    .training-grid {
+        gap: 16px;
+    }
+
+    .training-card {
+        padding: 24px;
+    }
+}
+
+/* Adapt attendance management for smaller screens. */
 @media (max-width: 700px) {
     .training-attendance-sessions {
         grid-template-columns: 1fr;
@@ -358,5 +322,47 @@
 
     .training-attendance-roster {
         margin-top: 55px;
+    }
+}
+
+/* Adapt the general layout for mobile devices. */
+@media (max-width: 600px) {
+    .training-page {
+        padding: 48px 0 70px;
+    }
+
+    .training-container {
+        width: min(100% - 32px, 1180px);
+    }
+
+    .training-introduction {
+        margin-bottom: 50px;
+    }
+
+    .training-introduction h1 {
+        font-size: 38px;
+        letter-spacing: -1px;
+    }
+
+    .training-intro-text {
+        font-size: 15px;
+    }
+
+    .training-section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .training-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .training-card-title {
+        font-size: 23px;
+    }
+
+    .training-notice {
+        padding: 42px 22px;
     }
 }

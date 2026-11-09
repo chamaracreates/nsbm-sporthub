@@ -45,30 +45,53 @@ if (
 
 $csrfToken = $_SESSION['training_attendance_csrf'];
 
-/* Retrieve the selected training session ID. */
+/* Retrieve and validate the selected session ID. */
 $rawSessionId = $requestMethod === 'POST'
     ? ($_POST['session_id'] ?? null)
     : ($_GET['session_id'] ?? null);
 
-$sessionId = filter_var(
-    $rawSessionId,
-    FILTER_VALIDATE_INT,
-    ['options' => ['min_range' => 1]]
-);
+$sessionId = null;
 
-if ($rawSessionId !== null && $sessionId === false) {
-    http_response_code(400);
-    exit('Invalid training session.');
+if ($rawSessionId !== null) {
+    $validatedId = filter_var(
+        $rawSessionId,
+        FILTER_VALIDATE_INT,
+        ['options' => ['min_range' => 1]]
+    );
+
+    if ($validatedId === false) {
+        http_response_code(400);
+        exit('Invalid training session.');
+    }
+
+    $sessionId = (int) $validatedId;
 }
 
-$sessionId = is_int($sessionId) ? $sessionId : null;
+/* Validate attendance form security. */
+if ($requestMethod === 'POST') {
+    $submittedToken = $_POST['csrf_token'] ?? null;
 
+    if (
+        !is_string($submittedToken) ||
+        !hash_equals($csrfToken, $submittedToken)
+    ) {
+        http_response_code(403);
+        exit('Invalid form submission.');
+    }
+
+    if ($sessionId === null) {
+        http_response_code(400);
+        exit('Training session is required.');
+    }
+}
+
+/* Initialize attendance page data. */
 $sessions = [];
 $selectedSession = null;
 $students = [];
 $loadError = false;
 
-/* Retrieve attendance feedback from the previous request. */
+/* Retrieve feedback from the previous request. */
 $feedback = $_SESSION['training_attendance_feedback'] ?? null;
 
 unset($_SESSION['training_attendance_feedback']);
@@ -76,7 +99,7 @@ unset($_SESSION['training_attendance_feedback']);
 try {
     $pdo = db();
 
-    /* Retrieve sessions accessible to the current staff member. */
+    /* Retrieve sessions available to the current staff member. */
     $sessionSql = "
         SELECT
             ts.session_id,
@@ -88,17 +111,21 @@ try {
         FROM training_sessions AS ts
         INNER JOIN sports_clubs AS sc
             ON sc.club_id = ts.club_id
-        WHERE
-            :is_admin = 1
-            OR EXISTS (
-                SELECT 1
-                FROM sport_staff AS ss
-                WHERE ss.club_id = ts.club_id
-                    AND ss.user_id = :staff_user_id
-                    AND ss.staff_role = :staff_role
-                    AND ss.status = 'active'
+        WHERE sc.status = 'active'
+            AND (
+                :is_admin = 1
+                OR EXISTS (
+                    SELECT 1
+                    FROM sport_staff AS ss
+                    WHERE ss.club_id = ts.club_id
+                        AND ss.user_id = :staff_user_id
+                        AND ss.staff_role = :staff_role
+                        AND ss.status = 'active'
+                )
             )
-        ORDER BY ts.date DESC, ts.start_time DESC
+        ORDER BY
+            ts.date DESC,
+            ts.start_time DESC
         LIMIT 100
     ";
 
@@ -110,11 +137,10 @@ try {
         'staff_role' => $userRole
     ]);
 
-    $sessions = $statement->fetchAll();
+    $sessions = $statement->fetchAll(PDO::FETCH_ASSOC);
 
+    /* Retrieve the selected session with authorization checks. */
     if ($sessionId !== null) {
-
-        /* Verify authorization for the selected session. */
         $detailsSql = "
             SELECT
                 ts.session_id,
@@ -131,6 +157,7 @@ try {
             INNER JOIN sports_clubs AS sc
                 ON sc.club_id = ts.club_id
             WHERE ts.session_id = :session_id
+                AND sc.status = 'active'
                 AND (
                     :is_admin = 1
                     OR EXISTS (
@@ -154,7 +181,9 @@ try {
             'staff_role' => $userRole
         ]);
 
-        $selectedSession = $statement->fetch();
+        $selectedSession = $statement->fetch(
+            PDO::FETCH_ASSOC
+        );
 
         if (!$selectedSession) {
             http_response_code(404);
@@ -162,19 +191,8 @@ try {
         }
     }
 
-    /* Validate and process an attendance submission. */
+    /* Process a Present attendance submission. */
     if ($requestMethod === 'POST') {
-
-        $submittedToken = $_POST['csrf_token'] ?? null;
-
-        if (
-            !is_string($submittedToken) ||
-            !hash_equals($csrfToken, $submittedToken)
-        ) {
-            http_response_code(403);
-            exit('Invalid form submission.');
-        }
-
         if (
             $selectedSession === null ||
             (int) $selectedSession['can_record'] !== 1
@@ -191,16 +209,16 @@ try {
 
         $attendanceStatus = $_POST['attendance_status'] ?? null;
 
+        /* Only Present attendance is permitted. */
         if (
             !is_int($studentId) ||
-            !is_string($attendanceStatus) ||
-            !in_array($attendanceStatus, ['present', 'absent'], true)
+            $attendanceStatus !== 'present'
         ) {
             http_response_code(400);
             exit('Invalid attendance information.');
         }
 
-        /* Verify approved club membership and student identity. */
+        /* Verify the student's approved club membership. */
         $eligibilitySql = "
             SELECT 1
             FROM club_membership AS cm
@@ -225,7 +243,7 @@ try {
             exit('Student is not eligible for this session.');
         }
 
-        /* Insert or update the student's attendance record. */
+        /* Save Present attendance without creating duplicate records. */
         $saveSql = "
             INSERT INTO training_attendance (
                 user_id,
@@ -236,11 +254,11 @@ try {
             VALUES (
                 :student_id,
                 :session_id,
-                :attendance_status,
+                'present',
                 :recorded_by
             )
             ON DUPLICATE KEY UPDATE
-                att_status = :updated_status,
+                att_status = 'present',
                 recorded_by = :updated_by
         ";
 
@@ -249,17 +267,17 @@ try {
         $statement->execute([
             'student_id' => $studentId,
             'session_id' => $sessionId,
-            'attendance_status' => $attendanceStatus,
             'recorded_by' => $userId,
-            'updated_status' => $attendanceStatus,
             'updated_by' => $userId
         ]);
 
+        /* Store success feedback for the redirected page. */
         $_SESSION['training_attendance_feedback'] =
-            'Attendance recorded successfully.';
+            'Student attendance marked as Present successfully.';
 
         header(
-            'Location: /training/attendance.php?session_id=' . $sessionId,
+            'Location: /training/attendance.php?session_id=' .
+                $sessionId,
             true,
             303
         );
@@ -267,9 +285,8 @@ try {
         exit;
     }
 
+    /* Retrieve approved students and their attendance status. */
     if ($selectedSession !== null) {
-
-        /* Retrieve approved members and existing attendance records. */
         $studentsSql = "
             SELECT
                 u.user_id,
@@ -294,7 +311,7 @@ try {
             'club_id' => (int) $selectedSession['club_id']
         ]);
 
-        $students = $statement->fetchAll();
+        $students = $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 } catch (Throwable $error) {
     error_log(
@@ -305,7 +322,7 @@ try {
     $loadError = true;
 }
 
-/* Load the shared SportsHub layout. */
+/* Load the shared SportsHub header. */
 require __DIR__ . '/../includes/header.php';
 
 ?>
@@ -316,17 +333,22 @@ require __DIR__ . '/../includes/header.php';
 
     <div class="training-container">
 
-        <section class="training-introduction">
+        <section
+            class="training-introduction"
+            aria-labelledby="attendance-page-title">
 
             <p class="training-eyebrow">
                 TRAINING MANAGEMENT
             </p>
 
-            <h1>Attendance Management</h1>
+            <h1 id="attendance-page-title">
+                Attendance Management
+            </h1>
 
             <p class="training-intro-text">
                 Manage student attendance for authorized
                 NSBM sports training sessions.
+                Mark eligible students as Present.
             </p>
 
         </section>
@@ -334,25 +356,37 @@ require __DIR__ . '/../includes/header.php';
         <?php if ($loadError): ?>
 
             <div class="training-notice" role="alert">
+
                 <h3>Unable to load attendance information</h3>
-                <p>Please try again later.</p>
+
+                <p>
+                    Attendance information is currently
+                    unavailable. Please try again later.
+                </p>
+
             </div>
 
         <?php else: ?>
 
             <?php if (is_string($feedback)): ?>
 
-                <p class="training-attendance-feedback" role="status">
-                    <?php echo attendanceEscape($feedback); ?>
+                <p
+                    class="training-attendance-feedback"
+                    role="status">
+                    <?php
+                    echo attendanceEscape($feedback);
+                    ?>
                 </p>
 
             <?php endif; ?>
 
-            <section aria-labelledby="attendance-sessions-title">
+            <section
+                aria-labelledby="attendance-sessions-title">
 
                 <div class="training-section-heading">
 
                     <div>
+
                         <p class="training-eyebrow">
                             AVAILABLE SESSIONS
                         </p>
@@ -360,6 +394,7 @@ require __DIR__ . '/../includes/header.php';
                         <h2 id="attendance-sessions-title">
                             Select a Training Session
                         </h2>
+
                     </div>
 
                 </div>
@@ -367,11 +402,14 @@ require __DIR__ . '/../includes/header.php';
                 <?php if (empty($sessions)): ?>
 
                     <div class="training-notice">
+
                         <h3>No training sessions available</h3>
+
                         <p>
                             No training sessions are currently
                             assigned to your account.
                         </p>
+
                     </div>
 
                 <?php else: ?>
@@ -385,6 +423,7 @@ require __DIR__ . '/../includes/header.php';
                                 href="/training/attendance.php?session_id=<?php
                                                                             echo (int) $session['session_id'];
                                                                             ?>">
+
                                 <strong>
                                     <?php
                                     echo attendanceEscape(
@@ -408,6 +447,7 @@ require __DIR__ . '/../includes/header.php';
                                     );
                                     ?>
                                 </span>
+
                             </a>
 
                         <?php endforeach; ?>
@@ -455,21 +495,30 @@ require __DIR__ . '/../includes/header.php';
                     ): ?>
 
                         <div class="training-notice">
-                            <h3>Attendance recording is not open</h3>
+
+                            <h3>
+                                Attendance recording is not open
+                            </h3>
+
                             <p>
-                                Attendance can be recorded
-                                once the training session starts.
+                                Attendance can be recorded once
+                                the training session starts.
                             </p>
+
                         </div>
 
                     <?php elseif (empty($students)): ?>
 
                         <div class="training-notice">
+
                             <h3>No eligible students found</h3>
+
                             <p>
-                                Approved club members will
-                                appear here when available.
+                                Students with approved memberships
+                                in this sports club will appear
+                                here when available.
                             </p>
+
                         </div>
 
                     <?php else: ?>
@@ -479,11 +528,16 @@ require __DIR__ . '/../includes/header.php';
                             <?php foreach ($students as $student): ?>
 
                                 <?php
+
+                                /* Determine whether attendance is recorded. */
                                 $currentStatus = (string) (
                                     $student['att_status'] ?? ''
                                 );
 
+                                $isPresent = $currentStatus === 'present';
+
                                 $studentId = (int) $student['user_id'];
+
                                 ?>
 
                                 <form
@@ -503,12 +557,21 @@ require __DIR__ . '/../includes/header.php';
                                     <input
                                         type="hidden"
                                         name="session_id"
-                                        value="<?php echo $sessionId; ?>">
+                                        value="<?php
+                                                echo (int) $sessionId;
+                                                ?>">
 
                                     <input
                                         type="hidden"
                                         name="student_id"
-                                        value="<?php echo $studentId; ?>">
+                                        value="<?php
+                                                echo $studentId;
+                                                ?>">
+
+                                    <input
+                                        type="hidden"
+                                        name="attendance_status"
+                                        value="present">
 
                                     <strong>
                                         <?php
@@ -518,51 +581,27 @@ require __DIR__ . '/../includes/header.php';
                                         ?>
                                     </strong>
 
-                                    <label
-                                        class="training-attendance-label"
-                                        for="attendance-<?php echo $studentId; ?>">
-                                        Attendance status
-                                    </label>
+                                    <span
+                                        class="training-attendance-current">
+                                        <?php
+                                        echo $isPresent
+                                            ? 'Present recorded'
+                                            : 'Not recorded';
+                                        ?>
+                                    </span>
 
-                                    <select
-                                        id="attendance-<?php echo $studentId; ?>"
-                                        name="attendance_status"
-                                        required>
-
-                                        <option value="" disabled <?php
-                                                                    echo !in_array(
-                                                                        $currentStatus,
-                                                                        ['present', 'absent'],
-                                                                        true
-                                                                    ) ? 'selected' : '';
-                                                                    ?>>
-                                            Select status
-                                        </option>
-
-                                        <option
-                                            value="present"
-                                            <?php
-                                            echo $currentStatus === 'present'
-                                                ? 'selected'
-                                                : '';
-                                            ?>>
-                                            Present
-                                        </option>
-
-                                        <option
-                                            value="absent"
-                                            <?php
-                                            echo $currentStatus === 'absent'
-                                                ? 'selected'
-                                                : '';
-                                            ?>>
-                                            Absent
-                                        </option>
-
-                                    </select>
-
-                                    <button type="submit">
-                                        Save Attendance
+                                    <button
+                                        type="submit"
+                                        <?php
+                                        echo $isPresent
+                                            ? 'disabled'
+                                            : '';
+                                        ?>>
+                                        <?php
+                                        echo $isPresent
+                                            ? 'Recorded'
+                                            : 'Mark Present';
+                                        ?>
                                     </button>
 
                                 </form>
