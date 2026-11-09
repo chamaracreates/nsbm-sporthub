@@ -125,10 +125,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <link rel="stylesheet" href="/assets/css/student-accounts.css">
 
-<main class="accounts-page">
-    <section class="accounts-container shell" aria-labelledby="register-title">
 
-        <h1 id="register-title">Create Student Account</h1>
+<main class="accounts-page register-layout-page">
+
+    <div class="shell register-layout">
+
+        <!-- Left welcome section -->
+        <div class="register-welcome">
+
+            <h1>Start your<br>journey.</h1>
+
+            <p>
+                Create an account to apply for sports clubs
+                and follow your participation.
+            </p>
+
+        </div>
+
+        <!-- Right registration card -->
+        <section class="accounts-container register-card"
+                 aria-labelledby="register-title">
+
+            <h2 id="register-title">Create account</h2>
 
 
 <?php if ($success): ?>
@@ -163,7 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <label for="name">Full Name</label>
         <input type="text" id="name" name="name"
-               maxlength="100" required>
+               maxlength="100" placeholder="Enter your full name" required>
 
 <label for="student_number">NSBM Student ID</label>
 <input
@@ -178,7 +196,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <label for="email">Email Address</label>
         <input type="email" id="email" name="email"
-               maxlength="255" required>
+               maxlength="255" placeholder="Enter your email address" required>
 
 <label for="password">Password</label>
 
@@ -188,6 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         id="password"
         name="password"
         minlength="10"
+        placeholder="Enter your password (at least 10 characters)"
         required
     >
     <button
@@ -209,6 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         id="confirm_password"
         name="confirm_password"
         minlength="10"
+        placeholder="Re-enter your password"
         required
     >
     <button
@@ -231,7 +251,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </p>
 
 
-    </section>
+            </section>
+    </div>
 </main>
 <script src="/assets/js/student-accounts.js" defer></script>
 
