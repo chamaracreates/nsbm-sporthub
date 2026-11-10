@@ -242,9 +242,23 @@ require __DIR__ . '/../includes/header.php';
 
                     </div>
 
-                    <span class="training-session-count">
-                        <?php echo count($sessions); ?> sessions
-                    </span>
+                    <div class="training-schedule-controls">
+
+                        <span class="training-session-count">
+                            <?php echo count($sessions); ?> sessions
+                        </span>
+
+                        <?php if (!empty($clubs)): ?>
+
+                            <a
+                                href="/training/create.php"
+                                class="training-create-link">
+                                Create Training Session
+                            </a>
+
+                        <?php endif; ?>
+
+                    </div>
 
                 </div>
 
