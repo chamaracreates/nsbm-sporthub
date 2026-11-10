@@ -97,10 +97,30 @@ if (
 <?php require __DIR__ . '/includes/header.php'; ?>
 <link rel="stylesheet" href="/assets/css/student-accounts.css">
 
-<main class="accounts-page">
-    <section class="accounts-container shell" aria-labelledby="login-title">
 
-        <h1 id="login-title">Login to Your Account</h1>
+<main class="accounts-page login-layout-page">
+
+    <div class="shell login-layout">
+
+        <?php if (empty($_SESSION['user_id'])): ?>
+            <div class="login-welcome">
+                <h1>Welcome <br>back.</h1>
+                <p>
+                    Sign in to follow your sports activities
+                    and club memberships.
+                </p>
+            </div>
+        <?php endif; ?>
+
+        <section class="accounts-container login-card"
+                 aria-labelledby="login-title">
+
+            <?php if (!empty($_SESSION['user_id'])): ?>
+                <h1 id="login-title">Your Account</h1>
+            <?php else: ?>
+                <h2 id="login-title">Log in</h2>
+            <?php endif; ?>
+
 
 
 <?php if (!empty($_SESSION['user_id'])): ?>
@@ -186,8 +206,7 @@ if (
 </div>
 
 
-        <button type="submit">Login</button>
-
+        <button type="submit">Log in</button>
     </form>
 
     <p>
@@ -197,7 +216,8 @@ if (
     <?php endif; ?>
 
 
-    </section>
+        </section>
+    </div>
 </main>
 
 <script src="/assets/js/student-accounts.js" defer></script>
