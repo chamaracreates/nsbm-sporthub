@@ -278,15 +278,12 @@ require __DIR__ . '/../includes/header.php';
 
                 <?php else: ?>
 
+
                     <div class="training-attendance-sessions">
 
                         <?php foreach ($sessions as $session): ?>
 
-                            <a
-                                class="training-attendance-session"
-                                href="/training/attendance.php?session_id=<?php
-                                                                            echo (int) $session['session_id'];
-                                                                            ?>">
+                            <article class="training-attendance-session">
 
                                 <strong>
                                     <?php
@@ -312,11 +309,27 @@ require __DIR__ . '/../includes/header.php';
                                     ?>
                                 </span>
 
-                                <span>
-                                    Manage Attendance
-                                </span>
+                                <div class="training-session-actions">
 
-                            </a>
+                                    <a
+                                        href="/training/attendance.php?session_id=<?php
+                                                                                    echo (int) $session['session_id'];
+                                                                                    ?>"
+                                        class="training-session-action">
+                                        Manage Attendance
+                                    </a>
+
+                                    <a
+                                        href="/training/edit.php?session_id=<?php
+                                                                            echo (int) $session['session_id'];
+                                                                            ?>"
+                                        class="training-session-action training-session-edit">
+                                        Edit Session
+                                    </a>
+
+                                </div>
+
+                            </article>
 
                         <?php endforeach; ?>
 
