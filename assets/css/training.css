@@ -654,3 +654,17 @@
         width: 100%;
     }
 }
+
+/* Indicate sessions that cannot be edited. */
+.training-session-locked {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 9px;
+    background: var(--color-surface-alt);
+    color: var(--color-muted);
+    font-size: 13px;
+    font-weight: 600;
+}

@@ -85,7 +85,16 @@ try {
             ts.date,
             ts.start_time,
             ts.end_time,
-            sc.club_name
+            sc.club_name,
+            (
+                TIMESTAMP(ts.date, ts.start_time) > NOW()
+            ) AS is_editable_time,
+            EXISTS (
+                SELECT 1
+                FROM training_attendance AS ta
+                WHERE ta.session_id = ts.session_id
+            ) AS has_attendance
+
         FROM training_sessions AS ts
         INNER JOIN sports_clubs AS sc
             ON sc.club_id = ts.club_id
@@ -319,13 +328,27 @@ require __DIR__ . '/../includes/header.php';
                                         Manage Attendance
                                     </a>
 
-                                    <a
-                                        href="/training/edit.php?session_id=<?php
-                                                                            echo (int) $session['session_id'];
-                                                                            ?>"
-                                        class="training-session-action training-session-edit">
-                                        Edit Session
-                                    </a>
+
+                                    <?php if (
+                                        (int) $session['is_editable_time'] === 1 &&
+                                        (int) $session['has_attendance'] === 0
+                                    ): ?>
+
+                                        <a
+                                            href="/training/edit.php?session_id=<?php
+                                                                                echo (int) $session['session_id'];
+                                                                                ?>"
+                                            class="training-session-action training-session-edit">
+                                            Edit Session
+                                        </a>
+
+                                    <?php else: ?>
+
+                                        <span class="training-session-locked">
+                                            Editing unavailable
+                                        </span>
+
+                                    <?php endif; ?>
 
                                 </div>
 
