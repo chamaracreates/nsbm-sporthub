@@ -3,6 +3,13 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/auth.php';
+
+$canManageTournaments = in_array(
+    current_user_role(),
+    ['admin', 'coach', 'mic'],
+    true
+);
 
 function tournamentEscape(mixed $value): string
 {

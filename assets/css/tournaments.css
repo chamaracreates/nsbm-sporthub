@@ -628,3 +628,57 @@
         width: 100%;
     }
 }
+
+/* Tournament editing context and feedback. */
+.tournament-edit-context {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 25px;
+    color: var(--color-muted);
+    font-size: 14px;
+}
+
+.tournament-edit-context strong {
+    color: var(--color-text);
+    font-weight: 700;
+}
+
+.tournament-edit-context span {
+    padding: 7px 13px;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+}
+
+.tournament-form-success {
+    margin-bottom: 26px;
+    padding: 20px 24px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-surface);
+    color: var(--color-accent);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.tournament-management-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 25px;
+}
+
+.tournament-management-actions .button {
+    margin-top: 0;
+}
+
+@media (max-width: 560px) {
+    .tournament-management-actions {
+        flex-direction: column;
+    }
+
+    .tournament-management-actions .button {
+        width: 100%;
+    }
+}
