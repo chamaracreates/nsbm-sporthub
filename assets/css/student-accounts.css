@@ -1319,3 +1319,911 @@
     outline: 2px solid var(--color-accent);
     outline-offset: 3px;
 }
+
+/* ==========================================
+   Login Page - Two Column Layout
+   ========================================== */
+
+.accounts-page.login-layout-page {
+    display: block;
+    width: 100%;
+    padding: 0;
+}
+
+/* Main layout */
+.login-layout-page .login-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    align-items: center;
+    gap: 64px;
+
+    width: min(1200px, calc(100% - 48px));
+    max-width: 1200px;
+    min-height: 70vh;
+    margin: 0 auto;
+    padding: 64px 0;
+}
+
+/* Left welcome section */
+.login-layout-page .login-welcome {
+    min-width: 0;
+}
+
+
+/* Welcome heading - reference screenshot style */
+.login-layout-page .login-welcome h1 {
+    font-family: -apple-system, BlinkMacSystemFont,
+                 "Segoe UI", Arial, sans-serif;
+
+    font-size: clamp(54px, 5.5vw, 78px);
+    font-weight: 800;
+    font-style: normal;
+
+    line-height: 0.98;
+    letter-spacing: -0.055em;
+
+    margin: 0 0 24px;
+    color: var(--color-text);
+}
+
+/* Mobile heading */
+@media (max-width: 600px) {
+    .login-layout-page .login-welcome h1 {
+        font-size: 44px;
+        line-height: 1.05;
+    }
+}
+
+
+.login-layout-page .login-welcome p {
+    max-width: 500px;
+    margin: 0;
+
+    font-size: 20px;
+    line-height: 1.7;
+
+    color: var(--color-muted);
+}
+
+/* Right login card */
+.login-layout-page .accounts-container.login-card {
+    width: 100%;
+    max-width: 520px;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+/* Login card heading */
+.login-layout-page .login-card #login-title {
+    margin: 0 0 28px;
+    font-size: 34px;
+    font-weight: 800;
+    line-height: 1.2;
+    text-align: left;
+}
+
+/* Make sure the form fills the card */
+.login-layout-page .login-card form {
+    width: 100%;
+}
+
+/* No arrow on login button */
+.login-layout-page .login-card form button[type="submit"]::after {
+    content: none;
+}
+
+/* Center the card when the user is logged in */
+.login-layout-page .login-layout > .login-card:only-child {
+    grid-column: 1 / -1;
+    justify-self: center;
+}
+
+/* Tablet */
+@media (max-width: 900px) {
+    .login-layout-page .login-layout {
+        grid-template-columns: 1fr;
+        gap: 36px;
+        min-height: auto;
+        padding: 56px 0;
+    }
+
+    .login-layout-page .login-welcome {
+        text-align: center;
+    }
+
+    .login-layout-page .login-welcome h1 {
+        font-size: clamp(44px, 8vw, 68px);
+    }
+
+    .login-layout-page .login-welcome p {
+        margin: 0 auto;
+        font-size: 17px;
+    }
+
+    .login-layout-page .accounts-container.login-card {
+        justify-self: center;
+    }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    .login-layout-page .login-layout {
+        width: calc(100% - 32px);
+        gap: 28px;
+        padding: 40px 0;
+    }
+
+    .login-layout-page .login-welcome h1 {
+        font-size: 46px;
+        margin-bottom: 16px;
+    }
+
+    .login-layout-page .login-welcome p {
+        font-size: 16px;
+    }
+
+    .login-layout-page .login-card #login-title {
+        font-size: 28px;
+    }
+}
+
+/* Login page - refined typography */
+
+.login-layout-page .login-welcome h1 {
+    font-size: clamp(40px, 4.5vw, 64px);
+    font-weight: 600;
+    line-height: 1.12;
+    letter-spacing: -0.035em;
+    margin-bottom: 20px;
+}
+
+.login-layout-page .login-welcome p {
+    max-width: 430px;
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.65;
+}
+
+.login-layout-page .login-card #login-title {
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    margin-bottom: 24px;
+}
+
+.login-layout-page .login-card label {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.login-layout-page .login-card form button[type="submit"] {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+@media (max-width: 900px) {
+    .login-layout-page .login-welcome h1 {
+        font-size: 48px;
+    }
+}
+
+@media (max-width: 600px) {
+    .login-layout-page .login-welcome h1 {
+        font-size: 40px;
+    }
+
+    .login-layout-page .login-welcome p {
+        font-size: 15px;
+    }
+
+    .login-layout-page .login-card #login-title {
+        font-size: 26px;
+    }
+}
+
+/* Rounded Log in button */
+.login-layout-page .login-card form button[type="submit"] {
+    border-radius: 999px;
+    min-height: 54px;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+/* Login button - shorter pill shape */
+.login-layout-page .login-card form button[type="submit"] {
+    min-height: 44px;
+    height: 44px;
+    padding: 0 20px;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+/* Welcome heading line spacing */
+.login-layout-page .login-welcome h1 {
+    line-height: 1.08;
+}
+
+/* ==========================================
+   Student Accounts - Shared Typography
+   Based on NSBM SportsHub main stylesheet
+   ========================================== */
+
+/* Same font family across student account pages */
+.accounts-page,
+.student-profile-page,
+.edit-profile-page,
+.change-password-page,
+.student-history-page {
+    font-family: -apple-system, BlinkMacSystemFont,
+                 "Segoe UI", Arial, sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.55;
+}
+
+/* Main page headings */
+.accounts-page h1,
+.student-profile-page h1,
+.edit-profile-page h1,
+.change-password-page h1,
+.student-history-page h1 {
+    font-size: clamp(36px, 4.5vw, 60px);
+    font-weight: 750;
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+}
+
+/* Secondary headings */
+.accounts-page h2,
+.student-profile-page h2,
+.edit-profile-page h2,
+.change-password-page h2,
+.student-history-page h2 {
+    font-size: clamp(26px, 3vw, 34px);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+}
+
+/* Card and section headings */
+.accounts-page h3,
+.student-profile-page h3,
+.edit-profile-page h3,
+.change-password-page h3,
+.student-history-page h3 {
+    font-size: 23px;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.5px;
+}
+
+/* Form labels */
+.accounts-page label,
+.student-profile-page label,
+.edit-profile-page label,
+.change-password-page label {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+/* Form inputs */
+.accounts-page input,
+.accounts-page select,
+.accounts-page textarea,
+.edit-profile-page input,
+.edit-profile-page select,
+.edit-profile-page textarea,
+.change-password-page input {
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 400;
+}
+
+/* Account buttons */
+.accounts-page button,
+.student-profile-page button,
+.edit-profile-page button,
+.change-password-page button,
+.student-history-page button {
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+/* Login welcome heading */
+.login-layout-page .login-welcome h1 {
+    font-size: clamp(52px, 5.5vw, 76px);
+    font-weight: 800;
+    line-height: 0.98;
+    letter-spacing: -0.045em;
+    margin-bottom: 24px;
+}
+
+/* Login description */
+.login-layout-page .login-welcome p {
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.55;
+}
+
+/* Login form heading */
+.login-layout-page .login-card #login-title {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+/* Preserve shorter pill-shaped Log in button */
+.login-layout-page .login-card form button[type="submit"] {
+    height: 44px;
+    min-height: 44px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+/* Mobile typography */
+@media (max-width: 600px) {
+    .accounts-page h1,
+    .student-profile-page h1,
+    .edit-profile-page h1,
+    .change-password-page h1,
+    .student-history-page h1 {
+        font-size: 34px;
+    }
+
+    .login-layout-page .login-welcome h1 {
+        font-size: 44px;
+        line-height: 1.05;
+    }
+
+    .accounts-page h2,
+    .student-profile-page h2,
+    .edit-profile-page h2,
+    .change-password-page h2,
+    .student-history-page h2 {
+        font-size: 27px;
+    }
+
+    .accounts-page h3,
+    .student-profile-page h3,
+    .edit-profile-page h3,
+    .change-password-page h3,
+    .student-history-page h3 {
+        font-size: 21px;
+    }
+}
+
+/* Student Accounts - balanced typography */
+
+.accounts-page {
+    font-family: -apple-system, BlinkMacSystemFont,
+                 "Segoe UI", Arial, sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.55;
+}
+
+/* Normal page titles */
+.accounts-page:not(.login-layout-page) h1 {
+    font-size: clamp(30px, 3.5vw, 40px);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+}
+
+/* Card headings and section titles */
+.accounts-page h2,
+.accounts-page h3 {
+    font-size: clamp(21px, 2.5vw, 28px);
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+}
+
+/* Login card heading */
+.login-layout-page .login-card #login-title {
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+}
+
+/* Supporting descriptions */
+.accounts-page p {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.6;
+}
+
+/* Form labels */
+.accounts-page label {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* Form input text */
+.accounts-page input,
+.accounts-page select,
+.accounts-page textarea {
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 400;
+}
+
+/* Buttons */
+.accounts-page button,
+.accounts-page .accounts-submit {
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+/* Preserve the login button */
+.login-layout-page .login-card form button[type="submit"] {
+    min-height: 44px;
+    height: 44px;
+    border-radius: 999px;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    .accounts-page:not(.login-layout-page) h1 {
+        font-size: 30px;
+    }
+
+    .accounts-page h2,
+    .accounts-page h3 {
+        font-size: 22px;
+    }
+
+    .login-layout-page .login-welcome h1 {
+        font-size: 44px;
+    }
+
+    .login-layout-page .login-card #login-title {
+        font-size: 26px;
+    }
+}
+
+
+
+/* =========================================
+   REGISTER PAGE - REFERENCE PROPORTIONS
+   ========================================= */
+
+@media (min-width: 901px) {
+
+    .register-layout-page .register-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 488px;
+        align-items: start;
+        column-gap: 72px;
+
+        width: min(1228px, calc(100% - 48px));
+        max-width: 1228px;
+        min-height: 0;
+        margin: 0 auto;
+        padding: 32px 0 56px;
+    }
+
+    /* Position heading close to top of form */
+    .register-layout-page .register-welcome {
+        align-self: start;
+        padding-top: 60px;
+    }
+
+
+
+.register-layout-page .register-welcome h1 {
+    font-size: 64px;
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.035em;
+    margin: 0 0 22px;
+}
+
+
+
+    /* Left description */
+    .register-layout-page .register-welcome p {
+        max-width: 465px;
+        font-size: 17px;
+        line-height: 1.6;
+    }
+
+    /* Right form card */
+    .register-layout-page .accounts-container.register-card {
+        width: 100%;
+        max-width: 488px;
+        margin: 0;
+        padding: 30px;
+        justify-self: end;
+        box-sizing: border-box;
+        border-radius: 22px;
+    }
+}
+
+/* Registration card heading */
+.register-layout-page .register-card #register-title {
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+    text-align: left;
+    margin: 0 0 22px;
+}
+
+/* Form field spacing */
+.register-layout-page .register-card form > p,
+.register-layout-page .register-card .form-group {
+    margin-top: 0;
+    margin-bottom: 14px;
+}
+
+/* Form labels */
+.register-layout-page .register-card label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 7px;
+}
+
+/* Input dimensions */
+.register-layout-page .register-card input:not([type="hidden"]) {
+    width: 100%;
+    height: 48px;
+    min-height: 48px;
+    box-sizing: border-box;
+    border-radius: 10px;
+    font-size: 15px;
+}
+
+/* Create Account button */
+.register-layout-page .register-card form button[type="submit"] {
+    width: 100%;
+    height: 46px;
+    min-height: 46px;
+    padding: 0 20px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+/* Tablet and mobile */
+@media (max-width: 900px) {
+    .register-layout-page .register-layout {
+        grid-template-columns: 1fr;
+        width: calc(100% - 32px);
+        gap: 32px;
+        padding: 40px 0;
+        min-height: 0;
+    }
+
+    .register-layout-page .register-welcome {
+        padding-top: 0;
+        text-align: center;
+    }
+
+
+.register-layout-page .register-welcome h1 {
+    font-size: clamp(38px, 6vw, 48px);
+    font-weight: 600;
+    line-height: 1.08;
+}
+
+
+    .register-layout-page .register-welcome p {
+        margin: 0 auto;
+    }
+
+    .register-layout-page .accounts-container.register-card {
+        width: 100%;
+        max-width: 488px;
+        margin: 0 auto;
+        padding: 26px;
+    }
+}
+
+
+/* Register page - correct vertical alignment */
+
+@media (min-width: 901px) {
+    .register-layout-page .register-layout {
+        align-items: start;
+        min-height: 0;
+        padding: 48px 0 60px;
+    }
+
+    .register-layout-page .register-welcome {
+        align-self: start;
+        padding-top: clamp(65px, 11vh, 110px);
+    }
+}
+
+/* Register form - compact proportions */
+
+.register-layout-page .accounts-container.register-card {
+    max-width: 490px;
+    padding: 28px 32px;
+    justify-self: end;
+}
+
+.register-layout-page .register-card #register-title {
+    font-size: 29px;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.register-layout-page .register-card form > p,
+.register-layout-page .register-card .form-group {
+    margin-bottom: 14px;
+}
+
+.register-layout-page .register-card label {
+    margin-bottom: 6px;
+}
+
+.register-layout-page .register-card input:not([type="hidden"]) {
+    height: 46px;
+    min-height: 46px;
+}
+
+.register-layout-page .register-card form button[type="submit"] {
+    min-height: 44px;
+    height: 44px;
+    border-radius: 999px;
+}
+
+/* Preserve mobile-friendly alignment */
+@media (max-width: 900px) {
+    .register-layout-page .register-welcome {
+        padding-top: 0;
+    }
+
+    .register-layout-page .accounts-container.register-card {
+        justify-self: center;
+        width: 100%;
+    }
+}
+
+@media (max-width: 600px) {
+    .register-layout-page .accounts-container.register-card {
+        padding: 24px 20px;
+    }
+}
+
+/* ==========================================
+   Compact Registration Form
+   ========================================== */
+
+@media (min-width: 901px) {
+    .register-layout-page .register-layout {
+        grid-template-columns: minmax(0, 1fr) 440px;
+        column-gap: 64px;
+        padding-top: 28px;
+        padding-bottom: 36px;
+    }
+
+    .register-layout-page .register-welcome {
+        padding-top: 65px;
+    }
+}
+
+/* Smaller form card */
+.register-layout-page .accounts-container.register-card {
+    max-width: 440px;
+    padding: 24px 28px;
+    border-radius: 20px;
+}
+
+/* Smaller heading */
+.register-layout-page .register-card #register-title {
+    font-size: 27px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+/* Reduce space between fields */
+.register-layout-page .register-card form > p,
+.register-layout-page .register-card .form-group {
+    margin-bottom: 10px;
+}
+
+/* Compact labels */
+.register-layout-page .register-card label {
+    font-size: 13px;
+    margin-bottom: 5px;
+}
+
+/* Shorter input fields */
+.register-layout-page .register-card input:not([type="hidden"]) {
+    height: 42px;
+    min-height: 42px;
+    padding-top: 9px;
+    padding-bottom: 9px;
+    font-size: 14px;
+}
+
+/* Smaller Create Account button */
+.register-layout-page .register-card form button[type="submit"] {
+    height: 42px;
+    min-height: 42px;
+    margin-top: 8px;
+    border-radius: 999px;
+    font-size: 14px;
+}
+
+/* Mobile */
+@media (max-width: 900px) {
+    .register-layout-page .accounts-container.register-card {
+        width: 100%;
+        max-width: 440px;
+        padding: 24px;
+    }
+}
+
+/* ==========================================
+   Register Page - Balanced Positioning
+   ========================================== */
+
+@media (min-width: 901px) {
+
+    /* Reduce empty space below navigation */
+    .accounts-page.register-layout-page {
+        padding-top: 0;
+        margin-top: 0;
+    }
+
+    .accounts-page.register-layout-page .register-layout {
+        padding-top: 18px;
+        padding-bottom: 32px;
+        min-height: 0;
+        align-items: start;
+    }
+
+    /* Move left heading closer to the top */
+    .accounts-page.register-layout-page .register-welcome {
+        padding-top: 65px;
+        margin-top: 0;
+    }
+
+    /* Keep registration form near the top */
+    .accounts-page.register-layout-page .register-card {
+        margin-top: 0;
+        align-self: start;
+    }
+}
+
+
+/* Registration form - balanced final width */
+
+@media (min-width: 901px) {
+
+    .register-layout-page .register-layout {
+        grid-template-columns: minmax(0, 1fr) 475px;
+        column-gap: 64px;
+    }
+
+    .register-layout-page .accounts-container.register-card {
+        width: 465px;
+        max-width: 100%;
+        padding: 24px 30px;
+        border-radius: 20px;
+        transform: translateX(-25px);
+    }
+}
+
+/* ==========================================
+   Registration Card - Soft Dark Appearance
+   ========================================== */
+
+.register-layout-page .accounts-container.register-card {
+    background: #0c0d10;
+
+    border: 1px solid rgba(255, 255, 255, 0.055);
+
+    box-shadow:
+        0 12px 35px rgba(0, 0, 0, 0.30),
+        0 25px 60px rgba(0, 0, 0, 0.18);
+
+    border-radius: 20px;
+}
+
+/* Softer input background */
+.register-layout-page .register-card input:not([type="hidden"]) {
+    background: #151619;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    color: #f5f5f5;
+}
+
+/* Placeholder appearance */
+.register-layout-page .register-card input::placeholder {
+    color: #9298a3;
+    opacity: 1;
+    font-size: 13px;
+    font-weight: 400;
+}
+
+/* Subtle input highlight on focus */
+.register-layout-page .register-card input:focus {
+    border-color: rgba(168, 255, 0, 0.65);
+    outline: 2px solid rgba(168, 255, 0, 0.15);
+    outline-offset: 1px;
+}
+
+/* Preserve bright green action button */
+.register-layout-page .register-card button[type="submit"] {
+    border-radius: 999px;
+}
+
+/* ==========================================
+   Login & Registration - Dark Green Gradient
+   ========================================== */
+
+.accounts-page.login-layout-page,
+.accounts-page.register-layout-page {
+    background-color: #050706;
+
+    background-image:
+        radial-gradient(
+            ellipse 65% 85% at 12% 42%,
+            rgba(153, 255, 0, 0.12) 0%,
+            transparent 68%
+        ),
+        radial-gradient(
+            ellipse 55% 75% at 90% 35%,
+            rgba(0, 105, 67, 0.22) 0%,
+            transparent 72%
+        ),
+        linear-gradient(
+            115deg,
+            #050706 0%,
+            #0b130e 52%,
+            #050807 100%
+        );
+
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+/* Match Register heading position to Login page */
+
+@media (min-width: 901px) {
+    .accounts-page.register-layout-page .register-welcome {
+        padding-top: 145px;
+    }
+}
+
+
+/* Mobile Registration - Fix Vertical Alignment */
+
+@media (max-width: 900px) {
+
+    /* Prevent the main page from centering its contents */
+    .accounts-page.register-layout-page {
+        display: block;
+        min-height: 0;
+        padding-top: 0;
+        padding-bottom: 24px;
+    }
+
+    /* Position registration content near the top */
+    .accounts-page.register-layout-page .register-layout {
+        width: calc(100% - 32px);
+        margin: 0 auto;
+        padding: 20px 0 0;
+        min-height: 0;
+        align-content: start;
+    }
+
+    /* Keep heading centered without extra top spacing */
+    .accounts-page.register-layout-page .register-welcome {
+        padding-top: 0;
+        margin-top: 0;
+        align-self: start;
+        text-align: center;
+    }
+}
