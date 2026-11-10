@@ -260,8 +260,14 @@ if (
     }
 
     /* Save only when all submitted values are valid. */
+
     if (empty($errors)) {
         try {
+            /* Read the latest committed scheduling information. */
+            $pdo->exec(
+                'SET TRANSACTION ISOLATION LEVEL READ COMMITTED'
+            );
+
             $pdo->beginTransaction();
 
             /* Recheck club authorization before insertion. */
