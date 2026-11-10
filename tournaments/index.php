@@ -142,6 +142,26 @@ require __DIR__ . '/../includes/header.php';
                 competition schedules, participating clubs
                 and registration periods.
             </p>
+            <?php if ($canManageTournaments): ?>
+
+                <div class="tournament-directory-actions">
+
+                    <a
+                        href="/tournaments/manage.php"
+                        class="button button-outline">
+                        Manage Tournaments
+                    </a>
+
+                    <a
+                        href="/tournaments/create.php"
+                        class="button button-accent">
+                        Create Tournament
+                    </a>
+
+                </div>
+
+            <?php endif; ?>
+
         </header>
 
         <nav class="tournaments-tabs"
@@ -293,4 +313,13 @@ require __DIR__ . '/../includes/header.php';
 
 </main>
 
-<?php require __DIR__ . '/../includes/footer.php'; ?>
+<?php require __DIR__ . '/../includes/footer.php';
+
+require_once __DIR__ . '/../includes/auth.php';
+
+$canManageTournaments = in_array(
+    current_user_role(),
+    ['admin', 'coach', 'mic'],
+    true
+);
+?>
