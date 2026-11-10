@@ -239,6 +239,47 @@ if ($requestMethod === 'POST' && !$loadError) {
 
             $pdo->beginTransaction();
 
+            /* Identify the facility before locking the session. */
+            $venueLookup = $pdo->prepare(
+                "SELECT location
+                 FROM training_sessions
+                 WHERE session_id = :session_id
+                 LIMIT 1"
+            );
+
+            $venueLookup->execute([
+                'session_id' => $sessionId
+            ]);
+
+            $initialVenueId = $venueLookup->fetchColumn();
+
+            if ($initialVenueId === false) {
+                throw new DomainException(
+                    'This training session is no longer available.'
+                );
+            }
+
+            $venueId = (int) $initialVenueId;
+
+            /* Lock the facility before locking the session. */
+            $venueStatement = $pdo->prepare(
+                "SELECT res_id
+                 FROM resources
+                 WHERE res_id = :venue_id
+                   AND LOWER(TRIM(res_status)) = 'active'
+                 FOR UPDATE"
+            );
+
+            $venueStatement->execute([
+                'venue_id' => $venueId
+            ]);
+
+            if (!$venueStatement->fetchColumn()) {
+                throw new DomainException(
+                    'The assigned facility is no longer available.'
+                );
+            }
+
             /* Lock the existing training session. */
             $statement = $pdo->prepare(
                 "SELECT
@@ -330,24 +371,10 @@ if ($requestMethod === 'POST' && !$loadError) {
                 );
             }
 
-            $venueId = (int) $existing['location'];
-
-            /* Lock the original facility for conflict checking. */
-            $statement = $pdo->prepare(
-                "SELECT res_id
-                FROM resources
-                WHERE res_id = :venue_id
-                    AND LOWER(TRIM(res_status)) = 'active'
-                FOR UPDATE"
-            );
-
-            $statement->execute([
-                'venue_id' => $venueId
-            ]);
-
-            if (!$statement->fetchColumn()) {
+            /* Verify that the session still uses the locked facility. */
+            if ((int) $existing['location'] !== $venueId) {
                 throw new DomainException(
-                    'The assigned facility is no longer available.'
+                    'The assigned facility changed. Reload and try again.'
                 );
             }
 
