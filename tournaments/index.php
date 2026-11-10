@@ -275,6 +275,12 @@ require __DIR__ . '/../includes/header.php';
 
                         </div>
 
+                        <a
+                            href="/tournaments/view.php?id=<?= (int) $tournament['t_id'] ?>"
+                            class="button button-outline tournament-view-link">
+                            View Tournament
+                        </a>
+
                     </article>
 
                 <?php endforeach; ?>
