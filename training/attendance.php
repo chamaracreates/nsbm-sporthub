@@ -97,7 +97,7 @@ $feedback = $_SESSION['training_attendance_feedback'] ?? null;
 unset($_SESSION['training_attendance_feedback']);
 
 try {
-    $pdo = db();
+    $pdo = trainingDb();
 
     /* Retrieve sessions available to the current staff member. */
     $sessionSql = "

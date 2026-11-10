@@ -36,7 +36,7 @@ $sessions = [];
 $loadError = false;
 
 try {
-    $pdo = db();
+    $pdo = trainingDb();
 
     /* Restrict staff access to their active club assignments. */
     $clubScope = '';

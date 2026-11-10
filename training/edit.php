@@ -78,7 +78,7 @@ $feedback = $_SESSION['training_edit_feedback'] ?? null;
 unset($_SESSION['training_edit_feedback']);
 
 try {
-    $pdo = db();
+    $pdo = trainingDb();
 
     /* Retrieve the session within the authorized club scope. */
     $statement = $pdo->prepare(
