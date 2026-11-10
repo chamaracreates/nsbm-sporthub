@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/auth.php';
-require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/timezone.php';
 
 /* Require an authorized staff account. */
 $userId = require_login();
@@ -92,7 +92,7 @@ $successMessage = $_SESSION['training_create_flash'] ?? null;
 unset($_SESSION['training_create_flash']);
 
 try {
-    $pdo = db();
+    $pdo = trainingDb();
 
     /* Retrieve clubs that the current staff member may manage. */
     if ($isAdmin) {

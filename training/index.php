@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/timezone.php';
 
 /* Escape values before rendering them in HTML. */
 function trainingEscape(mixed $value): string
@@ -41,7 +41,7 @@ try {
             ts.session_id ASC
     ";
 
-    $statement = db()->query($sql);
+    $statement = trainingDb()->query($sql);
     $sessions = $statement->fetchAll();
 } catch (PDOException $error) {
     error_log(
