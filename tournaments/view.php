@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/auth.php';
 
 /* Escape values displayed in the tournament details page. */
 function tournamentViewEscape(mixed $value): string
@@ -159,6 +160,40 @@ require __DIR__ . '/../includes/header.php';
                 </p>
 
             </header>
+
+            <?php
+            $registrationToday = (new DateTimeImmutable(
+                'now',
+                new DateTimeZone('Asia/Colombo')
+            ))->format('Y-m-d');
+
+            $registrationAvailable =
+                strtolower(trim((string) $tournament['status']))
+                === 'upcoming'
+                && (string) $tournament['reg_open_at']
+                <= $registrationToday
+                && (string) $tournament['reg_end_at']
+                >= $registrationToday
+                && (string) $tournament['start_date']
+                > $registrationToday;
+
+            $canApply = !is_logged_in()
+                || current_user_role() === 'student';
+            ?>
+
+            <?php if ($registrationAvailable && $canApply): ?>
+
+                <div class="tournament-directory-actions">
+
+                    <a
+                        href="/tournaments/register.php?id=<?= (int) $tournament['t_id'] ?>"
+                        class="button button-accent">
+                        Register for Tournament
+                    </a>
+
+                </div>
+
+            <?php endif; ?>
 
             <div class="tournament-view-layout">
 
