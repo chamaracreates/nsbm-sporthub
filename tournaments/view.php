@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/db.php';
+auth_start();
+
 require_once __DIR__ . '/../includes/auth.php';
 
 /* Escape values displayed in the tournament details page. */
