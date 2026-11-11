@@ -212,13 +212,17 @@ require __DIR__ . '/../includes/header.php';
             </p>
 
             <div class="tournament-directory-actions">
-
                 <a
                     href="/tournaments/teams.php"
                     class="button button-outline">
                     Manage Teams
                 </a>
 
+                <a
+                    href="/tournaments/registrations.php"
+                    class="button button-accent">
+                    Review Registrations
+                </a>
             </div>
 
         </header>
