@@ -45,6 +45,11 @@ function teamManageDate(string $value): string
 
 $isAdmin = $userRole === 'admin';
 
+$teamCreatedMessage =
+    $_SESSION['team_created_flash'] ?? null;
+
+unset($_SESSION['team_created_flash']);
+
 $teams = [];
 $loadError = false;
 
@@ -154,6 +159,14 @@ require __DIR__ . '/../includes/header.php';
 
         </header>
 
+        <?php if (is_string($teamCreatedMessage)): ?>
+
+            <div class="tournament-form-success" role="status">
+                <?= teamManageEscape($teamCreatedMessage) ?>
+            </div>
+
+        <?php endif; ?>
+
         <div class="tournament-view-navigation">
             <a
                 href="/tournaments/manage.php"
@@ -186,6 +199,12 @@ require __DIR__ . '/../includes/header.php';
                             : 'teams' ?>
                     </p>
                 </div>
+
+                <a
+                    href="/tournaments/create-team.php"
+                    class="button button-accent">
+                    Create Team
+                </a>
 
             </div>
 
