@@ -682,3 +682,100 @@
         width: 100%;
     }
 }
+
+/* Team roster management. */
+.tournament-roster-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr);
+    align-items: start;
+    gap: 22px;
+}
+
+.tournament-roster-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+.tournament-roster-heading h2 {
+    margin: 0;
+}
+
+.tournament-roster-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tournament-roster-member {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 15px;
+    padding: 18px;
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    background: var(--color-surface-alt);
+}
+
+.tournament-roster-member>div {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+}
+
+.tournament-roster-member strong {
+    color: var(--color-text);
+    font-size: 15px;
+    overflow-wrap: anywhere;
+}
+
+.tournament-roster-member span {
+    color: var(--color-muted);
+    font-size: 13px;
+}
+
+.tournament-roster-form {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.tournament-roster-form .button {
+    align-self: flex-start;
+}
+
+.tournament-roster-note {
+    margin-bottom: 26px;
+    padding: 20px 24px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-surface);
+    color: var(--color-muted);
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+@media (max-width: 800px) {
+    .tournament-roster-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 560px) {
+    .tournament-roster-member {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .tournament-roster-member form,
+    .tournament-roster-member .button,
+    .tournament-roster-form .button {
+        width: 100%;
+    }
+}

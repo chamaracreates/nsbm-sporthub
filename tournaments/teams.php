@@ -300,6 +300,12 @@ require __DIR__ . '/../includes/header.php';
                                     View Tournament
                                 </a>
 
+                                <a
+                                    href="/tournaments/team-roster.php?id=<?= (int) $team['team_id'] ?>"
+                                    class="button button-accent">
+                                    Manage Roster
+                                </a>
+
                             </div>
 
                         </article>
