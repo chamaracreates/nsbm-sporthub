@@ -211,6 +211,16 @@ require __DIR__ . '/../includes/header.php';
                 authorized sports clubs.
             </p>
 
+            <div class="tournament-directory-actions">
+
+                <a
+                    href="/tournaments/teams.php"
+                    class="button button-outline">
+                    Manage Teams
+                </a>
+
+            </div>
+
         </header>
 
         <?php if ($loadError): ?>
