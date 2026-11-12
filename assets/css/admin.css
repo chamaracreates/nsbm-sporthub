@@ -525,9 +525,9 @@ body {
     font-weight: 700;
 }
 
-.nav-link.active::before {
+/* .nav-link.active::before {
     height: 23px;
-}
+} */
 
 /* ==========================================
    PREMIUM WELCOME HERO

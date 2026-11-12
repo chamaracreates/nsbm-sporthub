@@ -1,0 +1,178 @@
+/* =========================================
+   NSBM SportsHub - Reports & Analytics
+========================================= */
+
+.report-section {
+    margin-top: 30px;
+    padding: 25px;
+    background: #111214;
+    border: 1px solid #2a2d2c;
+    border-radius: 14px;
+}
+
+.report-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+    gap: 15px;
+}
+
+.report-heading h2 {
+    color: #f5f5f7;
+    font-size: 21px;
+    margin-bottom: 7px;
+}
+
+.report-heading p {
+    color: #a3a7a6;
+    font-size: 14px;
+}
+
+.report-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #2a2d2c;
+    border-radius: 10px;
+}
+
+.report-table {
+    width: 100%;
+    min-width: 750px;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.report-table th {
+    background: #17191b;
+    color: #a8ff00;
+    padding: 16px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.report-table td {
+    padding: 16px;
+    color: #f5f5f7;
+    font-size: 14px;
+    border-top: 1px solid #2a2d2c;
+}
+
+.report-table tbody tr:hover {
+    background: #17191b;
+}
+
+.empty-report {
+    text-align: center;
+    color: #a3a7a6 !important;
+    padding: 35px 15px !important;
+}
+
+.report-note {
+    margin-top: 14px;
+    color: #a3a7a6;
+    font-size: 12px;
+}
+
+@media (max-width: 768px) {
+    .report-section {
+        padding: 16px;
+    }
+
+    .report-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+
+/*----Reports Filter Panel---- */
+
+.report-filters {
+    margin-top: 25px;
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.filter-field label {
+    color: #f5f5f7;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.filter-field input,
+.filter-field select {
+    width: 100%;
+    padding: 12px;
+    background: #17191b;
+    border: 1px solid #2a2d2c;
+    border-radius: 8px;
+    color: #f5f5f7;
+    font-size: 13px;
+}
+
+.filter-field input:focus,
+.filter-field select:focus {
+    outline: none;
+    border-color: #a8ff00;
+}
+
+.filter-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 22px;
+}
+
+.filter-button {
+    padding: 12px 22px;
+    background: #a8ff00;
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.filter-reset {
+    color: #a3a7a6;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.filter-reset:hover {
+    color: #a8ff00;
+}
+
+.filter-error {
+    color: #ff7777;
+    margin-bottom: 15px;
+    font-size: 13px;
+}
+
+@media (max-width: 900px) {
+    .filter-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 550px) {
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-actions {
+        flex-wrap: wrap;
+    }
+}
