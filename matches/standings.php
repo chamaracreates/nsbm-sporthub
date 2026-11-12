@@ -162,6 +162,8 @@ try {
     $loadError = true;
 }
 
+$pageStylesheets = ['/assets/css/matches.css'];
+
 include __DIR__ . '/../includes/header.php';
 
 ?>

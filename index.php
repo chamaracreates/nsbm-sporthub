@@ -9,17 +9,72 @@ function homeEscape($value): string
 
 // Reference content used to preview the club gallery before clubs are added.
 $referenceClubs = [
-    ['sport' => 'Cricket',       'name' => 'Cricket Club',       'description' => 'Play for the team, strengthen your technique and take on friendly fixtures.', 'image' => '/assets/images/cricket.jpg'],
-    ['sport' => 'Badminton',     'name' => 'Badminton Club',     'description' => 'Bring energy to every rally with singles, doubles and club practice.', 'image' => '/assets/images/badminton.jpg'],
-    ['sport' => 'Rugby',         'name' => 'Rugby Club',         'description' => 'Play with discipline, courage and camaraderie on and off the pitch.', 'image' => '/assets/images/rugby.jpg'],
-    ['sport' => 'Athletics',     'name' => 'Athletics Club',     'description' => 'From sprints to field events, challenge yourself and run together.', 'image' => '/assets/images/athletics.jpg'],
-    ['sport' => 'Chess',         'name' => 'Chess Club',         'description' => 'Build strategic thinking through friendly games and tournaments.', 'image' => '/assets/images/chess.jpg'],
-    ['sport' => 'Martial Arts',  'name' => 'Martial Arts Club',  'description' => 'Develop confidence, discipline and skills through martial arts.', 'image' => '/assets/images/martialarts.jpg'],
-    ['sport' => 'Netball',       'name' => 'Netball Club',       'description' => 'Grow your skills and teamwork on the netball court.', 'image' =>  '/assets/images/netball.jpg'],
-    ['sport' => 'Swimming',      'name' => 'Swimming Club',      'description' => 'Explore aquatic fitness, training and competitions.', 'image' => '/assets/images/swimming.jpg'],
-    ['sport' => 'Table Tennis',  'name' => 'Table Tennis Club',  'description' => 'Develop quick reflexes through singles and doubles.', 'image' => '/assets/images/tabletennis.jpg'],
-    ['sport' => 'Tennis',        'name' => 'Tennis Club',        'description' => 'Learn and improve your tennis skills through regular practice.', 'image' => '/assets/images/tennis.jpg'],
-    ['sport' => 'Volleyball',    'name' => 'Volleyball Club',    'description' => 'Build team spirit and confidence through volleyball.', 'image' => '/assets/images/volleyball.jpg'],
+    [
+        'sport' => 'Cricket',
+        'name' => 'Cricket Club',
+        'description' => 'Play for the team, strengthen your technique and take on friendly fixtures.',
+        'image' => '/assets/images/cricket.jpg',
+    ],
+    [
+        'sport' => 'Badminton',
+        'name' => 'Badminton Club',
+        'description' => 'Bring energy to every rally with singles, doubles and club practice.',
+        'image' => '/assets/images/badminton.jpg',
+    ],
+    [
+        'sport' => 'Rugby',
+        'name' => 'Rugby Club',
+        'description' => 'Play with discipline, courage and camaraderie on and off the pitch.',
+        'image' => '/assets/images/rugby.jpg',
+    ],
+    [
+        'sport' => 'Athletics',
+        'name' => 'Athletics Club',
+        'description' => 'From sprints to field events, challenge yourself and run together.',
+        'image' => '/assets/images/athletics.jpg',
+    ],
+    [
+        'sport' => 'Chess',
+        'name' => 'Chess Club',
+        'description' => 'Build strategic thinking through friendly games and tournaments.',
+        'image' => '/assets/images/chess.jpg',
+    ],
+    [
+        'sport' => 'Martial Arts',
+        'name' => 'Martial Arts Club',
+        'description' => 'Develop confidence, discipline and skills through martial arts.',
+        'image' => '/assets/images/martialarts.jpg',
+    ],
+    [
+        'sport' => 'Netball',
+        'name' => 'Netball Club',
+        'description' => 'Grow your skills and teamwork on the netball court.',
+        'image' => '/assets/images/netball.jpg',
+    ],
+    [
+        'sport' => 'Swimming',
+        'name' => 'Swimming Club',
+        'description' => 'Explore aquatic fitness, training and competitions.',
+        'image' => '/assets/images/swimming.jpg',
+    ],
+    [
+        'sport' => 'Table Tennis',
+        'name' => 'Table Tennis Club',
+        'description' => 'Develop quick reflexes through singles and doubles.',
+        'image' => '/assets/images/tabletennis.jpg',
+    ],
+    [
+        'sport' => 'Tennis',
+        'name' => 'Tennis Club',
+        'description' => 'Learn and improve your tennis skills through regular practice.',
+        'image' => '/assets/images/tennis.jpg',
+    ],
+    [
+        'sport' => 'Volleyball',
+        'name' => 'Volleyball Club',
+        'description' => 'Build team spirit and confidence through volleyball.',
+        'image' => '/assets/images/volleyball.jpg',
+    ],
 ];
 
 $clubs = $referenceClubs;
@@ -110,12 +165,9 @@ include __DIR__ . '/includes/header.php';
 ?>
 
 <main class="homepage">
-
-    <!-- Hero: a centered headline and a standalone sports visual. -->
+    <!-- Homepage hero -->
     <section class="hero-section" aria-labelledby="hero-title">
-
         <div class="hero-section-header">
-
             <h1 id="hero-title">
                 <span class="hero-title-accent">Your Game.</span>
                 <span class="hero-title-secondary">Your Community.</span>
@@ -124,7 +176,6 @@ include __DIR__ . '/includes/header.php';
             <p class="hero-section-subtitle">
                 Find your sport. Meet your team. Make every game count.
             </p>
-
         </div>
 
         <div class="hero-section-visual">
@@ -138,6 +189,7 @@ include __DIR__ . '/includes/header.php';
 
         <div class="hero-section-cta">
             <p>Discover clubs, upcoming competitions and campus sporting opportunities.</p>
+
             <div class="hero-section-actions">
                 <a class="button button-accent" href="#discover">Explore sports</a>
                 <a class="button button-outline" href="/register.php">Join SportsHub</a>
@@ -145,29 +197,46 @@ include __DIR__ . '/includes/header.php';
         </div>
     </section>
 
-    <!-- Discover: images stand alone with descriptions beneath each image. -->
+    <!-- Sports club gallery -->
     <section class="club-showcase" id="discover" aria-labelledby="discover-title">
         <div class="section-container section-header club-showcase-header">
             <div>
                 <h2 id="discover-title">Find your kind of game.</h2>
                 <p class="section-description">From your first training to the next big fixture.</p>
             </div>
-            <a class="section-link" href="/clubs/index.php">All sports clubs <span aria-hidden="true">↗</span></a>
+
+            <a class="section-link" href="/clubs/index.php">
+                All sports clubs <span aria-hidden="true">↗</span>
+            </a>
         </div>
 
-        <div class="club-showcase-track" aria-label="Sports clubs; scroll horizontally to see more" tabindex="0">
+        <div
+            class="club-showcase-track"
+            aria-label="Sports clubs; scroll horizontally to see more"
+            tabindex="0">
             <?php foreach ($clubs as $club): ?>
                 <?php
                 $slug = strtolower(trim(preg_replace('/[^a-z0-9]+/i', '-', $club['sport']), '-'));
                 $markPath = '/assets/images/club-marks/' . $slug . '.svg';
                 ?>
+
                 <article class="club-showcase-item">
-                    <a class="club-showcase-media" href="/clubs/view.php?sport=<?php echo urlencode($club['sport']); ?>" aria-label="More information about <?php echo homeEscape($club['name']); ?>">
+                    <a
+                        class="club-showcase-media"
+                        href="/clubs/view.php?sport=<?php echo urlencode($club['sport']); ?>"
+                        aria-label="More information about <?php echo homeEscape($club['name']); ?>">
                         <?php if (!empty($club['image'])): ?>
-                            <img src="<?php echo homeEscape($club['image']); ?>" alt="<?php echo homeEscape($club['sport']); ?> sports activity" loading="lazy">
+                            <img
+                                src="<?php echo homeEscape($club['image']); ?>"
+                                alt="<?php echo homeEscape($club['sport']); ?> sports activity"
+                                loading="lazy">
                         <?php else: ?>
                             <div class="club-showcase-placeholder">
-                                <img src="<?php echo homeEscape($markPath); ?>" alt="" aria-hidden="true" loading="lazy">
+                                <img
+                                    src="<?php echo homeEscape($markPath); ?>"
+                                    alt=""
+                                    aria-hidden="true"
+                                    loading="lazy">
                                 <span><?php echo homeEscape($club['sport']); ?></span>
                             </div>
                         <?php endif; ?>
@@ -176,49 +245,41 @@ include __DIR__ . '/includes/header.php';
                     <div class="club-showcase-details">
                         <h3><?php echo homeEscape($club['name']); ?></h3>
                         <p><?php echo homeEscape($club['description']); ?></p>
-                        <a class="text-link" href="/clubs/view.php?sport=<?php echo urlencode($club['sport']); ?>">More info <span aria-hidden="true">↗</span></a>
+                        <a class="text-link" href="/clubs/view.php?sport=<?php echo urlencode($club['sport']); ?>">
+                            More info <span aria-hidden="true">↗</span>
+                        </a>
                     </div>
                 </article>
             <?php endforeach; ?>
         </div>
     </section>
 
-    <!-- Spotlight: published stories are retrieved from club_news. -->
+    <!-- Club news and highlights -->
     <section class="club-spotlight" id="club-spotlight">
-
         <div class="club-spotlight-header">
             <div>
                 <h2>Club highlights.</h2>
-
                 <p>
                     Stories, achievements and moments
                     from our sports community.
                 </p>
             </div>
 
-            <a href="/clubs/index.php"
-                class="club-spotlight-all-link">
-                Explore clubs ↗
-            </a>
+            <a href="/clubs/index.php" class="club-spotlight-all-link">Explore clubs ↗</a>
         </div>
 
         <?php if (count($spotlightStories) > 0): ?>
-
-            <div class="club-spotlight-track"
+            <div
+                class="club-spotlight-track"
                 id="spotlight-track"
                 aria-label="Club news stories">
-
                 <?php foreach ($spotlightStories as $story): ?>
-
                     <?php
                     // Find the photograph for this club.
                     $newsImage = '';
 
                     foreach ($clubs as $club) {
-                        if (strcasecmp(
-                            $club['sport'],
-                            $story['sport']
-                        ) == 0) {
+                        if (strcasecmp($club['sport'], $story['sport']) == 0) {
                             $newsImage = $club['image'] ?? '';
                             break;
                         }
@@ -226,10 +287,7 @@ include __DIR__ . '/includes/header.php';
                     ?>
 
                     <article class="club-spotlight-slide">
-
-                        <!-- Story information -->
                         <div class="club-spotlight-content">
-
                             <p class="club-spotlight-category">
                                 CLUB NEWS /
                                 <?php echo htmlspecialchars(
@@ -256,20 +314,14 @@ include __DIR__ . '/includes/header.php';
                             </p>
 
                             <a
-                                href="/clubs/view.php?sport=<?php
-                                                            echo urlencode($story['sport']);
-                                                            ?>"
+                                href="/clubs/view.php?sport=<?php echo urlencode($story['sport']); ?>"
                                 class="club-spotlight-link">
                                 View club profile ↗
                             </a>
-
                         </div>
 
-                        <!-- Story photograph -->
                         <div class="club-spotlight-media">
-
                             <?php if ($newsImage != ''): ?>
-
                                 <img
                                     src="<?php echo htmlspecialchars(
                                                 $newsImage,
@@ -282,9 +334,7 @@ include __DIR__ . '/includes/header.php';
                                                 'UTF-8'
                                             ); ?>"
                                     loading="lazy">
-
                             <?php else: ?>
-
                                 <div class="club-spotlight-placeholder">
                                     <span>
                                         <?php echo htmlspecialchars(
@@ -294,43 +344,28 @@ include __DIR__ . '/includes/header.php';
                                         ); ?>
                                     </span>
                                 </div>
-
                             <?php endif; ?>
-
                         </div>
-
                     </article>
-
                 <?php endforeach; ?>
-
             </div>
 
-            <!-- Carousel navigation -->
             <?php if (count($spotlightStories) > 1): ?>
                 <div class="club-spotlight-controls">
-
-                    <button type="button"
-                        id="spotlight-prev"
-                        aria-label="Previous story">
+                    <button type="button" id="spotlight-prev" aria-label="Previous story">
                         &#8592;
                     </button>
 
-                    <span class="club-spotlight-counter"
-                        id="spotlight-counter">
+                    <span class="club-spotlight-counter" id="spotlight-counter">
                         1 / <?php echo count($spotlightStories); ?>
                     </span>
 
-                    <button type="button"
-                        id="spotlight-next"
-                        aria-label="Next story">
+                    <button type="button" id="spotlight-next" aria-label="Next story">
                         &#8594;
                     </button>
-
                 </div>
             <?php endif; ?>
-
         <?php else: ?>
-
             <div class="club-spotlight-empty">
                 <h3>Every club has a story.</h3>
                 <p>
@@ -338,12 +373,10 @@ include __DIR__ . '/includes/header.php';
                     here when published.
                 </p>
             </div>
-
         <?php endif; ?>
-
     </section>
 
-    <!-- Coming Up: read-only previews owned by the tournaments and matches modules. -->
+    <!-- Upcoming tournaments and match fixtures -->
     <section class="coming-section section-container" id="coming-up" aria-labelledby="coming-title">
         <div class="section-header">
             <div>
@@ -377,7 +410,9 @@ include __DIR__ . '/includes/header.php';
                     <p class="coming-empty">No upcoming tournaments announced yet.</p>
                 <?php endif; ?>
 
-                <a class="text-link coming-all" href="/tournaments/index.php">All tournaments <span aria-hidden="true">↗</span></a>
+                <a class="text-link coming-all" href="/tournaments/index.php">
+                    All tournaments <span aria-hidden="true">↗</span>
+                </a>
             </div>
 
             <div class="coming-panel">
@@ -390,10 +425,12 @@ include __DIR__ . '/includes/header.php';
                     <?php foreach ($upcomingFixtures as $match): ?>
                         <?php
                         $matchTitle = trim(($match['home_name'] ?? '') . ' vs ' . ($match['away_name'] ?? ''));
+
                         if (empty($match['home_name']) || empty($match['away_name'])) {
                             $matchTitle = $match['title'];
                         }
                         ?>
+
                         <div class="coming-item">
                             <div class="coming-date" aria-hidden="true">
                                 <strong><?php echo date('d', strtotime($match['date'])); ?></strong>
@@ -410,54 +447,33 @@ include __DIR__ . '/includes/header.php';
                     <p class="coming-empty">No upcoming matches have been scheduled yet.</p>
                 <?php endif; ?>
 
-                <a class="text-link coming-all" href="/matches/index.php">All fixtures <span aria-hidden="true">↗</span></a>
+                <a class="text-link coming-all" href="/matches/index.php">
+                    All fixtures <span aria-hidden="true">↗</span>
+                </a>
             </div>
         </div>
     </section>
 
-
-    <!-- Homepage Closing Section -->
-    <section class="closing-section">
-
+    <!-- Sports discovery closing section -->
+    <section class="closing-section" aria-labelledby="closing-title">
         <div class="closing-content">
+            <p class="closing-label">NSBM SPORTSHUB</p>
 
-            <p class="closing-label">
-                ONE COMMUNITY. EVERY SPORT.
-            </p>
-
-            <h2>
-                <span class="closing-title-accent">
-                    Your next chapter
-                </span>
-
-                <span class="closing-title-line">
-                    starts here.
-                </span>
+            <h2 id="closing-title">
+                <span class="closing-title-accent">The game doesn't stop here.</span>
             </h2>
 
             <p class="closing-description">
-                Discover sports clubs, connect with teammates,
-                and explore opportunities across campus.
-                Your sporting journey begins with SportsHub.
+                Discover campus sports, explore clubs and stay connected
+                with upcoming competitions.
             </p>
 
             <div class="closing-actions">
-
-                <a href="/register.php" class="closing-register">
-                    Register
-                </a>
-
-                <a href="/login.php" class="closing-login">
-                    Log in
-                </a>
-
+                <a href="/clubs/index.php" class="closing-register">Explore sports clubs</a>
+                <a href="/matches/index.php" class="closing-login">View fixtures</a>
             </div>
-
         </div>
-
     </section>
-
-
 </main>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
