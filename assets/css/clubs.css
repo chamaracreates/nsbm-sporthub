@@ -1,0 +1,537 @@
+
+/* ==========================================
+   NSBM SportsHub — Club Management
+   Member 03
+   ========================================== */
+
+.clubs-page {
+    background: #050505;
+    color: #f5f5f5;
+    min-height: 65vh;
+    padding-bottom: 80px;
+}
+
+/* Page introduction */
+
+.clubs-page .clubs-intro {
+    padding-top: 55px;
+    padding-bottom: 35px;
+}
+
+.clubs-page .clubs-eyebrow {
+    color: #b8ff00;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+}
+
+.clubs-page .clubs-intro h1 {
+    font-size: clamp(36px, 5vw, 60px);
+    font-weight: 800;
+    line-height: 1.1;
+    margin: 0 0 20px;
+}
+
+.clubs-page .clubs-intro > p:last-child {
+    color: #b7b7b7;
+    font-size: 16px;
+    line-height: 1.8;
+    max-width: 760px;
+}
+
+/* Search and sport filters */
+
+.clubs-page .clubs-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    background: #111;
+    border: 1px solid #292929;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.clubs-page .clubs-filters label {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.clubs-page .clubs-filters input,
+.clubs-page .clubs-filters select {
+    background: #1c1c1c;
+    border: 1px solid #383838;
+    border-radius: 9px;
+    color: #fff;
+    padding: 12px 15px;
+    font-size: 14px;
+    min-height: 45px;
+}
+
+.clubs-page .clubs-filters input {
+    flex: 1 1 230px;
+    min-width: 0;
+}
+
+.clubs-page .clubs-filters select {
+    min-width: 150px;
+}
+
+.clubs-page .clubs-filters button {
+    background: #b8ff00;
+    color: #080808;
+    border: none;
+    border-radius: 9px;
+    padding: 13px 20px;
+    min-height: 45px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.clubs-page .clubs-filters button:hover {
+    background: #d3ff69;
+}
+
+.clubs-page .clubs-filters a {
+    color: #ccc;
+    font-size: 14px;
+    text-decoration: underline;
+}
+
+.clubs-page .clubs-result-count {
+    color: #aaa;
+    font-size: 14px;
+    margin-bottom: 22px;
+}
+
+/* Sports club card grid */
+
+.clubs-page .clubs-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+}
+
+.clubs-page .clubs-card {
+    background: #121212;
+    border: 1px solid #292929;
+    border-radius: 16px;
+    overflow: hidden;
+    min-width: 0;
+    transition: transform 0.2s ease,
+                border-color 0.2s ease;
+}
+
+.clubs-page .clubs-card:hover {
+    transform: translateY(-4px);
+    border-color: #b8ff00;
+}
+
+.clubs-page .clubs-card > img {
+    display: block;
+    width: 100%;
+    height: 210px;
+    object-fit: cover;
+}
+
+.clubs-page .clubs-card-content {
+    padding: 24px;
+}
+
+.clubs-page .clubs-sport {
+    color: #b8ff00;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.clubs-page .clubs-card h2 {
+    color: #fff;
+    font-size: 22px;
+    line-height: 1.3;
+    margin: 12px 0;
+}
+
+.clubs-page .clubs-card p {
+    color: #aaa;
+    font-size: 14px;
+    line-height: 1.7;
+    margin-bottom: 24px;
+    min-height: 72px;
+}
+
+.clubs-page .clubs-view-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #b8ff00;
+    color: #080808;
+    border-radius: 8px;
+    padding: 11px 18px;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.clubs-page .clubs-view-link:hover {
+    background: #d3ff69;
+    color: #080808;
+}
+
+/* Empty directory */
+
+.clubs-page .clubs-empty {
+    background: #121212;
+    border: 1px solid #292929;
+    border-radius: 16px;
+    text-align: center;
+    padding: 65px 20px;
+}
+
+.clubs-page .clubs-empty h2 {
+    margin-bottom: 10px;
+}
+
+.clubs-page .clubs-empty p {
+    color: #aaa;
+}
+
+/* Tablet */
+
+@media (max-width: 1000px) {
+    .clubs-page .clubs-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Mobile */
+
+@media (max-width: 650px) {
+    .clubs-page {
+        padding-bottom: 45px;
+    }
+
+    .clubs-page .clubs-intro {
+        padding-top: 35px;
+    }
+
+    .clubs-page .clubs-grid {
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+
+    .clubs-page .clubs-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .clubs-page .clubs-filters input,
+    .clubs-page .clubs-filters select,
+    .clubs-page .clubs-filters button {
+        width: 100%;
+        flex: none;
+    }
+
+    .clubs-page .clubs-card > img {
+        height: 200px;
+    }
+
+    .clubs-page .clubs-card p {
+        min-height: 0;
+    }
+}
+
+
+/* ==========================================
+   Individual Club Profile
+   ========================================== */
+
+.clubs-page .club-profile {
+    padding-top: 35px;
+    padding-bottom: 55px;
+}
+
+.clubs-page .club-back {
+    display: inline-block;
+    color: #b8ff00;
+    font-size: 14px;
+    text-decoration: none;
+    margin-bottom: 30px;
+}
+
+.clubs-page .club-back:hover {
+    text-decoration: underline;
+}
+
+.clubs-page .club-profile-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 45px;
+    margin-bottom: 35px;
+}
+
+.clubs-page .club-profile-heading h1 {
+    font-size: clamp(36px, 5vw, 58px);
+    line-height: 1.15;
+    margin: 15px 0 22px;
+}
+
+.clubs-page .club-profile-heading p {
+    color: #aaa;
+    font-size: 16px;
+    line-height: 1.8;
+}
+
+.clubs-page .club-profile-image img {
+    display: block;
+    width: 100%;
+    height: 360px;
+    object-fit: cover;
+    border-radius: 18px;
+}
+
+.clubs-page .club-profile-info {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+}
+
+.clubs-page .club-info-card {
+    background: #121212;
+    border: 1px solid #292929;
+    border-radius: 16px;
+    padding: 28px;
+}
+
+.clubs-page .club-info-card h2 {
+    color: #fff;
+    font-size: 23px;
+    margin-bottom: 20px;
+}
+
+.clubs-page .club-info-card p {
+    color: #aaa;
+    font-size: 15px;
+    line-height: 1.8;
+    margin-bottom: 12px;
+}
+
+.clubs-page .club-info-card a {
+    color: #b8ff00;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 768px) {
+    .clubs-page .club-profile-header,
+    .clubs-page .club-profile-info {
+        grid-template-columns: 1fr;
+    }
+
+    .clubs-page .club-profile-header {
+        gap: 25px;
+    }
+
+    .clubs-page .club-profile-image img {
+        height: 240px;
+    }
+
+    .clubs-page .club-info-card {
+        padding: 22px;
+    }
+}
+
+/* Club Membership Application */
+
+.clubs-page .club-membership {
+    margin-top: 28px;
+    padding: 32px;
+    background: #121212;
+    border: 1px solid #292929;
+    border-radius: 16px;
+}
+
+.clubs-page .club-membership h2 {
+    color: #fff;
+    font-size: 26px;
+    margin-bottom: 14px;
+}
+
+.clubs-page .club-membership p {
+    color: #bbb;
+    font-size: 15px;
+    line-height: 1.8;
+    margin-bottom: 18px;
+}
+
+.clubs-page .club-apply-button {
+    display: inline-block;
+    background: #b8ff00;
+    color: #080808;
+    border: none;
+    border-radius: 9px;
+    padding: 13px 25px;
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.clubs-page .club-apply-button:hover {
+    background: #d3ff69;
+    color: #080808;
+}
+
+.clubs-page .club-membership-status {
+    color: #b8ff00;
+    text-transform: capitalize;
+}
+
+@media (max-width: 650px) {
+    .clubs-page .club-membership {
+        padding: 22px;
+    }
+}
+
+/* ==========================================
+   Member 03 - Admin Membership Management
+   ========================================== */
+
+.clubs-page .club-admin-page {
+    padding-top: 55px;
+    padding-bottom: 80px;
+}
+
+.clubs-page .club-admin-page h1 {
+    color: #fff;
+    font-size: clamp(30px, 4vw, 48px);
+    font-weight: 800;
+    line-height: 1.2;
+    margin: 18px 0;
+}
+
+.clubs-page .club-admin-page > p {
+    color: #b7b7b7;
+    font-size: 15px;
+    line-height: 1.7;
+    margin-bottom: 24px;
+}
+
+/* Success message */
+
+.clubs-page .club-admin-success {
+    padding: 15px 20px;
+    background: #182312;
+    border: 1px solid #5a8422;
+    border-radius: 10px;
+    color: #b8ff00 !important;
+    font-weight: 600;
+    margin-bottom: 25px;
+}
+
+/* Table container */
+
+.clubs-page .club-admin-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    background: #121212;
+    border: 1px solid #292929;
+    border-radius: 16px;
+}
+
+/* Membership table */
+
+.clubs-page .club-admin-table {
+    width: 100%;
+    min-width: 850px;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.clubs-page .club-admin-table thead {
+    background: #1c1c1c;
+}
+
+.clubs-page .club-admin-table th {
+    color: #b8ff00;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    padding: 20px 16px;
+    white-space: nowrap;
+}
+
+.clubs-page .club-admin-table td {
+    color: #e5e5e5;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 20px 16px;
+    border-top: 1px solid #292929;
+    vertical-align: middle;
+}
+
+.clubs-page .club-admin-table tbody tr:hover {
+    background: #1a1a1a;
+}
+
+/* Membership actions */
+
+.clubs-page .club-admin-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.clubs-page .club-admin-actions button {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.clubs-page .club-admin-approve {
+    background: #b8ff00;
+    color: #080808;
+}
+
+.clubs-page .club-admin-approve:hover {
+    background: #d3ff69;
+}
+
+.clubs-page .club-admin-reject {
+    background: #351b1b;
+    color: #ff9c9c;
+    border: 1px solid #733434 !important;
+}
+
+.clubs-page .club-admin-reject:hover {
+    background: #512424;
+}
+
+.clubs-page .club-admin-actions button:focus-visible {
+    outline: 2px solid #b8ff00;
+    outline-offset: 3px;
+}
+
+/* Responsive layout */
+
+@media (max-width: 768px) {
+    .clubs-page .club-admin-page {
+        padding-top: 35px;
+        padding-bottom: 50px;
+    }
+
+    .clubs-page .club-admin-table th,
+    .clubs-page .club-admin-table td {
+        padding: 15px 12px;
+    }
+}
