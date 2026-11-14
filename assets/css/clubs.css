@@ -593,3 +593,222 @@
         padding: 22px;
     }
 }
+
+/* ==========================================
+   Club MICs and Coaches
+   ========================================== */
+
+.clubs-page .club-staff-section {
+    margin-top: 35px;
+    margin-bottom: 35px;
+}
+
+.clubs-page .club-staff-heading {
+    margin-bottom: 25px;
+}
+
+.clubs-page .club-staff-heading h2 {
+    color: #fff;
+    font-size: clamp(26px, 4vw, 36px);
+    margin: 12px 0;
+}
+
+.clubs-page .club-staff-heading p {
+    color: #aaa;
+    font-size: 15px;
+    line-height: 1.7;
+}
+
+.clubs-page .club-staff-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+}
+
+.clubs-page .club-staff-card {
+    background: #121212;
+    border: 1px solid #292929;
+    border-radius: 16px;
+    padding: 28px;
+    transition: border-color 0.2s ease;
+}
+
+.clubs-page .club-staff-card:hover {
+    border-color: #b8ff00;
+}
+
+.clubs-page .club-staff-role {
+    color: #b8ff00;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.clubs-page .club-staff-card h3 {
+    color: #fff;
+    font-size: 22px;
+    margin: 14px 0;
+}
+
+.clubs-page .club-staff-card p {
+    color: #aaa;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.clubs-page .club-staff-empty {
+    background: #121212;
+    border: 1px dashed #383838;
+    border-radius: 16px;
+    padding: 35px;
+    text-align: center;
+}
+
+.clubs-page .club-staff-empty p {
+    color: #aaa;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .clubs-page .club-staff-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .clubs-page .club-staff-card {
+        padding: 22px;
+    }
+}
+/* ==========================================
+   MIC & Coach Management - Admin Form
+   ========================================== */
+
+.club-staff-admin-panel {
+    background: #151515;
+    border: 1px solid #303030;
+    border-radius: 16px;
+    padding: 30px;
+    margin: 30px 0;
+}
+
+.club-staff-admin-panel h2 {
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 24px;
+}
+
+.club-staff-admin-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 24px;
+    align-items: end;
+}
+
+.club-staff-admin-form label {
+    display: block;
+    color: #dddddd;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: -8px;
+}
+
+.club-staff-admin-form select,
+.club-staff-admin-form input[type="text"] {
+    width: 100%;
+    min-width: 0;
+    padding: 13px 15px;
+    background: #242424;
+    color: #ffffff;
+    border: 1px solid #444444;
+    border-radius: 9px;
+    font-size: 14px;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+}
+
+.club-staff-admin-form select:focus,
+.club-staff-admin-form input[type="text"]:focus {
+    border-color: #b8ff00;
+}
+
+.club-staff-admin-form select option {
+    background: #242424;
+    color: #ffffff;
+}
+
+.club-staff-admin-form .club-admin-approve {
+    background: #b8ff00;
+    color: #111111;
+    border: none;
+    border-radius: 9px;
+    padding: 14px 24px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s ease,
+                transform 0.2s ease;
+}
+
+.club-staff-admin-form .club-admin-approve:hover {
+    background: #d0ff60;
+    transform: translateY(-2px);
+}
+
+.club-staff-admin-form .club-admin-approve:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 3px;
+}
+
+/* Responsive layout */
+
+@media (max-width: 768px) {
+    .club-staff-admin-panel {
+        padding: 22px;
+    }
+
+    .club-staff-admin-form {
+        grid-template-columns: 1fr;
+    }
+
+    .club-staff-admin-form .club-admin-approve {
+        width: 100%;
+    }
+}
+/* ==========================================
+   Step 95D - Fix staff form label spacing
+   ========================================== */
+
+.club-staff-admin-form .club-staff-form-field {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+}
+
+.club-staff-admin-form .club-staff-form-field label {
+    display: block;
+    margin: 0;
+    padding: 0;
+    line-height: 1.5;
+    color: #dddddd;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.club-staff-admin-form .club-staff-form-field select,
+.club-staff-admin-form .club-staff-form-field input {
+    display: block;
+    width: 100%;
+    margin: 0;
+    min-height: 48px;
+}
+
+.club-staff-admin-form .club-staff-form-actions {
+    align-self: end;
+}
+
+.club-staff-admin-form .club-staff-form-actions button {
+    min-height: 48px;
+}
