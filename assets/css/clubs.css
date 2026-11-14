@@ -985,3 +985,56 @@
     outline: 2px solid #fff;
     outline-offset: 3px;
 }
+/* Club Leadership Management */
+
+.clubs-page .club-leaders-table-section {
+    margin-top: 36px;
+}
+
+.clubs-page .club-leaders-table-section h2 {
+    margin-bottom: 20px;
+}
+
+.clubs-page .club-leaders-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #303030;
+    border-radius: 14px;
+    background: #151515;
+}
+
+.clubs-page .club-leaders-table-wrapper .club-admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.clubs-page .club-leaders-table-wrapper .club-admin-table th,
+.clubs-page .club-leaders-table-wrapper .club-admin-table td {
+    padding: 16px;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.clubs-page .club-leaders-table-wrapper .club-admin-table form {
+    margin: 0;
+}
+
+.clubs-page .club-leaders-table-wrapper .club-admin-reject {
+    padding: 10px 16px;
+    border: 0;
+    border-radius: 8px;
+    background: #a72b36;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.clubs-page .club-leaders-table-wrapper .club-admin-reject:hover {
+    background: #c63845;
+}
+
+.clubs-page .club-leaders-table-wrapper .club-admin-reject:focus-visible {
+    outline: 2px solid #cfff00;
+    outline-offset: 3px;
+}

@@ -118,6 +118,50 @@ if ($club && !$loadError) {
 
 require __DIR__ . '/../includes/header.php';
 
+/* Load the club captain and vice-captain */
+
+$clubLeaders = [];
+$leadersLoadError = false;
+
+if ($club && !$loadError) {
+    try {
+        $leaderStmt = db()->prepare(
+            "SELECT
+                cl.leader_role,
+                cl.appointed_at,
+                u.name AS student_name
+             FROM club_leaders cl
+             INNER JOIN users u
+                ON u.user_id = cl.user_id
+             INNER JOIN club_membership cm
+                ON cm.user_id = cl.user_id
+               AND cm.club_id = cl.club_id
+             WHERE cl.club_id = :club_id
+               AND u.role = 'student'
+               AND cm.status = 'approved'
+             ORDER BY
+                CASE
+                    WHEN cl.leader_role = 'captain' THEN 0
+                    ELSE 1
+                END"
+        );
+
+        $leaderStmt->execute([
+            'club_id' => $clubId
+        ]);
+
+        $clubLeaders = $leaderStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    } catch (Throwable $exception) {
+        error_log(
+            'Club leadership loading error: ' .
+            $exception->getMessage()
+        );
+
+        $leadersLoadError = true;
+    }
+}
+
 $viewerId = current_user_id();
 $isStudent = $viewerId !== null && current_user_role() === 'student';
 
@@ -390,6 +434,63 @@ if ($club && $isStudent) {
 
 </section>
 
+<section class="club-staff-section">
+
+    <div class="club-staff-heading">
+        <span class="clubs-sport">CLUB LEADERSHIP</span>
+
+        <h2>Captain &amp; Vice-Captain</h2>
+
+        <p>
+            Meet the student leaders representing
+            this sports club.
+        </p>
+    </div>
+
+    <?php if ($leadersLoadError): ?>
+
+        <p role="alert">
+            Club leadership information is temporarily unavailable.
+        </p>
+
+    <?php elseif (empty($clubLeaders)): ?>
+
+        <div class="club-staff-empty">
+            <p>
+                No captain or vice-captain has been
+                assigned to this club yet.
+            </p>
+        </div>
+
+    <?php else: ?>
+
+        <div class="club-staff-grid">
+
+            <?php foreach ($clubLeaders as $leader): ?>
+
+                <article class="club-staff-card">
+
+                    <span class="club-staff-role">
+                        <?= $leader['leader_role'] === 'captain'
+                            ? 'Captain'
+                            : 'Vice-Captain' ?>
+                    </span>
+
+                    <h3>
+                        <?= clubViewEscape(
+                            $leader['student_name']
+                        ) ?>
+                    </h3>
+
+                </article>
+
+            <?php endforeach; ?>
+
+        </div>
+
+    <?php endif; ?>
+
+</section>
 
         <?php endif; ?>
 
