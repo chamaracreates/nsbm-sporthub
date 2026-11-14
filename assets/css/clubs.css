@@ -812,3 +812,176 @@
 .club-staff-admin-form .club-staff-form-actions button {
     min-height: 48px;
 }
+
+/* ==========================================
+   Admin Club Management - Create Club Form
+   Member 03
+   ========================================== */
+
+.club-create-section {
+    margin: 36px 0;
+    padding: 28px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 14px;
+}
+
+.club-create-section h2 {
+    margin: 0 0 10px;
+    color: #fff;
+    font-size: 26px;
+}
+
+.club-create-section > p {
+    margin-bottom: 26px;
+    color: #aaa;
+}
+
+.club-create-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+}
+
+.club-create-field {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    min-width: 0;
+}
+
+.club-create-field label {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.club-create-field input,
+.club-create-field select,
+.club-create-field textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 13px 15px;
+    border: 1px solid #444;
+    border-radius: 9px;
+    background: #111;
+    color: #fff;
+    font: inherit;
+}
+
+.club-create-field input:focus,
+.club-create-field select:focus,
+.club-create-field textarea:focus {
+    outline: 2px solid #baff00;
+    outline-offset: 2px;
+    border-color: #baff00;
+}
+
+.club-create-field textarea {
+    resize: vertical;
+    min-height: 110px;
+}
+
+.club-create-full,
+.club-create-actions {
+    grid-column: 1 / -1;
+}
+
+.club-create-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.club-create-button {
+    padding: 13px 26px;
+    border: none;
+    border-radius: 9px;
+    background: #baff00;
+    color: #111;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.club-create-button:hover {
+    background: #d4ff66;
+    transform: translateY(-2px);
+}
+
+.club-create-button:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 3px;
+}
+
+@media (max-width: 700px) {
+    .club-create-section {
+        padding: 20px;
+    }
+
+    .club-create-form {
+        grid-template-columns: 1fr;
+    }
+
+    .club-create-actions {
+        justify-content: stretch;
+    }
+
+    .club-create-button {
+        width: 100%;
+    }
+}
+
+/* Club creation feedback messages */
+
+.club-create-success,
+.club-create-error {
+    padding: 14px 18px;
+    margin: 18px 0;
+    border-radius: 9px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.club-create-success {
+    background: #17351b;
+    border: 1px solid #4caf50;
+    color: #b8ffbd;
+}
+
+.club-create-error {
+    background: #3b1717;
+    border: 1px solid #e05252;
+    color: #ffb8b8;
+}
+
+/* Admin Club Management - Edit Button */
+
+.club-admin-edit-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 18px;
+    border: 1px solid #baff00;
+    border-radius: 8px;
+    color: #baff00;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.club-admin-edit-button:hover {
+    background: #baff00;
+    color: #111;
+}
+
+.club-admin-edit-button:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 3px;
+}
