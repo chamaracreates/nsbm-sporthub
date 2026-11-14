@@ -74,6 +74,48 @@ $image = $club
         ?? '/assets/images/club-marks/general.svg')
     : '';
 
+/* Load assigned MICs and coaches */
+
+$clubStaff = [];
+$staffLoadError = false;
+
+if ($club && !$loadError) {
+    try {
+        $staffStmt = db()->prepare(
+            "SELECT
+                ss.staff_id,
+                ss.staff_role,
+                ss.specialization,
+                u.name AS staff_name
+             FROM sport_staff ss
+             INNER JOIN users u
+                 ON ss.user_id = u.user_id
+             WHERE ss.club_id = :club_id
+               AND ss.status = 'active'
+             ORDER BY
+                CASE
+                    WHEN ss.staff_role = 'mic' THEN 0
+                    ELSE 1
+                END,
+                u.name"
+        );
+
+        $staffStmt->execute([
+            'club_id' => $clubId
+        ]);
+
+        $clubStaff = $staffStmt->fetchAll();
+
+    } catch (Throwable $exception) {
+        error_log(
+            'Club staff loading error: ' .
+            $exception->getMessage()
+        );
+
+        $staffLoadError = true;
+    }
+}
+
 require __DIR__ . '/../includes/header.php';
 
 $viewerId = current_user_id();
@@ -278,6 +320,71 @@ if ($club && $isStudent) {
             </button>
 
         </form>
+
+    <?php endif; ?>
+
+</section>
+
+<section class="club-staff-section">
+
+    <div class="club-staff-heading">
+        <span class="clubs-sport">CLUB MANAGEMENT</span>
+        <h2>MICs &amp; Coaches</h2>
+        <p>
+            Meet the staff supporting training,
+            development and club activities.
+        </p>
+    </div>
+
+    <?php if ($staffLoadError): ?>
+
+        <p role="alert">
+            Staff information is temporarily unavailable.
+        </p>
+
+    <?php elseif (empty($clubStaff)): ?>
+
+        <div class="club-staff-empty">
+            <p>
+                No MICs or coaches have been assigned
+                to this club yet.
+            </p>
+        </div>
+
+    <?php else: ?>
+
+        <div class="club-staff-grid">
+
+            <?php foreach ($clubStaff as $staff): ?>
+
+                <article class="club-staff-card">
+
+                    <span class="club-staff-role">
+                        <?= $staff['staff_role'] === 'mic'
+                            ? 'Member in Charge (MIC)'
+                            : 'Coach' ?>
+                    </span>
+
+                    <h3>
+                        <?= clubViewEscape($staff['staff_name']) ?>
+                    </h3>
+
+                    <?php if (!empty($staff['specialization'])): ?>
+
+                        <p>
+                            Specialization:
+                            <?= clubViewEscape(
+                                $staff['specialization']
+                            ) ?>
+                        </p>
+
+                    <?php endif; ?>
+
+                </article>
+
+            <?php endforeach; ?>
+
+        </div>
 
     <?php endif; ?>
 
