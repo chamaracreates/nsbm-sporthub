@@ -1,0 +1,525 @@
+/* Main facility bookings page */
+.booking-page {
+    min-height: 65vh;
+    padding: 80px 0 110px;
+    background: var(--color-background);
+    color: var(--color-text);
+}
+
+/* Main content container */
+.booking-container {
+    width: min(1180px, calc(100% - 48px));
+    margin: 0 auto;
+}
+
+/* Page introduction */
+.booking-introduction {
+    max-width: 800px;
+    margin-bottom: 90px;
+}
+
+.booking-eyebrow {
+    margin: 0 0 18px;
+    color: var(--color-accent);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.booking-introduction h1 {
+    margin: 0;
+    font-size: clamp(42px, 5vw, 70px);
+    font-weight: 750;
+    line-height: 1.1;
+    letter-spacing: -2px;
+}
+
+.booking-intro-text {
+    max-width: 660px;
+    margin: 24px 0 0;
+    color: var(--color-muted);
+    font-size: 17px;
+    line-height: 1.8;
+}
+
+/* Facilities section heading */
+.booking-section-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.booking-section-heading h2 {
+    margin: 0;
+    font-size: clamp(28px, 3vw, 40px);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -1px;
+}
+
+.booking-count {
+    color: var(--color-muted);
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+/* Facility card layout */
+.booking-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+}
+
+.booking-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 30px;
+    border: 1px solid var(--color-border);
+    border-radius: 22px;
+    background: var(--color-surface);
+}
+
+.booking-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.booking-type {
+    color: var(--color-accent);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.booking-status {
+    padding: 7px 13px;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    color: var(--color-text);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.booking-card-title {
+    margin: 30px 0 26px;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.5px;
+}
+
+/* Facility details */
+.booking-card-details {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 22px 0;
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.booking-detail {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.booking-detail span {
+    color: var(--color-muted);
+    font-size: 14px;
+}
+
+.booking-detail strong {
+    font-size: 14px;
+    font-weight: 600;
+    text-align: right;
+}
+
+.booking-description {
+    margin: 22px 0 0;
+    color: var(--color-muted);
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+/* Empty and error messages */
+.booking-notice {
+    padding: 56px 32px;
+    border: 1px solid var(--color-border);
+    border-radius: 22px;
+    background: var(--color-surface);
+    text-align: center;
+}
+
+.booking-notice h3 {
+    margin: 0 0 14px;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.booking-notice p {
+    max-width: 500px;
+    margin: 0 auto;
+    color: var(--color-muted);
+    font-size: 15px;
+    line-height: 1.8;
+}
+
+/* Tablet layout */
+@media (max-width: 800px) {
+    .booking-page {
+        padding: 65px 0 85px;
+    }
+
+    .booking-introduction {
+        margin-bottom: 65px;
+    }
+
+    .booking-grid {
+        gap: 16px;
+    }
+
+    .booking-card {
+        padding: 24px;
+    }
+}
+
+/* Mobile layout */
+@media (max-width: 600px) {
+    .booking-page {
+        padding: 48px 0 70px;
+    }
+
+    .booking-container {
+        width: min(100% - 32px, 1180px);
+    }
+
+    .booking-introduction {
+        margin-bottom: 50px;
+    }
+
+    .booking-introduction h1 {
+        font-size: 38px;
+        letter-spacing: -1px;
+    }
+
+    .booking-intro-text {
+        font-size: 15px;
+    }
+
+    .booking-section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .booking-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .booking-card-title {
+        font-size: 23px;
+    }
+
+    .booking-notice {
+        padding: 42px 22px;
+    }
+}
+
+/* Facility administration */
+
+/* Admin action buttons */
+.facility-admin-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 24px;
+}
+
+.facility-admin-button {
+    display: inline-block;
+    padding: 13px 22px;
+    border-radius: 10px;
+    background: var(--color-accent);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+}
+
+.facility-admin-button:hover {
+    opacity: 0.85;
+}
+
+/* Responsive table container */
+.facility-admin-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    background: var(--color-surface);
+}
+
+/* Admin facility table */
+.facility-admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.facility-admin-table th,
+.facility-admin-table td {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 14px;
+}
+
+.facility-admin-table th {
+    color: var(--color-muted);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.facility-admin-table td {
+    color: var(--color-text);
+}
+
+.facility-admin-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.facility-admin-table tbody tr:hover {
+    background: var(--color-background);
+}
+
+.facility-admin-table td a {
+    color: var(--color-accent);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.facility-admin-table td a:hover {
+    text-decoration: underline;
+}
+
+/* Mobile layout */
+@media (max-width: 600px) {
+    .facility-admin-actions {
+        justify-content: flex-start;
+    }
+
+    .facility-admin-table th,
+    .facility-admin-table td {
+        padding: 14px;
+    }
+}
+
+/* =========================================
+   Facility Admin - Create Form
+========================================= */
+
+.facility-admin-page {
+    max-width: 850px;
+    margin: 40px auto;
+    padding: 30px;
+}
+
+.facility-admin-page h1 {
+    margin-bottom: 12px;
+}
+
+.facility-admin-page > p {
+    margin-bottom: 30px;
+    color: #aaa;
+}
+
+.facility-admin-form {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    max-width: 650px;
+}
+
+.facility-admin-field {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.facility-admin-field label {
+    font-weight: 600;
+    color: #fff;
+}
+
+.facility-admin-field input {
+    width: 100%;
+    padding: 13px 15px;
+    border: 1px solid #444;
+    border-radius: 8px;
+    background: #151515;
+    color: #fff;
+    font-size: 15px;
+}
+
+.facility-admin-field input:focus {
+    outline: 2px solid #aaff00;
+    border-color: #aaff00;
+}
+
+.facility-admin-error {
+    max-width: 650px;
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #e05252;
+    border-radius: 8px;
+    background: #351818;
+    color: #ffb3b3;
+}
+
+.facility-admin-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.facility-admin-button {
+    display: inline-block;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    background: #aaff00;
+    color: #111;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.facility-admin-button:hover {
+    background: #c0ff40;
+}
+
+@media (max-width: 600px) {
+    .facility-admin-page {
+        padding: 20px;
+    }
+
+    .facility-admin-actions {
+        flex-direction: column;
+    }
+
+    .facility-admin-button {
+        text-align: center;
+    }
+}
+/* Admin booking review error message */
+.booking-review-error {
+    background-color: rgba(239, 68, 68, 0.12);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.45);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* =========================================
+   Admin Booking Requests Table
+========================================= */
+
+.booking-requests-table {
+    width: 100%;
+    min-width: 900px;
+    table-layout: fixed;
+}
+
+.booking-requests-table th,
+.booking-requests-table td {
+    padding: 12px 10px;
+    font-size: 13px;
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+}
+
+/* Booking ID */
+.booking-requests-table th:nth-child(1),
+.booking-requests-table td:nth-child(1) {
+    width: 8%;
+}
+
+/* Student ID */
+.booking-requests-table th:nth-child(2),
+.booking-requests-table td:nth-child(2) {
+    width: 9%;
+}
+
+/* Facility */
+.booking-requests-table th:nth-child(3),
+.booking-requests-table td:nth-child(3) {
+    width: 15%;
+}
+
+/* Date */
+.booking-requests-table th:nth-child(4),
+.booking-requests-table td:nth-child(4) {
+    width: 12%;
+}
+
+/* Time */
+.booking-requests-table th:nth-child(5),
+.booking-requests-table td:nth-child(5) {
+    width: 12%;
+}
+
+/* Purpose */
+.booking-requests-table th:nth-child(6),
+.booking-requests-table td:nth-child(6) {
+    width: 16%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+/* Status */
+.booking-requests-table th:nth-child(7),
+.booking-requests-table td:nth-child(7) {
+    width: 10%;
+}
+
+/* Actions */
+.booking-requests-table th:nth-child(8),
+.booking-requests-table td:nth-child(8) {
+    width: 18%;
+}
+
+.booking-requests-table td form {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.booking-requests-table td button {
+    width: 100%;
+    padding: 9px 8px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+@media (max-width: 600px) {
+    .booking-requests-table {
+        min-width: 900px;
+    }
+
+    .booking-requests-table th,
+    .booking-requests-table td {
+        padding: 10px 8px;
+    }
+}
