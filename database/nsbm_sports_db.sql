@@ -410,7 +410,8 @@ ALTER TABLE `sport_staff`
 -- Indexes for table `student_profiles`
 --
 ALTER TABLE `student_profiles`
-  ADD PRIMARY KEY (`user_id`);
+  ADD PRIMARY KEY (`user_id`),
+  ADD UNIQUE KEY `uq_student_number` (`student_number`);
 
 --
 -- Indexes for table `teams`
@@ -569,6 +570,12 @@ ALTER TABLE `tournament_results`
 ALTER TABLE `training_sessions`
   MODIFY `session_id` int NOT NULL AUTO_INCREMENT;
 
+--
+-- AUTO_INCREMENT for table `users`
+--
+ALTER TABLE `users`
+  MODIFY `user_id` int NOT NULL AUTO_INCREMENT;
+
 -- --------------------------------------------------------
 
 --
@@ -576,7 +583,7 @@ ALTER TABLE `training_sessions`
 --
 DROP TABLE IF EXISTS `v_student_participation_summary`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`%` SQL SECURITY INVOKER VIEW `v_student_participation_summary`  AS SELECT `u`.`user_id` AS `user_id`, `u`.`name` AS `student_name`, `u`.`email` AS `email`, count(distinct `cm`.`club_id`) AS `total_clubs_joined`, count(distinct `ta`.`session_id`) AS `training_sessions_attended`, count(distinct `tr`.`t_id`) AS `tournaments_registered`, count(distinct `br`.`b_id`) AS `facility_bookings_made` FROM ((((`users` `u` left join `club_membership` `cm` on(((`u`.`user_id` = `cm`.`user_id`) and (`cm`.`status` = 'approved')))) left join `training_attendance` `ta` on((`u`.`user_id` = `ta`.`user_id`))) left join `tournament_registration` `tr` on((`u`.`user_id` = `tr`.`user_id`))) left join `booking_request` `br` on((`u`.`user_id` = `br`.`user_id`))) WHERE (`u`.`role` = 'student') GROUP BY `u`.`user_id`, `u`.`name`, `u`.`email` ;
+CREATE ALGORITHM=UNDEFINED SQL SECURITY INVOKER VIEW `v_student_participation_summary`  AS SELECT `u`.`user_id` AS `user_id`, `u`.`name` AS `student_name`, `u`.`email` AS `email`, count(distinct `cm`.`club_id`) AS `total_clubs_joined`, count(distinct `ta`.`session_id`) AS `training_sessions_attended`, count(distinct `tr`.`t_id`) AS `tournaments_registered`, count(distinct `br`.`b_id`) AS `facility_bookings_made` FROM ((((`users` `u` left join `club_membership` `cm` on(((`u`.`user_id` = `cm`.`user_id`) and (`cm`.`status` = 'approved')))) left join `training_attendance` `ta` on((`u`.`user_id` = `ta`.`user_id`))) left join `tournament_registration` `tr` on((`u`.`user_id` = `tr`.`user_id`))) left join `booking_request` `br` on((`u`.`user_id` = `br`.`user_id`))) WHERE (`u`.`role` = 'student') GROUP BY `u`.`user_id`, `u`.`name`, `u`.`email` ;
 
 --
 -- Constraints for dumped tables

@@ -94,8 +94,10 @@ if (
 ?>
 
 
-<?php require __DIR__ . '/includes/header.php'; ?>
-<link rel="stylesheet" href="/assets/css/student-accounts.css">
+<?php
+$pageStylesheets = ['/assets/css/student-accounts.css'];
+require __DIR__ . '/includes/header.php';
+?>
 
 
 <main class="accounts-page login-layout-page">

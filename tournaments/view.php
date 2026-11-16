@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/db.php';
-auth_start();
 
 require_once __DIR__ . '/../includes/auth.php';
+auth_start();
 
 /* Escape values displayed in the tournament details page. */
 function tournamentViewEscape(mixed $value): string
@@ -112,11 +112,10 @@ if (!is_int($tournamentId)) {
     }
 }
 
+$pageStylesheets = ['/assets/css/tournaments.css'];
 require __DIR__ . '/../includes/header.php';
 
 ?>
-
-<link rel="stylesheet" href="/assets/css/tournaments.css">
 
 <main class="tournaments-page">
 

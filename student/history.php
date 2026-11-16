@@ -145,7 +145,43 @@ try {
         'Unable to load tournament registration history.';
 }
 
- // Retrieve match registration history for the logged-in student
+ // List fixtures involving a team on the student's current roster.
+// Team membership is NOT the same as individual match registration.
+$teamMatchHistory = [];
+$teamMatchError = null;
+
+try {
+    $teamMatchStmt = db()->prepare(
+        "SELECT m.m_id,
+                m.title AS match_title,
+                m.home_name,
+                m.away_name,
+                m.sport,
+                m.date AS match_date,
+                m.venue,
+                m.match_status,
+                m.home_score,
+                m.away_score
+         FROM matches AS m
+         WHERE EXISTS (
+             SELECT 1
+             FROM team_members AS tm
+             INNER JOIN teams AS t ON t.team_id = tm.team_id
+             WHERE tm.user_id = :user_id
+               AND t.t_id = m.t_id
+               AND (t.team_id = m.home_team_id
+                    OR t.team_id = m.away_team_id)
+         )
+         ORDER BY m.date DESC, m.m_id DESC"
+    );
+    $teamMatchStmt->execute(['user_id' => $userId]);
+    $teamMatchHistory = $teamMatchStmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $error) {
+    error_log('Team match history error: ' . $error->getMessage());
+    $teamMatchError = 'Unable to load team match fixtures.';
+}
+
+// Retrieve match registration history for the logged-in student
 $matchHistory = [];
 $matchError = null;
 
@@ -227,9 +263,10 @@ try {
 ?>
 
 
-<?php require __DIR__ . '/../includes/header.php'; ?>
-
-<link rel="stylesheet" href="/assets/css/student-accounts.css">
+<?php
+$pageStylesheets = ['/assets/css/student-accounts.css'];
+require __DIR__ . '/../includes/header.php';
+?>
 
 <main class="student-history-page">
     <div class="shell history-layout">
@@ -640,6 +677,65 @@ try {
 </section>
 
 
+
+<section class="history-section history-team-matches-section"
+         aria-labelledby="team-match-history-title">
+    <h3 id="team-match-history-title">Matches Involving My Teams</h3>
+    <p>Fixtures involving teams on your current roster. This is not a record of individual match registration or confirmed playing time.</p>
+
+    <?php if ($teamMatchError !== null): ?>
+        <p class="history-section-error" role="alert">
+            <?= htmlspecialchars($teamMatchError, ENT_QUOTES, 'UTF-8') ?>
+        </p>
+    <?php elseif ($teamMatchHistory === []): ?>
+        <div class="history-empty-state">
+            <p>No fixtures are associated with your current teams yet.</p>
+        </div>
+    <?php else: ?>
+        <div class="history-table-scroll" role="region"
+             aria-label="Fixtures involving my teams" tabindex="0">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Fixture</th>
+                        <th>Teams</th>
+                        <th>Sport</th>
+                        <th>Date</th>
+                        <th>Venue</th>
+                        <th>Status</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($teamMatchHistory as $teamMatch): ?>
+                        <tr>
+                            <td>
+                                <a href="/matches/view.php?id=<?= (int) $teamMatch['m_id'] ?>">
+                                    <?= htmlspecialchars((string) $teamMatch['match_title'], ENT_QUOTES, 'UTF-8') ?>
+                                </a>
+                            </td>
+                            <td><?= htmlspecialchars(
+                                (string) $teamMatch['home_name'] . ' vs ' . (string) $teamMatch['away_name'],
+                                ENT_QUOTES, 'UTF-8'
+                            ) ?></td>
+                            <td><?= htmlspecialchars((string) $teamMatch['sport'], ENT_QUOTES, 'UTF-8') ?></td>
+                            <td><?= htmlspecialchars((string) $teamMatch['match_date'], ENT_QUOTES, 'UTF-8') ?></td>
+                            <td><?= htmlspecialchars((string) $teamMatch['venue'], ENT_QUOTES, 'UTF-8') ?></td>
+                            <td><?= htmlspecialchars(ucfirst((string) $teamMatch['match_status']), ENT_QUOTES, 'UTF-8') ?></td>
+                            <td>
+                                <?php if (in_array(strtolower((string) $teamMatch['match_status']), ['completed', 'finished'], true)): ?>
+                                    <?= (int) $teamMatch['home_score'] ?> - <?= (int) $teamMatch['away_score'] ?>
+                                <?php else: ?>
+                                    Not finalized
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    <?php endif; ?>
+</section>
 
 <section class="history-section history-match-section"
          aria-labelledby="match-history-title">

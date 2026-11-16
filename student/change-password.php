@@ -138,9 +138,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 
 
-<?php require __DIR__ . '/../includes/header.php'; ?>
+<?php $pageStylesheets = ['/assets/css/student-accounts.css'];
+require __DIR__ . '/../includes/header.php'; ?>
 
-<link rel="stylesheet" href="/assets/css/student-accounts.css">
 
 <main class="accounts-page change-password-page">
     <section class="accounts-container shell"

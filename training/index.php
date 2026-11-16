@@ -53,11 +53,10 @@ try {
 }
 
 /* Load the shared SportsHub header. */
+$pageStylesheets = ['/assets/css/training.css'];
 require __DIR__ . '/../includes/header.php';
 
 ?>
-
-<link rel="stylesheet" href="/assets/css/training.css">
 
 <main class="training-page">
 

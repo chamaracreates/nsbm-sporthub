@@ -259,6 +259,7 @@ try {
             )
             ON DUPLICATE KEY UPDATE
                 att_status = 'present',
+                recorded_by = :updated_by
         ";
 
         $statement = $pdo->prepare($saveSql);
@@ -267,6 +268,7 @@ try {
             'student_id' => $studentId,
             'session_id' => $sessionId,
             'recorded_by' => $userId,
+            'updated_by' => $userId,
         ]);
 
         /* Store success feedback for the redirected page. */
@@ -321,11 +323,10 @@ try {
 }
 
 /* Load the shared SportsHub header. */
+$pageStylesheets = ['/assets/css/training.css'];
 require __DIR__ . '/../includes/header.php';
 
 ?>
-
-<link rel="stylesheet" href="/assets/css/training.css">
 
 <main class="training-page">
 
