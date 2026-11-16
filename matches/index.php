@@ -1,6 +1,14 @@
 <?php
 
+require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/db.php';
+
+// Show management navigation only to authorized staff.
+$canManageMatches = in_array(
+    current_user_role(),
+    ['admin', 'coach', 'mic'],
+    true
+);
 
 function matchEscape($value): string
 {
@@ -24,6 +32,8 @@ $loadError = false;
 
 // Retrieve match information from the existing database.
 try {
+    $queryParams = [];
+
     switch ($activeTab) {
         case 'results':
             $condition = "WHERE LOWER(match_status) IN ('completed', 'finished')";
@@ -36,8 +46,15 @@ try {
             break;
 
         default:
-            $condition = "WHERE date >= CURDATE()
+            $condition = "WHERE date >= :today
                           AND LOWER(match_status) IN ('scheduled', 'upcoming')";
+
+            $queryParams['today'] = (
+                new DateTimeImmutable(
+                    'now',
+                    new DateTimeZone('Asia/Colombo')
+                )
+            )->format('Y-m-d');
             $order = "ORDER BY date ASC, m_id ASC";
             break;
     }
@@ -57,7 +74,9 @@ try {
             $condition
             $order";
 
-    $matches = db()->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    $statement = db()->prepare($sql);
+    $statement->execute($queryParams);
+    $matches = $statement->fetchAll(PDO::FETCH_ASSOC);
 } catch (Throwable $error) {
     error_log('Matches page query: ' . $error->getMessage());
     $loadError = true;
@@ -87,6 +106,20 @@ include __DIR__ . '/../includes/header.php';
             </p>
 
         </div>
+
+        <?php if ($canManageMatches): ?>
+
+            <div class="match-management-actions">
+
+                <a
+                    href="/matches/manage.php"
+                    class="button button-accent">
+                    Manage Matches
+                </a>
+
+            </div>
+
+        <?php endif; ?>
 
         <!-- Match category navigation -->
         <nav class="matches-tabs" aria-label="Match categories">
