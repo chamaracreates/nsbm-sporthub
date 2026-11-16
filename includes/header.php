@@ -1,3 +1,24 @@
+<?php
+require_once __DIR__ . '/auth.php';
+
+$headerRole = current_user_role();
+$headerLoggedIn = $headerRole !== null;
+$headerAccountUrl = $headerRole === 'student'
+    ? '/student/profile.php'
+    : '/login.php';
+$headerAccountLabel = $headerRole === 'student'
+    ? 'My profile'
+    : ($headerLoggedIn ? 'My account' : 'Log in');
+
+if (
+    $headerLoggedIn &&
+    (!isset($_SESSION['logout_csrf']) ||
+     !is_string($_SESSION['logout_csrf']) ||
+     $_SESSION['logout_csrf'] === '')
+) {
+    $_SESSION['logout_csrf'] = bin2hex(random_bytes(32));
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -35,16 +56,27 @@
 
             <!-- Desktop and tablet account actions -->
             <div class="account-nav">
-                <a href="/login.php">Log in</a>
-                <a href="/register.php" class="join-btn">Register</a>
+                <?php if ($headerLoggedIn): ?>
+                    <a href="<?= htmlspecialchars($headerAccountUrl, ENT_QUOTES, 'UTF-8') ?>">
+                        <?= htmlspecialchars($headerAccountLabel, ENT_QUOTES, 'UTF-8') ?>
+                    </a>
+                    <form action="/logout.php" method="POST" class="header-logout-form">
+                        <input type="hidden" name="csrf_token"
+                               value="<?= htmlspecialchars($_SESSION['logout_csrf'], ENT_QUOTES, 'UTF-8') ?>">
+                        <button type="submit" class="header-logout-button">Log out</button>
+                    </form>
+                <?php else: ?>
+                    <a href="/login.php">Log in</a>
+                    <a href="/register.php" class="join-btn">Register</a>
+                <?php endif; ?>
             </div>
 
             <!-- Mobile navigation controls -->
             <div class="mobile-controls">
                 <a
-                    href="/login.php"
+                    href="<?= htmlspecialchars($headerAccountUrl, ENT_QUOTES, 'UTF-8') ?>"
                     class="mobile-account-link"
-                    aria-label="Log in to your account">
+                    aria-label="<?= htmlspecialchars($headerAccountLabel, ENT_QUOTES, 'UTF-8') ?>">
                     <svg
                         viewBox="0 0 24 24"
                         width="24"
@@ -88,8 +120,19 @@
                         <a href="/bookings/index.php">Facilities</a>
 
                         <div class="mobile-menu-account">
-                            <a href="/login.php">Log in</a>
-                            <a href="/register.php">Register</a>
+                            <?php if ($headerLoggedIn): ?>
+                                <a href="<?= htmlspecialchars($headerAccountUrl, ENT_QUOTES, 'UTF-8') ?>">
+                                    <?= htmlspecialchars($headerAccountLabel, ENT_QUOTES, 'UTF-8') ?>
+                                </a>
+                                <form action="/logout.php" method="POST" class="header-logout-form">
+                                    <input type="hidden" name="csrf_token"
+                                           value="<?= htmlspecialchars($_SESSION['logout_csrf'], ENT_QUOTES, 'UTF-8') ?>">
+                                    <button type="submit" class="header-logout-button">Log out</button>
+                                </form>
+                            <?php else: ?>
+                                <a href="/login.php">Log in</a>
+                                <a href="/register.php">Register</a>
+                            <?php endif; ?>
                         </div>
                     </nav>
                 </details>

@@ -179,6 +179,36 @@ a:focus-visible {
     color: #102118;
 }
 
+/* Header logout uses a POST form with CSRF protection. */
+.site-header .header-logout-form {
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+}
+
+.site-header .header-logout-button {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: #d4d6d5;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 350;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.site-header .header-logout-button:hover,
+.site-header .header-logout-button:focus-visible {
+    color: #ffffff;
+}
+
+.site-header .mobile-menu-account .header-logout-button {
+    color: var(--color-accent);
+    font-size: 15px;
+    font-weight: 600;
+}
+
 /* 03. Shared page typography and actions */
 
 .section-header {

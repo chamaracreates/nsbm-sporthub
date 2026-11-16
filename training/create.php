@@ -474,11 +474,10 @@ if (
 }
 
 /* Load the existing SportsHub layout. */
+$pageStylesheets = ['/assets/css/training.css'];
 require __DIR__ . '/../includes/header.php';
 
 ?>
-
-<link rel="stylesheet" href="/assets/css/training.css">
 
 <main class="training-page">
     <div class="training-container">

@@ -311,14 +311,16 @@ if (
 
                     $duplicate = $pdo->prepare(
                         "SELECT 1
-                         FROM team_members
-                         WHERE team_id = :team_id
-                           AND user_id = :student_id
+                         FROM team_members AS tm
+                         INNER JOIN teams AS other_team
+                             ON other_team.team_id = tm.team_id
+                         WHERE other_team.t_id = :tournament_id
+                           AND tm.user_id = :student_id
                          LIMIT 1"
                     );
 
                     $duplicate->execute([
-                        'team_id' => $teamId,
+                        'tournament_id' => (int) $current['t_id'],
                         'student_id' => $studentId
                     ]);
 
@@ -467,7 +469,9 @@ if ($team !== null && $pdo instanceof PDO) {
                    AND NOT EXISTS (
                        SELECT 1
                        FROM team_members AS tm
-                       WHERE tm.team_id = :team_id
+                       INNER JOIN teams AS roster_team
+                           ON roster_team.team_id = tm.team_id
+                       WHERE roster_team.t_id = :tournament_id
                          AND tm.user_id = u.user_id
                    )
                  ORDER BY u.name ASC, u.user_id ASC"
@@ -475,7 +479,7 @@ if ($team !== null && $pdo instanceof PDO) {
 
             $statement->execute([
                 'club_id' => (int) $team['club_id'],
-                'team_id' => $teamId
+                'tournament_id' => (int) $team['t_id']
             ]);
 
             $students = $statement->fetchAll(
@@ -492,11 +496,10 @@ if ($team !== null && $pdo instanceof PDO) {
     }
 }
 
+$pageStylesheets = ['/assets/css/tournaments.css'];
 require __DIR__ . '/../includes/header.php';
 
 ?>
-
-<link rel="stylesheet" href="/assets/css/tournaments.css">
 
 <main class="tournaments-page">
     <section class="tournaments-container section-container">

@@ -28,12 +28,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
 
-    // Collect submitted form values
-    $name = trim($_POST['name'] ?? '');
-    $studentNumber = trim($_POST['student_number'] ?? '');
-    $email = strtolower(trim($_POST['email'] ?? ''));
+    // Validate submitted field types before string operations.
+    $fields = [
+        'name',
+        'student_number',
+        'email',
+        'password',
+        'confirm_password'
+    ];
+
+    foreach ($fields as $field) {
+        if (
+            isset($_POST[$field]) &&
+            !is_string($_POST[$field])
+        ) {
+            $errors[] = 'Invalid registration form data.';
+            break;
+        }
+    }
+
+    // Collect submitted form values safely.
+    $input = static function (string $field): string {
+        $value = $_POST[$field] ?? '';
+        return is_string($value) ? trim($value) : '';
+    };
+
+    $name = $input('name');
+    $studentNumber = $input('student_number');
+    $email = strtolower($input('email'));
+
     $password = $_POST['password'] ?? '';
+    $password = is_string($password) ? $password : '';
+
     $confirmPassword = $_POST['confirm_password'] ?? '';
+    $confirmPassword = is_string($confirmPassword)
+        ? $confirmPassword
+        : '';
 
     // Server-side validation
     if ($name === '' || strlen($name) > 100) {
@@ -121,9 +151,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 
 
-<?php require __DIR__ . '/includes/header.php'; ?>
+<?php
+$pageStylesheets = ['/assets/css/student-accounts.css'];
+require __DIR__ . '/includes/header.php';
+?>
 
-<link rel="stylesheet" href="/assets/css/student-accounts.css">
+
 
 
 <main class="accounts-page register-layout-page">

@@ -51,9 +51,12 @@ $stmt = db()->prepare(
 ?>
 
 
-<?php require __DIR__ . '/../includes/header.php'; ?>
+<?php
+$pageStylesheets = ['/assets/css/student-accounts.css'];
+require __DIR__ . '/../includes/header.php';
+?>
 
-<link rel="stylesheet" href="/assets/css/student-accounts.css">
+
 
 <main class="student-profile-page">
     <div class="shell profile-layout">

@@ -127,11 +127,10 @@ try {
     $loadError = true;
 }
 
+$pageStylesheets = ['/assets/css/tournaments.css'];
 require __DIR__ . '/../includes/header.php';
 
 ?>
-
-<link rel="stylesheet" href="/assets/css/tournaments.css">
 
 <main class="tournaments-page">
 

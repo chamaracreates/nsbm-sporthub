@@ -141,9 +141,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 
 
-<?php require __DIR__ . '/../includes/header.php'; ?>
-
-<link rel="stylesheet" href="/assets/css/student-accounts.css">
+<?php
+$pageStylesheets = ['/assets/css/student-accounts.css'];
+require __DIR__ . '/../includes/header.php';
+?>
 
 <main class="student-profile-page edit-profile-page">
     <div class="shell profile-layout">
