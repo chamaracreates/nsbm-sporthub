@@ -141,13 +141,32 @@ if ($action === 'update') {
                 if (!$exists->fetchColumn()) {
                     $errorMessage = 'Club not found.';
                 } else {
-                    // Exclude the current club from duplicate checks.
-                    $duplicate = $pdo->prepare(
+                    // Prevent duplicate club names during editing.
+                    $duplicateName = $pdo->prepare(
                         "SELECT club_id
-                         FROM sports_clubs
-                         WHERE sport = :sport
-                           AND club_id <> :club_id
-                         LIMIT 1"
+                        FROM sports_clubs
+                        WHERE club_name = :club_name
+                        AND club_id <> :club_id
+                        LIMIT 1"
+                    );
+
+                    $duplicateName->execute([
+                        'club_name' => $name,
+                        'club_id' => $clubId
+                    ]);
+
+                    if ($duplicateName->fetchColumn() !== false) {
+                        $errorMessage =
+                            'Another club already uses this name.';
+                    }
+
+                    // Exclude the current club from duplicate checks.
+                    $duplicateName = $pdo->prepare(
+                        "SELECT club_id
+                        FROM sports_clubs
+                        WHERE LOWER(club_name) = LOWER(:club_name)
+                        AND club_id <> :club_id
+                        LIMIT 1"
                     );
 
                     $duplicate->execute([
@@ -155,10 +174,15 @@ if ($action === 'update') {
                         'club_id' => $clubId
                     ]);
 
-                    if ($duplicate->fetchColumn() !== false) {
+                    if (
+                        $errorMessage === '' &&
+                        $duplicate->fetchColumn() !== false
+                    ) {
                         $errorMessage =
                             'Another club already uses this sport.';
-                    } else {
+                    }
+
+                    if ($errorMessage === '') {
                         $update = $pdo->prepare(
                             "UPDATE sports_clubs
                              SET club_name = :club_name,
@@ -259,34 +283,51 @@ if ($action === 'create') {
                     $errorMessage =
                         'A club for this sport already exists.';
                 } else {
-                    $insert = $pdo->prepare(
-                        "INSERT INTO sports_clubs
-                            (club_name, sport, description,
-                             club_email, status)
-                         VALUES
-                            (:club_name, :sport, :description,
-                             :club_email, :status)"
+                    // Check whether another club already uses this name.
+                    $nameCheck = $pdo->prepare(
+                        "SELECT club_id
+                        FROM sports_clubs
+                        WHERE LOWER(club_name) = LOWER(:club_name)
+                        LIMIT 1"
                     );
 
-                    $insert->execute([
-                        'club_name' => $name,
-                        'sport' => $sport,
-                        'description' => $description,
-                        'club_email' => $email,
-                        'status' => $status
+                    $nameCheck->execute([
+                        'club_name' => $name
                     ]);
 
-                    $successMessage =
-                        'Sports club created successfully.';
+                    if ($nameCheck->fetchColumn() !== false) {
+                        $errorMessage =
+                            'A club with this name already exists.';
+                    } else {
+                        $insert = $pdo->prepare(
+                            "INSERT INTO sports_clubs
+                                (club_name, sport, description,
+                                club_email, status)
+                            VALUES
+                                (:club_name, :sport, :description,
+                                :club_email, :status)"
+                        );
 
-                    // Clear form values after successful creation.
-                    $formValues = [
-                        'club_name' => '',
-                        'sport' => '',
-                        'club_email' => '',
-                        'status' => 'active',
-                        'description' => ''
-                    ];
+                        $insert->execute([
+                            'club_name' => $name,
+                            'sport' => $sport,
+                            'description' => $description,
+                            'club_email' => $email,
+                            'status' => $status
+                        ]);
+
+                        $successMessage =
+                            'Sports club created successfully.';
+
+                        // Clear form values after successful creation.
+                        $formValues = [
+                            'club_name' => '',
+                            'sport' => '',
+                            'club_email' => '',
+                            'status' => 'active',
+                            'description' => ''
+                        ];
+                    }
                 }
 
             } catch (PDOException $exception) {
