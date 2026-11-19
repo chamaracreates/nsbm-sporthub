@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . '/../includes/auth.php';
+require_admin();
+
 // NSBM SportsHub - Admin Dashboard
 
 require_once __DIR__ . '/../includes/db.php';
