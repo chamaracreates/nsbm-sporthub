@@ -176,3 +176,75 @@
         flex-wrap: wrap;
     }
 }
+
+
+/* ---- Unified Report Filter Buttons ---- */
+
+.filter-button,
+.filter-reset-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 145px;
+    padding: 12px 22px;
+
+    background: #a8ff00;
+    color: #000000;
+    border: 1px solid #a8ff00;
+    border-radius: 8px;
+
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+
+    transition: all 0.3s ease;
+}
+
+.filter-button:hover,
+.filter-reset-button:hover {
+    background: #17191b;
+    color: #a8ff00;
+    border-color: #a8ff00;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 18px rgba(168, 255, 0, 0.18);
+}
+
+.filter-button:active,
+.filter-reset-button:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.filter-button:focus-visible,
+.filter-reset-button:focus-visible {
+    outline: 2px solid #a8ff00;
+    outline-offset: 4px;
+}
+
+
+/* ---- Enhanced Report Section Headings ---- */
+
+.report-heading {
+    margin-bottom: 26px;
+}
+
+.report-heading>div {
+    position: relative;
+}
+
+.report-heading h2 {
+    color: #f5f5f7;
+    font-size: 23px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+    margin-bottom: 0;
+}
+
+.report-heading p {
+    color: #a3a7a6;
+    font-size: 14px;
+    margin-top: 10px;
+    line-height: 1.6;
+}
