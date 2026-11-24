@@ -2,531 +2,37 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_admin();
 
-// NSBM SportsHub - Reports & Analytics
+// Standalone admin pages share the site's POST/CSRF logout contract.
+if (empty($_SESSION['logout_csrf']) || !is_string($_SESSION['logout_csrf'])) {
+    $_SESSION['logout_csrf'] = bin2hex(random_bytes(32));
+}
+
 
 require_once __DIR__ . '/../includes/db.php';
 
+require_once __DIR__ . '/../includes/helpers.php';
+
 $pdo = db();
-
-// Report filter values
-$rawStartDate = trim((string) ($_GET['start_date'] ?? ''));
-$rawEndDate = trim((string) ($_GET['end_date'] ?? ''));
-
-$startDate = null;
-$endDate = null;
-$filterError = '';
-
-$validateDate = static function (string $date): ?string {
-    if ($date === '') {
-        return null;
-    }
-
-    $parsedDate = DateTime::createFromFormat('!Y-m-d', $date);
-
-    return $parsedDate && $parsedDate->format('Y-m-d') === $date
-        ? $date
-        : null;
-};
-
-$startDate = $validateDate($rawStartDate);
-$endDate = $validateDate($rawEndDate);
-
-if ($rawStartDate !== '' && $startDate === null) {
-    $filterError = 'Please enter a valid start date.';
-}
-
-if ($rawEndDate !== '' && $endDate === null) {
-    $filterError = 'Please enter a valid end date.';
-}
-
-if (
-    $startDate !== null &&
-    $endDate !== null &&
-    $startDate > $endDate
-) {
-    $filterError = 'The start date cannot be after the end date.';
-}
-
-// Selected club and sport
-$selectedClubId = filter_var(
-    $_GET['club_id'] ?? '',
-    FILTER_VALIDATE_INT
-);
-
-$selectedClubId = $selectedClubId !== false
-    ? (int) $selectedClubId
-    : 0;
-
-$selectedSport = trim((string) ($_GET['sport'] ?? ''));
-
-// Preserve active filters when exporting reports
-$exportFilters = [];
-
-if ($startDate !== null) {
-    $exportFilters['start_date'] = $startDate;
-}
-
-if ($endDate !== null) {
-    $exportFilters['end_date'] = $endDate;
-}
-
-if ($selectedClubId > 0) {
-    $exportFilters['club_id'] = $selectedClubId;
-}
-
-if ($selectedSport !== '') {
-    $exportFilters['sport'] = $selectedSport;
-}
-
-// Generate export URLs
-$studentExportUrl = 'export.php?' . http_build_query(
-    ['type' => 'students'] + $exportFilters
-);
-
-$clubExportUrl = 'export.php?' . http_build_query(
-    ['type' => 'clubs'] + $exportFilters
-);
-
-$trainingExportUrl = 'export.php?' . http_build_query(
-    ['type' => 'training'] + $exportFilters
-);
-
-$tournamentExportUrl = 'export.php?' . http_build_query(
-    ['type' => 'tournaments'] + $exportFilters
-);
-
-$matchExportUrl = 'export.php?' . http_build_query(
-    ['type' => 'matches'] + $exportFilters
-);
-
-
-// Active club options
-$filterClubs = $pdo->query("
-    SELECT club_id, club_name
-    FROM sports_clubs
-    WHERE status = 'active'
-    ORDER BY club_name
-")->fetchAll(PDO::FETCH_ASSOC);
-
-// Available sports
-$filterSports = $pdo->query("
-    SELECT sport
-    FROM sports_clubs
-    WHERE status = 'active'
-
-    UNION
-
-    SELECT DISTINCT sport
-    FROM matches
-    WHERE sport <> ''
-
-    ORDER BY sport
-")->fetchAll(PDO::FETCH_COLUMN);
-
-// Participation overview
-
-/**
- * Student participation report
- * Calculated from actual source tables.
- */
-
-$studentSql = "
-    SELECT
-        u.user_id,
-        u.name AS student_name,
-        u.email,
-
-        (
-            SELECT COUNT(DISTINCT cm.club_id)
-            FROM club_membership cm
-            INNER JOIN sports_clubs sc
-                ON sc.club_id = cm.club_id
-            WHERE cm.user_id = u.user_id
-              AND cm.status = 'approved'
-";
-
-$studentParams = [];
-
-if ($startDate !== null) {
-    $studentSql .= " AND cm.joined_date >= :club_start_date";
-    $studentParams['club_start_date'] = $startDate;
-}
-
-if ($endDate !== null) {
-    $studentSql .= " AND cm.joined_date <= :club_end_date";
-    $studentParams['club_end_date'] = $endDate;
-}
-
-if ($selectedClubId > 0) {
-    $studentSql .= " AND sc.club_id = :student_club_id";
-    $studentParams['student_club_id'] = $selectedClubId;
-}
-
-if ($selectedSport !== '') {
-    $studentSql .= " AND sc.sport = :student_club_sport";
-    $studentParams['student_club_sport'] = $selectedSport;
-}
-
-$studentSql .= "
-        ) AS total_clubs_joined,
-
-        (
-            SELECT COUNT(*)
-            FROM training_attendance ta
-            INNER JOIN training_sessions ts
-                ON ts.session_id = ta.session_id
-            INNER JOIN sports_clubs sc
-                ON sc.club_id = ts.club_id
-            WHERE ta.user_id = u.user_id
-";
-
-if ($startDate !== null) {
-    $studentSql .= " AND ts.date >= :training_start_date";
-    $studentParams['training_start_date'] = $startDate;
-}
-
-if ($endDate !== null) {
-    $studentSql .= " AND ts.date <= :training_end_date";
-    $studentParams['training_end_date'] = $endDate;
-}
-
-if ($selectedClubId > 0) {
-    $studentSql .= " AND sc.club_id = :training_club_id";
-    $studentParams['training_club_id'] = $selectedClubId;
-}
-
-if ($selectedSport !== '') {
-    $studentSql .= " AND sc.sport = :training_sport";
-    $studentParams['training_sport'] = $selectedSport;
-}
-
-$studentSql .= "
-        ) AS training_sessions_attended,
-
-        (
-            SELECT COUNT(*)
-            FROM tournament_registration tr
-            INNER JOIN tournaments t
-                ON t.t_id = tr.t_id
-            WHERE tr.user_id = u.user_id
-              AND tr.registration_status = 'approved'
-";
-
-if ($startDate !== null) {
-    $studentSql .= " AND tr.reg_date >= :tournament_start_date";
-    $studentParams['tournament_start_date'] = $startDate;
-}
-
-if ($endDate !== null) {
-    $studentSql .= " AND tr.reg_date <= :tournament_end_date";
-    $studentParams['tournament_end_date'] = $endDate;
-}
-
-if ($selectedClubId > 0) {
-    $studentSql .= " AND t.club_id = :tournament_club_id";
-    $studentParams['tournament_club_id'] = $selectedClubId;
-}
-
-if ($selectedSport !== '') {
-    $studentSql .= " AND t.sport = :tournament_sport";
-    $studentParams['tournament_sport'] = $selectedSport;
-}
-
-$studentSql .= "
-        ) AS tournaments_registered,
-
-        (
-            SELECT COUNT(*)
-            FROM booking_request br
-            WHERE br.user_id = u.user_id
-";
-
-if ($startDate !== null) {
-    $studentSql .= " AND br.date >= :booking_start_date";
-    $studentParams['booking_start_date'] = $startDate;
-}
-
-if ($endDate !== null) {
-    $studentSql .= " AND br.date <= :booking_end_date";
-    $studentParams['booking_end_date'] = $endDate;
-}
-
-$studentSql .= "
-        ) AS facility_bookings_made
-
-    FROM users u
-    WHERE u.role = 'student'
-    ORDER BY u.name ASC
-    LIMIT 50
-";
-
-$studentStmt = $pdo->prepare($studentSql);
-$studentStmt->execute($studentParams);
-
-$studentParticipation = $studentStmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Participation overview
-$summary = [
-    'students_in_report' => count($studentParticipation),
-    'total_club_participation' => array_sum(
-        array_column($studentParticipation, 'total_clubs_joined')
-    ),
-    'total_training_attendance' => array_sum(
-        array_column($studentParticipation, 'training_sessions_attended')
-    ),
-    'total_tournament_registrations' => array_sum(
-        array_column($studentParticipation, 'tournaments_registered')
-    ),
-    'total_facility_bookings' => array_sum(
-        array_column($studentParticipation, 'facility_bookings_made')
-    )
-];
-
-
-// Active clubs
-$activeClubs = (int) $pdo->query(
-    "SELECT COUNT(*) FROM sports_clubs WHERE status = 'active'"
-)->fetchColumn();
-
-
-
-// Club membership statistics
-$clubMembershipSql = "
-    SELECT
-        sc.club_name,
-        sc.sport,
-        COUNT(DISTINCT CASE
-            WHEN cm.status = 'approved' THEN cm.user_id
-        END) AS approved_members,
-        COUNT(DISTINCT CASE
-            WHEN cm.status = 'pending' THEN cm.user_id
-        END) AS pending_members
-    FROM sports_clubs sc
-    LEFT JOIN club_membership cm
-        ON cm.club_id = sc.club_id
-    WHERE sc.status = 'active'
-";
-
-$clubMembershipParams = [];
-
-if ($selectedClubId > 0) {
-    $clubMembershipSql .= " AND sc.club_id = :club_id";
-    $clubMembershipParams['club_id'] = $selectedClubId;
-}
-
-if ($selectedSport !== '') {
-    $clubMembershipSql .= " AND sc.sport = :sport";
-    $clubMembershipParams['sport'] = $selectedSport;
-}
-
-$clubMembershipSql .= "
-    GROUP BY sc.club_id, sc.club_name, sc.sport
-    ORDER BY sc.club_name ASC
-";
-
-$clubMembershipStmt = $pdo->prepare($clubMembershipSql);
-$clubMembershipStmt->execute($clubMembershipParams);
-
-$clubMemberships = $clubMembershipStmt->fetchAll(PDO::FETCH_ASSOC);
-
-
-// Training attendance report
-$trainingSql = "
-    SELECT
-        u.name AS student_name,
-        ts.title AS session_title,
-        sc.club_name,
-        sc.sport,
-        ts.date AS session_date,
-        ta.att_status
-    FROM training_attendance ta
-    INNER JOIN users u
-        ON u.user_id = ta.user_id
-    INNER JOIN training_sessions ts
-        ON ts.session_id = ta.session_id
-    INNER JOIN sports_clubs sc
-        ON sc.club_id = ts.club_id
-    WHERE u.role = 'student'
-";
-
-$trainingParams = [];
-
-if ($startDate !== null) {
-    $trainingSql .= " AND ts.date >= :start_date";
-    $trainingParams['start_date'] = $startDate;
-}
-
-if ($endDate !== null) {
-    $trainingSql .= " AND ts.date <= :end_date";
-    $trainingParams['end_date'] = $endDate;
-}
-
-if ($selectedClubId > 0) {
-    $trainingSql .= " AND sc.club_id = :club_id";
-    $trainingParams['club_id'] = $selectedClubId;
-}
-
-if ($selectedSport !== '') {
-    $trainingSql .= " AND sc.sport = :sport";
-    $trainingParams['sport'] = $selectedSport;
-}
-
-$trainingSql .= "
-    ORDER BY ts.date DESC, u.name ASC
-    LIMIT 100
-";
-
-$trainingStmt = $pdo->prepare($trainingSql);
-$trainingStmt->execute($trainingParams);
-
-$trainingAttendance = $trainingStmt->fetchAll(PDO::FETCH_ASSOC);
-
-
-// Match performance filters
-$matchWhere = [];
-$matchParams = [];
-
-if ($startDate !== null) {
-    $matchWhere[] = "m.date >= :start_date";
-    $matchParams['start_date'] = $startDate;
-}
-
-if ($endDate !== null) {
-    $matchWhere[] = "m.date <= :end_date";
-    $matchParams['end_date'] = $endDate;
-}
-
-if ($selectedClubId > 0) {
-    $matchWhere[] = "t.club_id = :club_id";
-    $matchParams['club_id'] = $selectedClubId;
-}
-
-if ($selectedSport !== '') {
-    $matchWhere[] = "m.sport = :sport";
-    $matchParams['sport'] = $selectedSport;
-}
-
-$matchFilterSql = $matchWhere
-    ? " AND " . implode(" AND ", $matchWhere)
-    : "";
-
-// Match performance summary
-$matchSummarySql = "
-    SELECT
-        COUNT(*) AS completed_matches,
-        COALESCE(SUM(CASE
-            WHEN m.home_score > m.away_score THEN 1 ELSE 0
-        END), 0) AS home_wins,
-        COALESCE(SUM(CASE
-            WHEN m.away_score > m.home_score THEN 1 ELSE 0
-        END), 0) AS away_wins,
-        COALESCE(SUM(CASE
-            WHEN m.home_score = m.away_score THEN 1 ELSE 0
-        END), 0) AS draws
-    FROM matches m
-    LEFT JOIN tournaments t
-        ON t.t_id = m.t_id
-    WHERE LOWER(TRIM(m.match_status))
-        IN ('completed', 'finished')
-    " . $matchFilterSql;
-
-$matchSummaryStmt = $pdo->prepare($matchSummarySql);
-$matchSummaryStmt->execute($matchParams);
-
-$matchPerformanceSummary = $matchSummaryStmt->fetch(PDO::FETCH_ASSOC);
-
-// Match performance details
-$matchDetailsSql = "
-    SELECT
-        m.title,
-        m.sport,
-        m.home_name,
-        m.away_name,
-        m.date AS match_date,
-        m.venue,
-        m.match_status,
-        m.home_score,
-        m.away_score,
-        CASE
-            WHEN LOWER(TRIM(m.match_status))
-                IN ('completed', 'finished')
-            THEN
-                CASE
-                    WHEN m.home_score > m.away_score
-                        THEN CONCAT(m.home_name, ' won')
-                    WHEN m.away_score > m.home_score
-                        THEN CONCAT(m.away_name, ' won')
-                    ELSE 'Draw'
-                END
-            ELSE 'Not played'
-        END AS result_summary
-    FROM matches m
-    LEFT JOIN tournaments t
-        ON t.t_id = m.t_id
-    WHERE 1=1
-    " . $matchFilterSql . "
-    ORDER BY m.date DESC, m.m_id DESC
-    LIMIT 100
-";
-
-$matchDetailsStmt = $pdo->prepare($matchDetailsSql);
-$matchDetailsStmt->execute($matchParams);
-
-$matchPerformance = $matchDetailsStmt->fetchAll(PDO::FETCH_ASSOC);
-
-
-// Tournament participation report
-$tournamentSql = "
-    SELECT
-        t.t_name AS tournament_name,
-        t.sport,
-        sc.club_name,
-        u.name AS student_name,
-        tr.reg_date,
-        tr.registration_status
-    FROM tournament_registration tr
-    INNER JOIN tournaments t
-        ON t.t_id = tr.t_id
-    INNER JOIN sports_clubs sc
-        ON sc.club_id = t.club_id
-    INNER JOIN users u
-        ON u.user_id = tr.user_id
-    WHERE u.role = 'student'
-";
-
-$tournamentParams = [];
-
-if ($startDate !== null) {
-    $tournamentSql .= " AND tr.reg_date >= :tournament_report_start";
-    $tournamentParams['tournament_report_start'] = $startDate;
-}
-
-if ($endDate !== null) {
-    $tournamentSql .= " AND tr.reg_date <= :tournament_report_end";
-    $tournamentParams['tournament_report_end'] = $endDate;
-}
-
-if ($selectedClubId > 0) {
-    $tournamentSql .= " AND t.club_id = :tournament_report_club";
-    $tournamentParams['tournament_report_club'] = $selectedClubId;
-}
-
-if ($selectedSport !== '') {
-    $tournamentSql .= " AND t.sport = :tournament_report_sport";
-    $tournamentParams['tournament_report_sport'] = $selectedSport;
-}
-
-$tournamentSql .= "
-    ORDER BY tr.reg_date DESC, u.name ASC
-    LIMIT 100
-";
-
-$tournamentStmt = $pdo->prepare($tournamentSql);
-$tournamentStmt->execute($tournamentParams);
-
-$tournamentParticipation = $tournamentStmt->fetchAll(PDO::FETCH_ASSOC);
-
-
+$filters = sportsHubReportFilters($pdo, $_GET);
+$rawStartDate = $filters['rawStartDate'];
+$rawEndDate = $filters['rawEndDate'];
+$startDate = $filters['startDate'];
+$endDate = $filters['endDate'];
+$filterError = $filters['filterError'];
+$selectedClubId = $filters['selectedClubId'];
+$selectedSport = $filters['selectedSport'];
+$filterClubs = $filters['filterClubs'];
+$filterSports = $filters['filterSports'];
+$facilityScopedOut = $selectedClubId > 0 || $selectedSport !== '';
+$queries = sportsHubReportQueries($filters);
+$summary = sportsHubReportRows($pdo, $queries['summary'])->fetch(PDO::FETCH_ASSOC);
+$studentParticipation = sportsHubReportRows($pdo, $queries['students'], 50)->fetchAll(PDO::FETCH_ASSOC);
+$clubMemberships = sportsHubReportRows($pdo, $queries['clubs'])->fetchAll(PDO::FETCH_ASSOC);
+$activeClubs = count($clubMemberships);
+$trainingAttendance = sportsHubReportRows($pdo, $queries['training'], 100)->fetchAll(PDO::FETCH_ASSOC);
+$tournamentParticipation = sportsHubReportRows($pdo, $queries['tournaments'], 100)->fetchAll(PDO::FETCH_ASSOC);
+$matchPerformanceSummary = sportsHubReportRows($pdo, $queries['performance'])->fetch(PDO::FETCH_ASSOC);
+$matchPerformance = sportsHubReportRows($pdo, $queries['matches'], 100)->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -561,8 +67,8 @@ $tournamentParticipation = $tournamentStmt->fetchAll(PDO::FETCH_ASSOC);
                     Dashboard
                 </a>
 
-                <a href="../student/" class="nav-link">
-                    Students
+                <a href="../clubs/admin/members.php" class="nav-link">
+                    Club Memberships
                 </a>
 
                 <a href="../clubs/" class="nav-link">
@@ -603,8 +109,14 @@ $tournamentParticipation = $tournamentStmt->fetchAll(PDO::FETCH_ASSOC);
                     <p>NSBM Sports Club Management System</p>
                 </div>
 
-                <div class="admin-profile">
-                    Administrator
+                <div class="admin-account-actions">
+                    <a class="admin-home-link" href="/index.php">View website</a>
+                    <span class="admin-profile">Administrator</span>
+                    <form class="admin-logout-form" action="/logout.php" method="post">
+                        <input type="hidden" name="csrf_token"
+                               value="<?= htmlspecialchars($_SESSION['logout_csrf'], ENT_QUOTES, 'UTF-8') ?>">
+                        <button class="admin-logout-button" type="submit">Log out</button>
+                    </form>
                 </div>
 
             </header>
@@ -635,10 +147,36 @@ $tournamentParticipation = $tournamentStmt->fetchAll(PDO::FETCH_ASSOC);
                 <?php if ($filterError !== ''): ?>
                     <p class="filter-error">
                         <?= htmlspecialchars($filterError) ?>
+                        Filters were not applied; showing the unfiltered report.
                     </p>
 
                 <?php endif; ?>
 
+                <?php
+                $reportFilters = [
+                    'start_date' => $startDate ?? '',
+                    'end_date' => $endDate ?? '',
+                    'sport' => $selectedSport,
+                    'club_id' => $selectedClubId > 0 ? $selectedClubId : ''
+                ];
+                $exports = [
+                    'students' => 'Student participation',
+                    'clubs' => 'Club memberships',
+                    'training' => 'Training attendance',
+                    'tournaments' => 'Tournament registrations',
+                    'matches' => 'Match results',
+                    'training-schedule' => 'Training schedule',
+                    'tournament-schedule' => 'Tournament schedule'
+                ];
+                if (!$facilityScopedOut) {
+                    $exports['bookings'] = 'Facility bookings';
+                }
+                ?>
+                <div class="report-export-links" role="group" aria-label="CSV exports for applied filters">
+                    <?php foreach ($exports as $type => $label): ?>
+                        <a class="filter-button report-export-button" href="<?= sportsHubEscape('export.php?' . http_build_query(['type' => $type] + $reportFilters)) ?>"><?= sportsHubEscape($label) ?> CSV</a>
+                    <?php endforeach; ?>
+                </div>
                 <form method="GET" action="index.php">
                     <div class="filter-grid">
 
@@ -702,6 +240,13 @@ $tournamentParticipation = $tournamentStmt->fetchAll(PDO::FETCH_ASSOC);
                         </a>
                     </div>
                 </form>
+                <p class="report-note">
+                    Date filters apply to club approval dates, training session dates,
+                    tournament registration dates, facility request dates and match dates.
+                    Pending club requests remain current (no request date is stored).
+                    Facility requests are not attributable to a club or sport.
+                    Club-specific match results include tournament-linked matches only. Tournament schedule exports use event start dates.
+                </p>
             </section>
 
 
@@ -741,9 +286,11 @@ $tournamentParticipation = $tournamentStmt->fetchAll(PDO::FETCH_ASSOC);
                     </div>
 
                     <div class="stat-card">
-                        <h3>Facility Bookings</h3>
+                        <h3>Facility Requests</h3>
                         <p class="stat-number">
-                            <?= number_format((int) $summary['total_facility_bookings']) ?>
+                            <?= $facilityScopedOut
+                                ? '—'
+                                : number_format((int) $summary['total_facility_bookings']) ?>
                         </p>
                     </div>
 
@@ -759,12 +306,6 @@ $tournamentParticipation = $tournamentStmt->fetchAll(PDO::FETCH_ASSOC);
                         <h2>Student Participation Report</h2>
                         <p>Individual student sports participation statistics</p>
                     </div>
-
-                    <a
-                        href="<?= htmlspecialchars($studentExportUrl, ENT_QUOTES, 'UTF-8') ?>"
-                        class="export-button">
-                        Export CSV
-                    </a>
                 </div>
 
                 <div class="report-table-wrapper">
@@ -778,7 +319,7 @@ $tournamentParticipation = $tournamentStmt->fetchAll(PDO::FETCH_ASSOC);
                                 <th>Clubs Joined</th>
                                 <th>Training Attended</th>
                                 <th>Tournaments</th>
-                                <th>Facility Bookings</th>
+                                <th>Facility Requests</th>
                             </tr>
                         </thead>
 
@@ -810,7 +351,7 @@ $tournamentParticipation = $tournamentStmt->fetchAll(PDO::FETCH_ASSOC);
                                         </td>
 
                                         <td>
-                                            <?= number_format((int) $student['facility_bookings_made']) ?>
+                                            <?= $facilityScopedOut ? '—' : number_format((int) $student['facility_bookings_made']) ?>
                                         </td>
                                     </tr>
 
@@ -833,34 +374,22 @@ $tournamentParticipation = $tournamentStmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
 
                 <p class="report-note">
-                    Showing up to 50 student records.
+                    Showing up to 50 student records. Club participations count approved memberships,
+                    training attendance counts present records, and registrations/requests include all statuses.
+                    Facility requests display as — when filtered by club or sport.
                 </p>
 
             </section>
 
-
-            <!-- Tournament Participation Report -->
             <section class="report-section">
-
                 <div class="report-heading">
                     <div>
                         <h2>Tournament Participation Report</h2>
-                        <p>
-                            Student registrations across tournaments
-                        </p>
+                        <p>Student registrations across tournaments</p>
                     </div>
-
-                    <a
-                        href="<?= htmlspecialchars($tournamentExportUrl, ENT_QUOTES, 'UTF-8') ?>"
-                        class="export-button">
-                        Export CSV
-                    </a>
                 </div>
-
                 <div class="report-table-wrapper">
-
                     <table class="report-table">
-
                         <thead>
                             <tr>
                                 <th>Tournament</th>
@@ -871,63 +400,25 @@ $tournamentParticipation = $tournamentStmt->fetchAll(PDO::FETCH_ASSOC);
                                 <th>Status</th>
                             </tr>
                         </thead>
-
                         <tbody>
-
-                            <?php if (!empty($tournamentParticipation)): ?>
-
-                                <?php foreach ($tournamentParticipation as $registration): ?>
-
-                                    <tr>
-                                        <td>
-                                            <?= htmlspecialchars((string) $registration['tournament_name']) ?>
-                                        </td>
-
-                                        <td>
-                                            <?= htmlspecialchars((string) $registration['sport']) ?>
-                                        </td>
-
-                                        <td>
-                                            <?= htmlspecialchars((string) $registration['club_name']) ?>
-                                        </td>
-
-                                        <td>
-                                            <?= htmlspecialchars((string) $registration['student_name']) ?>
-                                        </td>
-
-                                        <td>
-                                            <?= htmlspecialchars((string) $registration['reg_date']) ?>
-                                        </td>
-
-                                        <td>
-                                            <?= htmlspecialchars(ucfirst((string) $registration['registration_status'])) ?>
-                                        </td>
-                                    </tr>
-
-                                <?php endforeach; ?>
-
-                            <?php else: ?>
-
+                            <?php foreach ($tournamentParticipation as $registration): ?>
                                 <tr>
-                                    <td colspan="6" class="empty-report">
-                                        No tournament participation records available yet.
-                                    </td>
+                                    <td><?= sportsHubEscape($registration['tournament_name']) ?></td>
+                                    <td><?= sportsHubEscape($registration['sport']) ?></td>
+                                    <td><?= sportsHubEscape($registration['club_name'] ?? '—') ?></td>
+                                    <td><?= sportsHubEscape($registration['student_name']) ?></td>
+                                    <td><?= sportsHubEscape($registration['reg_date']) ?></td>
+                                    <td><?= sportsHubEscape(ucfirst($registration['registration_status'])) ?></td>
                                 </tr>
-
+                            <?php endforeach; ?>
+                            <?php if (!$tournamentParticipation): ?>
+                                <tr><td colspan="6" class="empty-report">No tournament participation records available.</td></tr>
                             <?php endif; ?>
-
                         </tbody>
-
                     </table>
-
                 </div>
-
-                <p class="report-note">
-                    Showing up to 100 tournament registrations.
-                </p>
-
+                <p class="report-note">Showing up to 100 tournament registrations.</p>
             </section>
-
 
             <!-- Club Membership Report -->
             <section class="report-section">
@@ -940,12 +431,6 @@ $tournamentParticipation = $tournamentStmt->fetchAll(PDO::FETCH_ASSOC);
                             <?= number_format($activeClubs) ?> active sports clubs
                         </p>
                     </div>
-
-                    <a
-                        href="<?= htmlspecialchars($clubExportUrl, ENT_QUOTES, 'UTF-8') ?>"
-                        class="export-button">
-                        Export CSV
-                    </a>
                 </div>
 
                 <div class="report-table-wrapper">
@@ -1002,7 +487,10 @@ $tournamentParticipation = $tournamentStmt->fetchAll(PDO::FETCH_ASSOC);
                     </table>
 
                 </div>
-
+                <p class="report-note">
+                    Approved memberships are filtered by their join/approval date.
+                    Pending requests are a current snapshot because the database has no submission date for them.
+                </p>
             </section>
 
             <!-- Training Attendance Report -->
@@ -1012,12 +500,6 @@ $tournamentParticipation = $tournamentStmt->fetchAll(PDO::FETCH_ASSOC);
                         <h2>Training Attendance Report</h2>
                         <p>Student attendance across sports club training sessions</p>
                     </div>
-
-                    <a
-                        href="<?= htmlspecialchars($trainingExportUrl, ENT_QUOTES, 'UTF-8') ?>"
-                        class="export-button">
-                        Export CSV
-                    </a>
                 </div>
 
                 <div class="report-table-wrapper">
@@ -1063,18 +545,11 @@ $tournamentParticipation = $tournamentStmt->fetchAll(PDO::FETCH_ASSOC);
 
             <!-- Match Performance Report -->
             <section class="report-section">
-
                 <div class="report-heading">
                     <div>
                         <h2>Match Performance Overview</h2>
                         <p>Results and performance statistics from completed matches</p>
                     </div>
-
-                    <a
-                        href="<?= htmlspecialchars($matchExportUrl, ENT_QUOTES, 'UTF-8') ?>"
-                        class="export-button">
-                        Export CSV
-                    </a>
                 </div>
 
                 <div class="statistics-grid">
@@ -1151,6 +626,9 @@ $tournamentParticipation = $tournamentStmt->fetchAll(PDO::FETCH_ASSOC);
                                             <?= $isCompleted
                                                 ? (int) $match['home_score'] . ' - ' . (int) $match['away_score']
                                                 : '—' ?>
+                                            <?php if ($isCompleted && strcasecmp((string) $match['sport'], 'Volleyball') === 0): ?>
+                                                <small>(sets)</small>
+                                            <?php endif; ?>
                                         </td>
                                         <td><?= htmlspecialchars($match['match_date']) ?></td>
                                         <td><?= htmlspecialchars($match['venue']) ?></td>

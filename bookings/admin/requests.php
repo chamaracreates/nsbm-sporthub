@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/helpers.php';
+
 require_once __DIR__ . '/../../includes/db.php';
 
 // Only administrators can view booking requests.
@@ -12,7 +14,7 @@ date_default_timezone_set('Asia/Colombo');
 
 $bookings = [];
 $loadError = false;
-// Generate a CSRF token for admin booking reviews.
+
 if (
     !isset($_SESSION['booking_review_csrf']) ||
     !is_string($_SESSION['booking_review_csrf'])
@@ -24,10 +26,10 @@ if (
 
 $reviewCsrfToken = $_SESSION['booking_review_csrf'];
 
-// Retrieve and clear review feedback.
+
 $feedback = $_SESSION['booking_admin_feedback'] ?? null;
 unset($_SESSION['booking_admin_feedback']);
-// Retrieve and clear booking review errors.
+
 $reviewError = $_SESSION['booking_admin_error'] ?? null;
 unset($_SESSION['booking_admin_error']);
 
@@ -46,7 +48,9 @@ try {
             r.res_name,
             r.res_type,
             r.location,
-            u.user_id
+            u.user_id,
+            u.name AS student_name,
+            u.email AS student_email
          FROM booking_request AS br
          INNER JOIN resources AS r
              ON br.res_id = r.res_id
@@ -73,35 +77,21 @@ try {
     $loadError = true;
 }
 
-function bookingAdminEscape(mixed $value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
+
+$pageStylesheets = ['/assets/css/bookings.css'];
 
 require __DIR__ . '/../../includes/header.php';
 
 ?>
 
-<link
-    rel="stylesheet"
-    href="/assets/css/bookings.css?v=<?= filemtime(__DIR__ . '/../../assets/css/bookings.css') ?>"
->
 
-<main class="booking-page">
+<main class="booking-page booking-workflow-page booking-review-page sports-hub-workflow">
 
     <div class="booking-container">
 
         <section class="booking-introduction">
 
-            <p class="booking-eyebrow">
-                NSBM SPORTSHUB ADMIN
-            </p>
-
-            <h1>Booking Requests</h1>
+<h1>Booking Requests</h1>
 
             <p class="booking-intro-text">
                 Review student facility booking requests,
@@ -114,19 +104,19 @@ require __DIR__ . '/../../includes/header.php';
         <section class="booking-section">
             <?php if (is_string($feedback)): ?>
     <p role="status" class="facility-admin-success">
-        <?= bookingAdminEscape($feedback) ?>
+        <?= sportsHubEscape($feedback) ?>
     </p>
 <?php endif; ?>
 <?php if (is_string($reviewError)): ?>
     <p role="alert" class="booking-review-error">
-        <?= bookingAdminEscape($reviewError) ?>
+        <?= sportsHubEscape($reviewError) ?>
     </p>
 <?php endif; ?>
 
             <div class="facility-admin-actions">
                 <a
                     href="/bookings/admin/"
-                    class="facility-admin-button"
+                    class="facility-admin-button facility-button-secondary"
                 >
                     Facility Management
                 </a>
@@ -155,7 +145,7 @@ require __DIR__ . '/../../includes/header.php';
                         <thead>
                             <tr>
                                 <th>Booking ID</th>
-                                <th>Student ID</th>
+                                <th>Student</th>
                                 <th>Facility</th>
                                 <th>Date</th>
                                 <th>Time</th>
@@ -176,23 +166,24 @@ require __DIR__ . '/../../includes/header.php';
                                     </td>
 
                                     <td>
-                                        <?= (int) $booking['user_id'] ?>
+                                        <strong><?= sportsHubEscape($booking['student_name']) ?></strong>
+                                        <small style="display:block"><?= sportsHubEscape($booking['student_email']) ?> (ID <?= (int) $booking['user_id'] ?>)</small>
                                     </td>
 
                                     <td>
-                                        <?= bookingAdminEscape(
+                                        <?= sportsHubEscape(
                                             $booking['res_name']
                                         ) ?>
                                     </td>
 
                                     <td>
-                                        <?= bookingAdminEscape(
+                                        <?= sportsHubEscape(
                                             $booking['date']
                                         ) ?>
                                     </td>
 
                                     <td>
-                                        <?= bookingAdminEscape(
+                                        <?= sportsHubEscape(
                                             substr(
                                                 (string) $booking['starts_at'],
                                                 0,
@@ -202,7 +193,7 @@ require __DIR__ . '/../../includes/header.php';
 
                                         –
 
-                                        <?= bookingAdminEscape(
+                                        <?= sportsHubEscape(
                                             substr(
                                                 (string) $booking['ends_at'],
                                                 0,
@@ -212,13 +203,13 @@ require __DIR__ . '/../../includes/header.php';
                                     </td>
 
                                     <td>
-                                        <?= bookingAdminEscape(
+                                        <?= sportsHubEscape(
                                             $booking['purpose']
                                         ) ?>
                                     </td>
 
                                     <td>
-                                        <?= bookingAdminEscape(
+                                        <?= sportsHubEscape(
                                             ucfirst(
                                                 (string) $booking['booking_status']
                                             )
@@ -236,7 +227,7 @@ require __DIR__ . '/../../includes/header.php';
             <input
                 type="hidden"
                 name="csrf_token"
-                value="<?= bookingAdminEscape($reviewCsrfToken) ?>"
+                value="<?= sportsHubEscape($reviewCsrfToken) ?>"
             >
 
             <input

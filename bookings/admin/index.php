@@ -2,21 +2,23 @@
 
 declare(strict_types=1);
 
-// Load shared authentication and database functions.
+
 require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/helpers.php';
+
 require_once __DIR__ . '/../../includes/db.php';
 
 // Only administrators can access facility management.
 require_admin();
 
-// Set Sri Lankan timezone.
+
 date_default_timezone_set('Asia/Colombo');
 
-// Initialize facility data and error state.
+
 $facilities = [];
 $loadError = false;
 
-// Generate a CSRF token for facility status changes.
+
 if (
     !isset($_SESSION['facility_status_csrf']) ||
     !is_string($_SESSION['facility_status_csrf'])
@@ -28,7 +30,7 @@ if (
 
 $statusCsrfToken = $_SESSION['facility_status_csrf'];
 
-// Retrieve and clear success feedback.
+
 $feedback = $_SESSION['facility_admin_feedback'] ?? null;
 unset($_SESSION['facility_admin_feedback']);
 
@@ -59,34 +61,20 @@ try {
     $loadError = true;
 }
 
-// Safely escape database values before displaying them.
-function facilityAdminEscape(mixed $value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
 
-// Load the shared SportsHub header.
+$pageStylesheets = ['/assets/css/bookings.css'];
 require __DIR__ . '/../../includes/header.php';
 
 ?>
 
-<link rel="stylesheet" href="/assets/css/bookings.css">
 
-<main class="booking-page">
+<main class="booking-page booking-workflow-page booking-resource-admin-page sports-hub-workflow">
 
     <div class="booking-container">
 
         <section class="booking-introduction">
 
-            <p class="booking-eyebrow">
-                NSBM SPORTSHUB ADMIN
-            </p>
-
-            <h1>Facility Management</h1>
+<h1>Facility Management</h1>
 
             <p class="booking-intro-text">
                 Manage sports facilities and equipment.
@@ -117,7 +105,7 @@ require __DIR__ . '/../../includes/header.php';
                     class="facility-admin-success"
                     role="status"
                 >
-                    <?= facilityAdminEscape($feedback) ?>
+                    <?= sportsHubEscape($feedback) ?>
                 </div>
 
             <?php endif; ?>
@@ -185,26 +173,25 @@ require __DIR__ . '/../../includes/header.php';
                                     </td>
 
                                     <td>
-                                        <?= facilityAdminEscape(
+                                        <?= sportsHubEscape(
                                             $facility['res_name']
                                         ) ?>
                                     </td>
 
                                     <td>
-                                        <?= facilityAdminEscape(
+                                        <?= sportsHubEscape(
                                             $facility['res_type']
                                         ) ?>
                                     </td>
 
                                     <td>
-                                        <?= facilityAdminEscape(
-                                            $facility['location']
-                                                ?: 'Not specified'
+                                        <?= sportsHubEscape(
+                                            preg_replace('/^NSBM Green University\s*,.*$/i', 'NSBM Green University', (string)($facility['location'] ?: 'Not specified'))
                                         ) ?>
                                     </td>
 
                                     <td>
-                                        <?= facilityAdminEscape(
+                                        <?= sportsHubEscape(
                                             $facility['res_status']
                                         ) ?>
                                     </td>
@@ -217,9 +204,16 @@ require __DIR__ . '/../../includes/header.php';
 
                                             <a
                                                 href="/bookings/admin/edit.php?res_id=<?= (int) $facility['res_id'] ?>"
-                                                class="facility-admin-button"
+                                                class="facility-admin-button facility-button-secondary"
                                             >
                                                 Edit
+                                            </a>
+
+                                            <!-- Removal is separate from status changes and requires confirmation. -->
+                                            <a
+                                                href="/admin/delete.php?type=facility&amp;id=<?= (int) $facility['res_id'] ?>"
+                                                class="facility-admin-button button-danger-outline">
+                                                Delete
                                             </a>
 
                                             <!-- Activate or deactivate facility -->
@@ -232,7 +226,7 @@ require __DIR__ . '/../../includes/header.php';
                                                 <input
                                                     type="hidden"
                                                     name="csrf_token"
-                                                    value="<?= facilityAdminEscape($statusCsrfToken) ?>"
+                                                    value="<?= sportsHubEscape($statusCsrfToken) ?>"
                                                 >
 
                                                 <input
@@ -249,7 +243,7 @@ require __DIR__ . '/../../includes/header.php';
 
                                                 <button
                                                     type="submit"
-                                                    class="facility-admin-button"
+                                                    class="facility-admin-button <?= $facility['res_status'] === 'active' ? 'facility-danger-button' : '' ?>"
                                                 >
                                                     <?= $facility['res_status'] === 'active'
                                                         ? 'Deactivate'

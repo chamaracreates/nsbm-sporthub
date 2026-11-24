@@ -2,14 +2,8 @@
 
 require_once __DIR__ . '/../includes/db.php';
 
-function matchDetailEscape($value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES,
-        'UTF-8'
-    );
-}
+
+require_once __DIR__ . '/../includes/helpers.php';
 
 // Validate the match ID supplied through the URL.
 $matchId = filter_input(
@@ -64,147 +58,119 @@ if ($matchId === null || $matchId === false) {
     }
 }
 
+/* Source links for verified historical results (no extra database fields). */
+$officialMatchSources = [
+    'NSBM vs University of Colombo - Volleyball Friendly' =>
+        'https://www.nsbm.ac.lk/nsbm-and-university-of-colombo-friendly-volleyball-clash-2025/',
+    'NSBM vs Peradeniya - Mens Basketball Friendly' =>
+        'https://www.nsbm.ac.lk/thrilling-basketball-showdown-of-nsbm-vs-university-of-peradeniya/',
+    'NSBM vs Peradeniya - Womens Basketball Friendly' =>
+        'https://www.nsbm.ac.lk/thrilling-basketball-showdown-of-nsbm-vs-university-of-peradeniya/',
+    'NSBM vs Sabaragamuwa University - Sabra Super 7s Final 2025' =>
+        'https://www.nsbm.ac.lk/nsbm-rugby-team-emerges-as-champions-of-sabra-super-7s-rugby-tournament-2025/',
+];
+$officialMatchSource = $match
+    ? ($officialMatchSources[(string) $match['title']] ?? null)
+    : null;
+
 $pageStylesheets = ['/assets/css/matches.css'];
 
 include __DIR__ . '/../includes/header.php';
 
 ?>
 
-<main class="matches-page">
-
-    <section class="section-container matches-section">
-
-        <div class="matches-header">
-
-            <p class="section-label">
-                NSBM SPORTSHUB / MATCH DETAILS
-            </p>
-
-            <h1>
-                <?php if ($match): ?>
-                    <?php echo matchDetailEscape($match['title']); ?>
-                <?php else: ?>
-                    Match details.
-                <?php endif; ?>
-            </h1>
-
-            <p class="section-description">
-                Explore match information, participating teams
-                and results from campus sporting events.
-            </p>
-
+<main class="matches-page match-profile-page">
+    <?php if (!$match): ?>
+        <div class="shell match-profile-error">
+            <a class="match-profile-back" href="/matches/index.php">&larr; Back to fixtures</a>
+            <div class="match-profile-notice" role="alert">
+                <h1>Match details unavailable</h1>
+                <p><?= sportsHubEscape($errorMessage) ?></p>
+            </div>
         </div>
+    <?php else: ?>
+        <?php
+        // Select the match cover photograph using the associated sport.
+        $detailSportImages = [
+            'volleyball' => 'https://d3c539pel8wzjz.cloudfront.net/wp-content/uploads/2025/06/NSBM-University-of-Colombo-Friendly-Volleyball-Clash-2025.jpg',
+            'basketball' => 'https://d3c539pel8wzjz.cloudfront.net/wp-content/uploads/2025/06/Thrilling-Basketball-Showdown-of-NSBM-vs-University-of-Peradeniya-1200x600.jpg',
+            'rugby' => 'https://d3c539pel8wzjz.cloudfront.net/wp-content/uploads/2025/03/NSBM-Rugby-Team-Emerges-as-Champions-of-Sabra-Super-7s-Rugby-Tournament-2025-6-1037x600.jpg',
+        ];
+        $detailImage = $match ? ($detailSportImages[strtolower(trim((string)$match['sport']))] ?? '/assets/images/hero-main.webp') : '';
 
-        <?php if (!$match): ?>
+        $status = strtolower(trim((string) $match['match_status']));
+        $isCompleted = in_array($status, ['completed', 'finished'], true);
+        $hasScore = $isCompleted && $match['home_score'] !== null && $match['away_score'] !== null;
+        $isVolleyball = strcasecmp((string) $match['sport'], 'Volleyball') === 0;
+        $matchDate = DateTimeImmutable::createFromFormat('!Y-m-d', (string) $match['date']);
+        $venue = trim((string) $match['venue']);
+        ?>
 
-            <!-- Invalid or unavailable match -->
-            <div class="matches-empty">
-
-                <h2>Match unavailable.</h2>
-
-                <p>
-                    <?php echo matchDetailEscape($errorMessage); ?>
-                </p>
-
-                <a
-                    href="/matches/index.php"
-                    class="button button-outline"
-                    style="margin-top: 24px;">
-                    Back to matches
-                </a>
-
+        <section class="match-profile-cover" aria-labelledby="match-profile-title">
+            <div class="match-profile-image" aria-hidden="true">
+                <img src="<?= sportsHubEscape($detailImage) ?>" alt="" loading="eager" decoding="async">
             </div>
-
-        <?php else: ?>
-
-            <?php
-            $status = strtolower(trim($match['match_status']));
-
-            $isCompleted = in_array(
-                $status,
-                ['completed', 'finished'],
-                true
-            );
-            ?>
-
-            <!-- Selected match information -->
-            <article class="match-card">
-
-                <div class="match-card-meta">
-
-                    <span>
-                        <?php echo matchDetailEscape($match['sport']); ?>
-                    </span>
-
-                    <span>
-                        <?php echo matchDetailEscape($match['match_status']); ?>
-                    </span>
-
-                </div>
-
-                <h2>
-                    <?php echo matchDetailEscape($match['title']); ?>
-                </h2>
-
-                <!-- Participating teams and result -->
-                <div class="match-card-teams">
-
-                    <span>
-                        <?php echo matchDetailEscape($match['home_name']); ?>
-                    </span>
-
-                    <?php if ($isCompleted): ?>
-
-                        <strong>
-                            <?php echo (int) $match['home_score']; ?>
-                            -
-                            <?php echo (int) $match['away_score']; ?>
-                        </strong>
-
-                    <?php else: ?>
-
-                        <strong>VS</strong>
-
-                    <?php endif; ?>
-
-                    <span>
-                        <?php echo matchDetailEscape($match['away_name']); ?>
-                    </span>
-
-                </div>
-
-                <!-- Match scheduling information -->
-                <div class="match-card-details">
-
-                    <span>
-                        <?php echo date(
-                            'd M Y',
-                            strtotime($match['date'])
-                        ); ?>
-                    </span>
-
-                    <span>
-                        <?php echo matchDetailEscape($match['venue']); ?>
-                    </span>
-
-                </div>
-
-            </article>
-
-            <div style="margin-top: 30px;">
-
-                <a
-                    href="/matches/index.php"
-                    class="button button-outline">
-                    Back to matches
-                </a>
-
+            <div class="shell match-profile-heading">
+                <a class="match-profile-back" href="/matches/index.php">&larr; Back to fixtures</a>
+                <h1 id="match-profile-title"><?= sportsHubEscape($match['title']) ?></h1>
+                <p><?= sportsHubEscape($match['sport']) ?> &middot; <?= sportsHubEscape($match['home_name']) ?> vs <?= sportsHubEscape($match['away_name']) ?></p>
             </div>
+        </section>
 
-        <?php endif; ?>
+        <div class="shell match-profile-content">
+            <section class="match-profile-result" aria-labelledby="match-result-title">
+                <div class="match-profile-section-heading">
+                    <div>
+                        <p class="match-profile-sport"><?= sportsHubEscape($match['sport']) ?></p>
+                        <h2 id="match-result-title"><?= $isCompleted ? 'Final score' : 'Match details' ?></h2>
+                    </div>
+                    <span class="match-profile-status"><?= sportsHubEscape(ucfirst($status)) ?></span>
+                </div>
 
-    </section>
+                <div class="match-profile-scoreboard">
+                    <div class="match-profile-team match-profile-home">
+                        <span class="match-profile-team-label">Home</span>
+                        <strong><?= sportsHubEscape($match['home_name']) ?></strong>
+                    </div>
+                    <div class="match-profile-score">
+                        <?php if ($hasScore): ?>
+                            <strong class="match-profile-score-value">
+                                <span><?= (int) $match['home_score'] ?></span>
+                                <span class="match-profile-score-separator">&ndash;</span>
+                                <span><?= (int) $match['away_score'] ?></span>
+                            </strong>
+                            <span class="match-profile-score-caption"><?= $isVolleyball ? 'Sets' : 'Full time' ?></span>
+                        <?php elseif ($isCompleted): ?>
+                            <span class="match-profile-score-caption">Score not available</span>
+                        <?php else: ?>
+                            <strong class="match-profile-versus">VS</strong>
+                        <?php endif; ?>
+                    </div>
+                    <div class="match-profile-team match-profile-away">
+                        <span class="match-profile-team-label">Away</span>
+                        <strong><?= sportsHubEscape($match['away_name']) ?></strong>
+                    </div>
+                </div>
 
+                <dl class="match-profile-facts">
+                    <div>
+                        <dt>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>
+                            Date
+                        </dt>
+                        <dd><?= sportsHubEscape($matchDate !== false ? $matchDate->format('d M Y') : 'Not published') ?></dd>
+                    </div>
+                    <div>
+                        <dt>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 5-8 10-8 10S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                            Venue
+                        </dt>
+                        <dd><?= sportsHubEscape($venue !== '' ? $venue : 'Not published') ?></dd>
+                    </div>
+                </dl>
+            </section>
+        </div>
+    <?php endif; ?>
 </main>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>

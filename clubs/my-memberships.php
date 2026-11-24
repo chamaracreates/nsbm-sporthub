@@ -1,8 +1,10 @@
 <?php
-// NSBM SportsHub - My Club Memberships
-// Member 03 - Club Management
+
+// Student club membership management.
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/helpers.php';
+
 require_once __DIR__ . '/../includes/db.php';
 
 // Start authentication before displaying HTML.
@@ -14,14 +16,6 @@ if (current_user_role() !== 'student') {
     exit('Access denied.');
 }
 
-function myMembershipEscape($value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
 
 $memberships = [];
 $loadError = false;
@@ -58,10 +52,11 @@ try {
     $loadError = true;
 }
 
+$pageStylesheets = ['/assets/css/clubs.css'];
+
 require __DIR__ . '/../includes/header.php';
 ?>
 
-<link rel="stylesheet" href="/assets/css/clubs.css">
 
 <main class="clubs-page">
 
@@ -125,17 +120,17 @@ require __DIR__ . '/../includes/header.php';
                     <article class="my-membership-card">
 
                         <span class="clubs-sport">
-                            <?= myMembershipEscape($membership['sport']) ?>
+                            <?= sportsHubEscape($membership['sport']) ?>
                         </span>
 
                         <h2>
-                            <?= myMembershipEscape($membership['club_name']) ?>
+                            <?= sportsHubEscape($membership['club_name']) ?>
                         </h2>
 
                         <p>
                             Application status:
                             <strong class="my-membership-status">
-                                <?= myMembershipEscape(
+                                <?= sportsHubEscape(
                                     ucfirst($membership['status'])
                                 ) ?>
                             </strong>
@@ -157,7 +152,7 @@ require __DIR__ . '/../includes/header.php';
 
                             <p>
                                 Joined:
-                                <?= myMembershipEscape(
+                                <?= sportsHubEscape(
                                     $membership['joined_date'] ?? 'Not recorded'
                                 ) ?>
                             </p>

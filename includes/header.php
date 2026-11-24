@@ -3,12 +3,18 @@ require_once __DIR__ . '/auth.php';
 
 $headerRole = current_user_role();
 $headerLoggedIn = $headerRole !== null;
-$headerAccountUrl = $headerRole === 'student'
-    ? '/student/profile.php'
-    : '/login.php';
-$headerAccountLabel = $headerRole === 'student'
-    ? 'My profile'
-    : ($headerLoggedIn ? 'My account' : 'Log in');
+$headerAccountUrl = match ($headerRole) {
+    'student' => '/student/profile.php',
+    'admin' => '/admin/dashboard.php',
+    'coach', 'mic' => '/training/manage.php',
+    default => '/login.php',
+};
+$headerAccountLabel = match ($headerRole) {
+    'student' => 'My profile',
+    'admin' => 'Admin dashboard',
+    'coach', 'mic' => 'Training management',
+    default => 'Log in',
+};
 
 if (
     $headerLoggedIn &&
@@ -25,13 +31,15 @@ if (
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NSBM SportsHub</title>
+    <title><?= htmlspecialchars(isset($pageTitle) ? $pageTitle . ' | NSBM SportsHub' : 'NSBM SportsHub', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></title>
     <link rel="stylesheet" href="/assets/css/style.css">
 
     <?php foreach (($pageStylesheets ?? []) as $stylesheet): ?>
         <link rel="stylesheet" href="<?= htmlspecialchars($stylesheet, ENT_QUOTES, 'UTF-8') ?>">
     <?php endforeach; ?>
 
+    <script defer src="/assets/js/navigation-icons.js"></script>
+    <script defer src="/assets/js/site-interactions.js"></script>
 </head>
 
 <body>
@@ -40,7 +48,7 @@ if (
             <!-- Site branding -->
             <a href="/index.php" class="brand">
                 <span class="brand-text">
-                    <span>SportsHub</span>
+                    <span>NSBM SportsHub</span>
                 </span>
             </a>
 
@@ -56,15 +64,11 @@ if (
 
             <!-- Desktop and tablet account actions -->
             <div class="account-nav">
+                <a href="/search.php" class="phase13-search-trigger" aria-label="Search SportsHub" title="Search SportsHub (⌘ K)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+                </a>
                 <?php if ($headerLoggedIn): ?>
-                    <a href="<?= htmlspecialchars($headerAccountUrl, ENT_QUOTES, 'UTF-8') ?>">
-                        <?= htmlspecialchars($headerAccountLabel, ENT_QUOTES, 'UTF-8') ?>
-                    </a>
-                    <form action="/logout.php" method="POST" class="header-logout-form">
-                        <input type="hidden" name="csrf_token"
-                               value="<?= htmlspecialchars($_SESSION['logout_csrf'], ENT_QUOTES, 'UTF-8') ?>">
-                        <button type="submit" class="header-logout-button">Log out</button>
-                    </form>
+                    <?php require __DIR__ . '/profile-menu.php'; ?>
                 <?php else: ?>
                     <a href="/login.php">Log in</a>
                     <a href="/register.php" class="join-btn">Register</a>
@@ -73,24 +77,21 @@ if (
 
             <!-- Mobile navigation controls -->
             <div class="mobile-controls">
-                <a
-                    href="<?= htmlspecialchars($headerAccountUrl, ENT_QUOTES, 'UTF-8') ?>"
-                    class="mobile-account-link"
-                    aria-label="<?= htmlspecialchars($headerAccountLabel, ENT_QUOTES, 'UTF-8') ?>">
-                    <svg
-                        viewBox="0 0 24 24"
-                        width="24"
-                        height="24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        aria-hidden="true">
-                        <circle cx="12" cy="8" r="4"></circle>
-                        <path d="M4 21a8 8 0 0 1 16 0"></path>
-                    </svg>
+                <a href="/search.php" class="phase13-search-trigger" aria-label="Search SportsHub" title="Search SportsHub">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
                 </a>
+                <?php if ($headerLoggedIn): ?>
+                    <?php require __DIR__ . '/profile-menu.php'; ?>
+                <?php else: ?>
+                    <a href="/login.php" class="mobile-account-link" aria-label="Log in">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="none"
+                             stroke="currentColor" stroke-width="1.8"
+                             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="8" r="4"></circle>
+                            <path d="M4 21a8 8 0 0 1 16 0"></path>
+                        </svg>
+                    </a>
+                <?php endif; ?>
 
                 <details class="mobile-menu">
                     <summary
@@ -118,22 +119,6 @@ if (
                         <a href="/matches/index.php">Fixtures</a>
                         <a href="/training/index.php">Training</a>
                         <a href="/bookings/index.php">Facilities</a>
-
-                        <div class="mobile-menu-account">
-                            <?php if ($headerLoggedIn): ?>
-                                <a href="<?= htmlspecialchars($headerAccountUrl, ENT_QUOTES, 'UTF-8') ?>">
-                                    <?= htmlspecialchars($headerAccountLabel, ENT_QUOTES, 'UTF-8') ?>
-                                </a>
-                                <form action="/logout.php" method="POST" class="header-logout-form">
-                                    <input type="hidden" name="csrf_token"
-                                           value="<?= htmlspecialchars($_SESSION['logout_csrf'], ENT_QUOTES, 'UTF-8') ?>">
-                                    <button type="submit" class="header-logout-button">Log out</button>
-                                </form>
-                            <?php else: ?>
-                                <a href="/login.php">Log in</a>
-                                <a href="/register.php">Register</a>
-                            <?php endif; ?>
-                        </div>
                     </nav>
                 </details>
             </div>

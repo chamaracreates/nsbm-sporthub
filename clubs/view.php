@@ -2,18 +2,12 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/helpers.php';
+
 require_once __DIR__ . '/../includes/auth.php';
 
 auth_start();
 
-function clubViewEscape(mixed $value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
 
 // Validate the club ID from the URL.
 $clubId = filter_input(
@@ -55,23 +49,9 @@ if (!$loadError && !$club) {
 }
 
 // Existing project images.
-$clubImages = [
-    'cricket' => '/assets/images/cricket.jpg',
-    'badminton' => '/assets/images/badminton.jpg',
-    'rugby' => '/assets/images/rugby.jpg',
-    'athletics' => '/assets/images/athletics.jpg',
-    'chess' => '/assets/images/chess.jpg',
-    'martial arts' => '/assets/images/martialarts.jpg',
-    'netball' => '/assets/images/netball.jpg',
-    'swimming' => '/assets/images/swimming.jpg',
-    'table tennis' => '/assets/images/tabletennis.jpg',
-    'tennis' => '/assets/images/tennis.jpg',
-    'volleyball' => '/assets/images/volleyball.jpg'
-];
 
 $image = $club
-    ? ($clubImages[strtolower(trim($club['sport']))]
-        ?? '/assets/images/club-marks/general.svg')
+    ? (sportsHubClubCover($club['sport']) ?: '/assets/images/hero-main.webp')
     : '';
 
 /* Load assigned MICs and coaches */
@@ -116,7 +96,6 @@ if ($club && !$loadError) {
     }
 }
 
-require __DIR__ . '/../includes/header.php';
 
 /* Load the club captain and vice-captain */
 
@@ -210,10 +189,54 @@ if ($club && $isStudent) {
     }
 }
 
+$pageStylesheets = ['/assets/css/clubs.css'];
+require __DIR__ . '/../includes/header.php';
 ?>
 
-<link rel="stylesheet" href="/assets/css/clubs.css">
+<?php
+// Find the next scheduled training session for the selected club.
+$nsbmNextTraining = null;
+if ($club && !$loadError) {
+    try {
+        $upcomingTraining = db()->prepare(
+            "SELECT session_id, title, date, start_time, end_time
+             FROM training_sessions
+             WHERE club_id = :club_id
+               AND TIMESTAMP(date, end_time) > NOW()
+             ORDER BY date ASC, start_time ASC, session_id ASC
+             LIMIT 1"
+        );
+        $upcomingTraining->execute(['club_id' => (int)$club['club_id']]);
+        $nextRecord = $upcomingTraining->fetch(PDO::FETCH_ASSOC);
+        if (is_array($nextRecord)) {
+            $nsbmNextTraining = $nextRecord;
+        }
+    } catch (Throwable $exception) {
+        error_log('Club next training lookup: ' . $exception->getMessage());
+    }
+}
 
+// Retrieve published news associated with the current active club.
+$phase13ClubHighlights = [];
+$phase14NewsImageColumn = 'NULL AS image_path';
+if ($club && !$loadError) {
+    try {
+
+        if (db()->query("SHOW COLUMNS FROM club_news LIKE 'image_path'")->fetch(PDO::FETCH_ASSOC)) {
+            $phase14NewsImageColumn = 'image_path';
+        }
+        $newsStmt = db()->prepare(
+            "SELECT title, summary, published_at, {$phase14NewsImageColumn}
+             FROM club_news WHERE club_id = ? AND status = 'published'
+             ORDER BY published_at DESC, news_id DESC LIMIT 6"
+        );
+        $newsStmt->execute([(int) $club['club_id']]);
+        $phase13ClubHighlights = $newsStmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Throwable $e) {
+        error_log('Club highlights loading: ' . $e->getMessage());
+    }
+}
+?>
 <main class="clubs-page">
 
     <div class="shell club-profile">
@@ -240,30 +263,58 @@ if ($club && $isStudent) {
 
         <?php else: ?>
 
-            <section class="club-profile-header">
-
-                <div class="club-profile-heading">
-                    <span class="clubs-sport">
-                        <?= clubViewEscape($club['sport']) ?>
-                    </span>
-
-                    <h1>
-                        <?= clubViewEscape($club['club_name']) ?>
-                    </h1>
-
-                    <p>
-                        <?= clubViewEscape($club['description']) ?>
-                    </p>
-                </div>
-
-                <div class="club-profile-image">
+            <section class="club-profile-header" aria-labelledby="club-profile-title">
+                <div class="club-profile-image" aria-hidden="true">
                     <img
-                        src="<?= clubViewEscape($image) ?>"
-                        alt="<?= clubViewEscape($club['club_name']) ?>"
+                        class="club-profile-hero-image"
+                        src="<?= sportsHubEscape($image) ?>"
+                        alt=""
+                        loading="eager"
+                        decoding="async"
                     >
                 </div>
 
+                <div class="club-profile-heading">
+                    <h1 id="club-profile-title">
+                        <?= sportsHubEscape($club['club_name']) ?>
+                    </h1>
+                    <p><?= sportsHubEscape($club['description']) ?></p>
+
+                    <div class="club-profile-action">
+                        <?php if (!is_logged_in()): ?>
+                            <a href="/login.php" class="club-apply-button">Join us</a>
+                        <?php elseif ($isStudent && $membershipCheckFailed): ?>
+                            <p class="club-hero-status" role="alert">
+                                Membership status is temporarily unavailable.
+                            </p>
+                        <?php elseif ($isStudent && $membershipStatus === null): ?>
+                            <form action="/clubs/join.php" method="post">
+                                <input type="hidden" name="club_id"
+                                    value="<?= (int) $club['club_id'] ?>">
+                                <input type="hidden" name="csrf_token"
+                                    value="<?= sportsHubEscape($csrfToken) ?>">
+                                <button type="submit" class="club-apply-button">Join us</button>
+                            </form>
+                        <?php elseif ($isStudent): ?>
+                            <p class="club-hero-status" role="status">
+                                Membership: <strong><?= sportsHubEscape(ucfirst($membershipStatus)) ?></strong>
+                            </p>
+                        <?php endif; ?>
+                    </div>
+                </div>
             </section>
+
+            <?php if ($nsbmNextTraining !== null): ?>
+            <section class="nsbm-club-next-training" aria-labelledby="club-next-training-heading">
+                <h2 id="club-next-training-heading">Next training session</h2>
+                <p class="nsbm-next-training-name"><?= sportsHubEscape($nsbmNextTraining['title']) ?></p>
+                <div class="nsbm-next-training-meta">
+                    <span><strong>Date</strong> <?= sportsHubEscape(date('D, d M Y', strtotime((string)$nsbmNextTraining['date']))) ?></span>
+                    <span><strong>Time</strong> <?= sportsHubEscape(date('g:i A', strtotime((string)$nsbmNextTraining['start_time']))) ?> – <?= sportsHubEscape(date('g:i A', strtotime((string)$nsbmNextTraining['end_time']))) ?></span>
+                </div>
+                <a class="nsbm-next-training-link" href="/training/index.php">View training schedule</a>
+            </section>
+            <?php endif; ?>
 
             <section class="club-profile-info">
 
@@ -271,7 +322,7 @@ if ($club && $isStudent) {
                     <h2>About the club</h2>
 
                     <p>
-                        <?= clubViewEscape($club['description']) ?>
+                        <?= sportsHubEscape($club['description']) ?>
                     </p>
                 </div>
 
@@ -280,13 +331,13 @@ if ($club && $isStudent) {
 
                     <p>
                         <strong>Sport:</strong>
-                        <?= clubViewEscape($club['sport']) ?>
+                        <?= sportsHubEscape($club['sport']) ?>
                     </p>
 
                     <p>
                         <strong>Email:</strong>
-                        <a href="mailto:<?= clubViewEscape($club['club_email']) ?>">
-                            <?= clubViewEscape($club['club_email']) ?>
+                        <a href="mailto:<?= sportsHubEscape($club['club_email']) ?>">
+                            <?= sportsHubEscape($club['club_email']) ?>
                         </a>
                     </p>
 
@@ -298,81 +349,9 @@ if ($club && $isStudent) {
 
             </section>
 
-<section class="club-membership">
-
-    <h2>Join this club</h2>
-
-    <p>
-        Become part of the NSBM SportsHub community.
-        Apply for membership and participate in club activities.
-    </p>
-
-    <?php if (!is_logged_in()): ?>
-
-        <p>Please log in to submit a membership application.</p>
-
-        <a href="/login.php" class="club-apply-button">
-            Log in to apply
-        </a>
-
-    <?php elseif (!$isStudent): ?>
-
-        <p>Membership applications are available to students only.</p>
-
-    <?php elseif ($membershipCheckFailed): ?>
-
-        <p role="alert">
-            Unable to check your membership status.
-            Please try again later.
-        </p>
-
-    <?php elseif ($membershipStatus !== null): ?>
-
-        <p>
-            Your membership status:
-            <strong class="club-membership-status">
-                <?= clubViewEscape(ucfirst($membershipStatus)) ?>
-            </strong>
-        </p>
-
-        <?php if ($membershipStatus === 'pending'): ?>
-            <p>Your application is awaiting administrator approval.</p>
-        <?php elseif ($membershipStatus === 'approved'): ?>
-            <p>You are an approved member of this club.</p>
-        <?php elseif ($membershipStatus === 'rejected'): ?>
-            <p>Your application was not approved.</p>
-        <?php endif; ?>
-
-    <?php else: ?>
-
-        <form action="/clubs/join.php" method="post">
-
-            <input
-                type="hidden"
-                name="club_id"
-                value="<?= (int) $club['club_id'] ?>"
-            >
-
-            <input
-                type="hidden"
-                name="csrf_token"
-                value="<?= clubViewEscape($csrfToken) ?>"
-            >
-
-            <button type="submit" class="club-apply-button">
-                Apply to join
-            </button>
-
-        </form>
-
-    <?php endif; ?>
-
-</section>
-
 <section class="club-staff-section">
 
     <div class="club-staff-heading">
-        <span class="clubs-sport">CLUB MANAGEMENT</span>
         <h2>MICs &amp; Coaches</h2>
         <p>
             Meet the staff supporting training,
@@ -410,14 +389,14 @@ if ($club && $isStudent) {
                     </span>
 
                     <h3>
-                        <?= clubViewEscape($staff['staff_name']) ?>
+                        <?= sportsHubEscape($staff['staff_name']) ?>
                     </h3>
 
                     <?php if (!empty($staff['specialization'])): ?>
 
                         <p>
                             Specialization:
-                            <?= clubViewEscape(
+                            <?= sportsHubEscape(
                                 $staff['specialization']
                             ) ?>
                         </p>
@@ -437,7 +416,6 @@ if ($club && $isStudent) {
 <section class="club-staff-section">
 
     <div class="club-staff-heading">
-        <span class="clubs-sport">CLUB LEADERSHIP</span>
 
         <h2>Captain &amp; Vice-Captain</h2>
 
@@ -477,7 +455,7 @@ if ($club && $isStudent) {
                     </span>
 
                     <h3>
-                        <?= clubViewEscape(
+                        <?= sportsHubEscape(
                             $leader['student_name']
                         ) ?>
                     </h3>
@@ -495,6 +473,74 @@ if ($club && $isStudent) {
         <?php endif; ?>
 
     </div>
+
+
+<?php if ($club && !$loadError && $phase13ClubHighlights): ?>
+<?php
+// Use article-specific photographs for club news.
+$officialNewsImages = array_column(sportsHubOfficialNews(), 'image', 'source');
+?>
+<section class="shell phase13-club-highlights" id="club-highlights" aria-labelledby="phase13-club-news-title">
+    <h2 id="phase13-club-news-title">Latest club news</h2>
+    <div class="phase13-club-highlights-list">
+        <?php foreach ($phase13ClubHighlights as $story): ?>
+            <?php
+            $rawSummary = trim((string) ($story['summary'] ?? ''));
+            $source = '';
+            if (preg_match('~Official source:\s*(https?://[^\s<>]+)~iu', $rawSummary, $sourceMatch)) {
+                $candidate = rtrim($sourceMatch[1], '.,)');
+                $host = strtolower((string) parse_url($candidate, PHP_URL_HOST));
+                if ($host === 'www.nsbm.ac.lk' || $host === 'nsbm.ac.lk') {
+                    $source = $candidate;
+                }
+            }
+            // Preserve the full story text while removing the importer's attribution paragraph.
+            $summary = preg_replace(
+                '~\s*Originally reported by NSBM on\s+\d{4}-\d{2}-\d{2}\.\s*Official source:\s*https?://[^\s<>]+~iu',
+                '',
+                $rawSummary
+            );
+            $summary = trim($summary ?? $rawSummary);
+
+            // Use the original article date when available (the database publication
+            // timestamp may instead be the date the historical news was imported).
+            $displayDate = substr((string) ($story['published_at'] ?? ''), 0, 10);
+            if (preg_match('/Originally reported by NSBM on\s+(\d{4}-\d{2}-\d{2})/iu', $rawSummary, $dateMatch)) {
+                $displayDate = $dateMatch[1];
+            }
+            $dateTime = DateTimeImmutable::createFromFormat('!Y-m-d', $displayDate);
+            $validDate = $dateTime instanceof DateTimeImmutable && $dateTime->format('Y-m-d') === $displayDate;
+
+            $newsImage = sportsHubNewsCover($story, $officialNewsImages[$source] ?? '');
+            ?>
+            <article class="club-news-article">
+                <div class="club-news-photo<?= $newsImage === '' ? ' club-news-photo--empty' : '' ?>">
+                    <?php if ($newsImage !== ''): ?>
+                        <img src="<?= sportsHubEscape($newsImage) ?>"
+                             alt="<?= sportsHubEscape('Photo from ' . (string) ($story['title'] ?? 'club news')) ?>"
+                             loading="lazy" decoding="async">
+                    <?php else: ?>
+                        <span>SportsHub news</span>
+                    <?php endif; ?>
+                </div>
+                <div class="club-news-card-body">
+                    <?php if ($validDate): ?>
+                        <time datetime="<?= sportsHubEscape($displayDate) ?>">
+                            <?= sportsHubEscape($dateTime->format('j M Y')) ?>
+                        </time>
+                    <?php endif; ?>
+                    <h3><?= sportsHubEscape($story['title']) ?></h3>
+                    <p><?= sportsHubEscape($summary) ?></p>
+                    <?php if ($source !== ''): ?>
+                        <a class="club-news-original" href="<?= sportsHubEscape($source) ?>"
+                           target="_blank" rel="noopener noreferrer">Read original</a>
+                    <?php endif; ?>
+                </div>
+            </article>
+        <?php endforeach; ?>
+    </div>
+</section>
+<?php endif; ?>
 
 </main>
 

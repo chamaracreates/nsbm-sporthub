@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/helpers.php';
+
 require_once __DIR__ . '/timezone.php';
 
 /* Require an authenticated staff account. */
@@ -21,14 +23,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') {
 }
 
 /* Escape dynamic content before rendering. */
-function trainingManageEscape(mixed $value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
+
 
 $isAdmin = $userRole === 'admin';
 $clubs = [];
@@ -124,7 +119,7 @@ require __DIR__ . '/../includes/header.php';
 
 ?>
 
-<main class="training-page">
+<main class="training-page sports-hub-workflow">
 
     <div class="training-container">
 
@@ -158,83 +153,9 @@ require __DIR__ . '/../includes/header.php';
 
         <?php else: ?>
 
-            <section aria-labelledby="managed-clubs-heading">
-
-                <div class="training-section-heading">
-
-                    <div>
-
-                        <p class="training-eyebrow">
-                            CLUB MANAGEMENT
-                        </p>
-
-                        <h2 id="managed-clubs-heading">
-                            Managed Sports Clubs
-                        </h2>
-
-                    </div>
-
-                    <span class="training-session-count">
-                        <?php echo count($clubs); ?> clubs
-                    </span>
-
-                </div>
-
-                <?php if (empty($clubs)): ?>
-
-                    <div class="training-notice">
-
-                        <h3>No sports clubs available</h3>
-
-                        <p>
-                            There are currently no active
-                            sports clubs available for
-                            management under this account.
-                        </p>
-
-                    </div>
-
-                <?php else: ?>
-
-                    <div class="training-grid">
-
-                        <?php foreach ($clubs as $club): ?>
-
-                            <article class="training-card">
-
-                                <div class="training-card-header">
-
-                                    <span class="training-sport">
-                                        <?php
-                                        echo trainingManageEscape(
-                                            $club['sport']
-                                        );
-                                        ?>
-                                    </span>
-
-                                </div>
-
-                                <h3 class="training-card-title">
-                                    <?php
-                                    echo trainingManageEscape(
-                                        $club['club_name']
-                                    );
-                                    ?>
-                                </h3>
-
-                            </article>
-
-                        <?php endforeach; ?>
-
-                    </div>
-
-                <?php endif; ?>
-
-            </section>
-
             <section
                 aria-labelledby="managed-sessions-heading"
-                style="margin-top: 70px;">
+                class="training-managed-sessions-v15">
 
                 <div class="training-section-heading">
 
@@ -295,7 +216,7 @@ require __DIR__ . '/../includes/header.php';
 
                                 <strong>
                                     <?php
-                                    echo trainingManageEscape(
+                                    echo sportsHubEscape(
                                         $session['title']
                                     );
                                     ?>
@@ -303,7 +224,7 @@ require __DIR__ . '/../includes/header.php';
 
                                 <span>
                                     <?php
-                                    echo trainingManageEscape(
+                                    echo sportsHubEscape(
                                         $session['club_name']
                                     );
                                     ?>
@@ -311,7 +232,7 @@ require __DIR__ . '/../includes/header.php';
 
                                 <span>
                                     <?php
-                                    echo trainingManageEscape(
+                                    echo sportsHubEscape(
                                         $session['date']
                                     );
                                     ?>
@@ -347,6 +268,14 @@ require __DIR__ . '/../includes/header.php';
                                             Editing unavailable
                                         </span>
 
+                                    <?php endif; ?>
+
+                                    <?php if ($isAdmin): ?>
+                                        <a
+                                            href="/admin/delete.php?type=training&amp;id=<?= (int) $session['session_id'] ?>"
+                                            class="training-session-action button-danger-outline">
+                                            Delete session
+                                        </a>
                                     <?php endif; ?>
 
                                 </div>

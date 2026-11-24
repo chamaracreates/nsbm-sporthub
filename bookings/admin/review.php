@@ -48,6 +48,8 @@ $pdo = null;
 
 try {
     $pdo = db();
+    // Read the latest committed schedule after acquiring the facility lock.
+    $pdo->exec("SET TRANSACTION ISOLATION LEVEL READ COMMITTED");
     $pdo->beginTransaction();
 
     // Identify the facility associated with this booking.
@@ -114,6 +116,16 @@ try {
         http_response_code(409);
         exit('This booking is no longer pending.');
     }
+    // past sessions cannot be newly approved.
+    if (
+        $action === 'approve' &&
+        ($booking['date'] . ' ' . $booking['starts_at']) <= date('Y-m-d H:i:s')
+    ) {
+        $pdo->rollBack();
+        $_SESSION['booking_admin_error'] = 'Cannot approve a booking whose start time has passed.';
+        header('Location: /bookings/admin/requests.php', true, 303);
+        exit;
+    }
 
     if ($action === 'approve') {
         if ($resource['res_status'] !== 'active') {
@@ -144,18 +156,52 @@ try {
         ]);
 
         if ($conflictStatement->fetch()) {
-    $pdo->rollBack();
+            $pdo->rollBack();
 
-    $_SESSION['booking_admin_error'] =
-        'Cannot approve: another approved booking overlaps this time.';
+            $_SESSION['booking_admin_error'] =
+                'Cannot approve: another approved booking overlaps this time.';
 
-    header(
-        'Location: /bookings/admin/requests.php',
-        true,
-        303
-    );
-    exit;
-}
+            header(
+                'Location: /bookings/admin/requests.php',
+                true,
+                303
+            );
+            exit;
+        }
+    }
+
+    // Recheck training conflicts before approving the booking.
+    if ($action === 'approve') {
+        $trainingCheck = $pdo->prepare(
+            "SELECT session_id
+             FROM training_sessions
+             WHERE location = :resource_id
+               AND date = :session_date
+               AND start_time < :requested_end
+               AND end_time > :requested_start
+             LIMIT 1"
+        );
+
+        $trainingCheck->execute([
+            'resource_id' => $booking['res_id'],
+            'session_date' => $booking['date'],
+            'requested_end' => $booking['ends_at'],
+            'requested_start' => $booking['starts_at']
+        ]);
+
+        if ($trainingCheck->fetchColumn() !== false) {
+            $pdo->rollBack();
+
+            $_SESSION['booking_admin_error'] =
+                'Cannot approve: a training session overlaps this time.';
+
+            header(
+                'Location: /bookings/admin/requests.php',
+                true,
+                303
+            );
+            exit;
+        }
     }
 
     $newStatus = $action === 'approve'

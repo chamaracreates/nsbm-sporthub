@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/helpers.php';
+
 require_once __DIR__ . '/../includes/db.php';
 
 $userId = require_login();
@@ -21,20 +23,6 @@ if (!in_array($method, ['GET', 'POST'], true)) {
     exit('Method not allowed.');
 }
 
-function fixtureEscape(mixed $value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
-
-function fixtureInput(string $key): string
-{
-    $value = $_POST[$key] ?? '';
-    return is_string($value) ? trim($value) : '';
-}
 
 function fixtureId(mixed $value): int
 {
@@ -86,7 +74,7 @@ $form = [
 
 if ($method === 'POST') {
     foreach (array_keys($form) as $key) {
-        $form[$key] = fixtureInput($key);
+        $form[$key] = sportsHubInput($key);
     }
 }
 
@@ -195,13 +183,136 @@ try {
     $loadError = true;
 }
 
-// Process the submitted fixture.
-if ($method === 'POST' && !$loadError) {
+// Allow administrators to create fixtures without a tournament association.
+// Staff are intentionally restricted to their authorized tournament clubs.
+$requestedMode = $method === 'POST'
+    ? sportsHubInput('match_mode')
+    : (is_string($_GET['mode'] ?? null) ? $_GET['mode'] : '');
+
+if ($method === 'POST' && $requestedMode === 'standalone' && $userRole !== 'admin') {
+    http_response_code(403);
+    exit('Only administrators can create independent fixtures.');
+}
+
+$standaloneMode = $userRole === 'admin'
+    && ($requestedMode === 'standalone'
+        || ($method === 'GET' && $requestedMode !== 'tournament' && $tournaments === []));
+
+$standalone = [
+    'title' => sportsHubInput('title'),
+    'home_name' => sportsHubInput('home_name'),
+    'away_name' => sportsHubInput('away_name'),
+    'sport' => sportsHubInput('sport'),
+    'date' => sportsHubInput('date'),
+    'venue' => sportsHubInput('venue'),
+];
+
+// A separately reviewed migration is required, not executed by this script.
+$standaloneSchemaReady = false;
+if ($standaloneMode && !$loadError) {
+    try {
+        $nullability = $pdo->query(
+            "SELECT COLUMN_NAME, IS_NULLABLE
+             FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND TABLE_NAME = 'matches'
+               AND COLUMN_NAME IN (
+                   'home_team_id', 'away_team_id', 'home_u_id', 'away_u_id'
+               )"
+        )->fetchAll(PDO::FETCH_KEY_PAIR);
+
+        $standaloneSchemaReady = count($nullability) === 4
+            && count(array_filter(
+                $nullability,
+                static fn($value): bool => $value === 'YES'
+            )) === 4;
+    } catch (Throwable $error) {
+        error_log('Independent fixture schema check: ' . $error->getMessage());
+    }
+}
+
+// Independent fixtures use the already-present team-name and sport fields;
+// optional tournament, roster and representative IDs remain NULL.
+if ($method === 'POST' && $standaloneMode && !$loadError) {
+    if (!hash_equals($csrfToken, sportsHubInput('csrf_token'))) {
+        $errors[] = 'Your session expired. Refresh and submit again.';
+    }
+    if (!$standaloneSchemaReady) {
+        $errors[] = 'Independent fixtures are not enabled in the database yet. '
+            . 'An administrator must apply migration 003 after a backup.';
+    }
+
+    $limits = [
+        'title' => [3, 100, 'Match title'],
+        'home_name' => [2, 255, 'Home team name'],
+        'away_name' => [2, 255, 'Away team name'],
+        'sport' => [2, 255, 'Sport'],
+        'venue' => [2, 255, 'Venue'],
+    ];
+    foreach ($limits as $field => [$minimum, $maximum, $label]) {
+        $length = function_exists('mb_strlen')
+            ? mb_strlen($standalone[$field], 'UTF-8')
+            : strlen($standalone[$field]);
+        if ($length < $minimum || $length > $maximum) {
+            $errors[] = sprintf('%s must contain %d–%d characters.', $label, $minimum, $maximum);
+        }
+    }
+    if (strcasecmp($standalone['home_name'], $standalone['away_name']) === 0) {
+        $errors[] = 'Home and away teams must be different.';
+    }
+
+    $parsedDate = preg_match('/^\d{4}-\d{2}-\d{2}$/D', $standalone['date']) === 1
+        ? DateTimeImmutable::createFromFormat('!Y-m-d', $standalone['date'])
+        : false;
+    if ($parsedDate === false || $parsedDate->format('Y-m-d') !== $standalone['date']) {
+        $errors[] = 'Enter a valid match date.';
+    } elseif ($standalone['date'] < $today) {
+        $errors[] = 'The fixture date cannot be in the past.';
+    }
+
+    if ($errors === []) {
+        try {
+            $pdo->beginTransaction();
+            $insertStandalone = $pdo->prepare(
+                "INSERT INTO matches (
+                    t_id, title, home_team_id, away_team_id,
+                    home_name, away_name, home_u_id, away_u_id,
+                    sport, date, venue, match_status, home_score, away_score
+                ) VALUES (
+                    NULL, :title, NULL, NULL,
+                    :home_name, :away_name, NULL, NULL,
+                    :sport, :match_date, :venue, 'scheduled', 0, 0
+                )"
+            );
+            $insertStandalone->execute([
+                'title' => $standalone['title'],
+                'home_name' => $standalone['home_name'],
+                'away_name' => $standalone['away_name'],
+                'sport' => $standalone['sport'],
+                'match_date' => $standalone['date'],
+                'venue' => $standalone['venue'],
+            ]);
+            $newMatchId = (int) $pdo->lastInsertId();
+            $pdo->commit();
+            header('Location: /matches/view.php?id=' . $newMatchId, true, 303);
+            exit;
+        } catch (Throwable $error) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log('Independent fixture creation: ' . $error->getMessage());
+            $errors[] = 'Unable to save the fixture. Check the database migration and logs.';
+        }
+    }
+}
+
+// Process the submitted tournament fixture.
+if ($method === 'POST' && !$loadError && !$standaloneMode) {
 
     if (
         !hash_equals(
             $csrfToken,
-            fixtureInput('csrf_token')
+            sportsHubInput('csrf_token')
         )
     ) {
         $errors[] = 'Invalid form token. Refresh and try again.';
@@ -279,7 +390,7 @@ if ($method === 'POST' && !$loadError) {
 
             /*
              * Lock the parent tournament before reading the current roster.
-             * Member 05's roster workflow locks this same row first.
+             * The tournament roster update process acquires the same lock.
              */
             $lockTournament = $pdo->prepare(
                 "SELECT t_id
@@ -454,7 +565,7 @@ $pageStylesheets = ['/assets/css/matches.css'];
 include __DIR__ . '/../includes/header.php';
 ?>
 
-<main class="matches-page">
+<main class="matches-page sports-hub-workflow">
     <section class="section-container matches-section">
 
         <div class="matches-header">
@@ -465,166 +576,202 @@ include __DIR__ . '/../includes/header.php';
             <h1>Create match fixture.</h1>
 
             <p class="section-description">
-                Schedule a match using registered tournament teams.
+                Schedule a standalone fixture or a tournament match.
             </p>
         </div>
 
-        <?php if ($loadError): ?>
+        <!-- Independent and tournament fixture entry options. -->
+        <?php if ($userRole === 'admin' && !$loadError): ?>
+            <nav class="match-mode-switch" aria-label="Fixture type">
+                <a href="/matches/create.php?mode=standalone"
+                   class="<?= $standaloneMode ? 'active' : '' ?>"
+                   <?= $standaloneMode ? 'aria-current="page"' : '' ?>>
+                    Standalone match
+                </a>
+                <a href="/matches/create.php?mode=tournament"
+                   class="<?= !$standaloneMode ? 'active' : '' ?>"
+                   <?= !$standaloneMode ? 'aria-current="page"' : '' ?>>
+                    Tournament match
+                </a>
+            </nav>
+        <?php endif; ?>
 
+        <?php if ($loadError): ?>
             <div class="matches-empty">
-                <h2>Unable to load tournament information.</h2>
+                <h2>Fixtures could not be loaded</h2>
                 <p>Please try again later.</p>
             </div>
 
-        <?php elseif ($tournaments === []): ?>
-
-            <div class="matches-empty">
-                <h2>No eligible tournaments available.</h2>
-                <p>
-                    Create a tournament or obtain an active
-                    staff assignment before scheduling matches.
-                </p>
+        <?php elseif ($standaloneMode): ?>
+            <div class="match-create-intro">
+                <h2>Schedule a standalone match</h2>
+                <p>Create a friendly fixture or campus match without setting up a tournament or registering teams first.</p>
             </div>
 
-        <?php else: ?>
-
-            <form method="get"
-                action="/matches/create.php"
-                class="match-create-form">
-
-                <label for="tournament">
-                    Select tournament
-                </label>
-
-                <select name="tournament"
-                    id="tournament"
-                    required>
-
-                    <option value="">Choose tournament</option>
-
-                    <?php foreach ($tournaments as $tournament): ?>
-                        <option
-                            value="<?= (int) $tournament['t_id'] ?>"
-                            <?= $tournamentId === (int) $tournament['t_id']
-                                ? 'selected' : '' ?>>
-                            <?= fixtureEscape($tournament['t_name']) ?>
-                        </option>
-                    <?php endforeach; ?>
-
-                </select>
-
-                <button type="submit" class="button button-accent">
-                    Load teams
-                </button>
-            </form>
+            <?php if (!$standaloneSchemaReady): ?>
+                <div class="match-create-notice" role="status">
+                    Standalone fixtures require nullable tournament and team references in the
+                    <code>matches</code> table. Update the existing database schema before
+                    creating standalone fixtures; do not reimport the full schema over existing data.
+                </div>
+            <?php endif; ?>
 
             <?php if ($errors !== []): ?>
                 <div class="match-create-errors" role="alert">
                     <?php foreach ($errors as $error): ?>
-                        <p><?= fixtureEscape($error) ?></p>
+                        <p><?= sportsHubEscape($error) ?></p>
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
 
-            <?php if ($selectedTournament !== null): ?>
+            <form class="match-create-form standalone-fixture-form"
+                  action="/matches/create.php?mode=standalone" method="post">
+                <input type="hidden" name="csrf_token" value="<?= sportsHubEscape($csrfToken) ?>">
+                <input type="hidden" name="match_mode" value="standalone">
 
-                <?php if (count($teamsById) < 2): ?>
+                <div class="match-field">
+                    <label for="standalone-title">Match title</label>
+                    <input id="standalone-title" name="title" maxlength="100" required
+                           placeholder="e.g. Interfaculty friendly" value="<?= sportsHubEscape($standalone['title']) ?>">
+                </div>
+                <div class="match-field">
+                    <label for="standalone-sport">Sport</label>
+                    <input id="standalone-sport" name="sport" maxlength="255" required
+                           list="standalone-sports" placeholder="e.g. Football"
+                           value="<?= sportsHubEscape($standalone['sport']) ?>">
+                    <datalist id="standalone-sports">
+                        <option value="Athletics"><option value="Badminton"><option value="Basketball">
+                        <option value="Cricket"><option value="Football"><option value="Netball">
+                        <option value="Rugby"><option value="Swimming"><option value="Tennis">
+                        <option value="Volleyball">
+                    </datalist>
+                </div>
+                <div class="match-field">
+                    <label for="standalone-home">Home team</label>
+                    <input id="standalone-home" name="home_name" maxlength="255" required
+                           placeholder="e.g. Faculty of Computing" value="<?= sportsHubEscape($standalone['home_name']) ?>">
+                </div>
+                <div class="match-field">
+                    <label for="standalone-away">Away team</label>
+                    <input id="standalone-away" name="away_name" maxlength="255" required
+                           placeholder="e.g. Faculty of Engineering" value="<?= sportsHubEscape($standalone['away_name']) ?>">
+                </div>
+                <div class="match-field">
+                    <label for="standalone-date">Match date</label>
+                    <input id="standalone-date" type="date" name="date" min="<?= sportsHubEscape($today) ?>"
+                           required value="<?= sportsHubEscape($standalone['date']) ?>">
+                </div>
+                <div class="match-field">
+                    <label for="standalone-venue">Venue</label>
+                    <input id="standalone-venue" name="venue" maxlength="255" required
+                           placeholder="e.g. NSBM Sports Ground" value="<?= sportsHubEscape($standalone['venue']) ?>">
+                </div>
+                <div class="match-form-footer">
+                    <p>The match will appear in public fixtures. You can update results later through Manage Matches.</p>
+                    <button type="submit" class="button button-accent"
+                            <?= !$standaloneSchemaReady ? 'disabled' : '' ?>>Create standalone match</button>
+                </div>
+            </form>
 
-                    <div class="matches-empty">
-                        <h2>Not enough eligible teams.</h2>
-                        <p>
-                            At least two tournament teams must
-                            have rostered students before a
-                            fixture can be scheduled.
-                        </p>
+        <?php else: ?>
+            <div class="match-create-intro">
+                <h2>Schedule a tournament match</h2>
+                <p>Choose a tournament, then select two eligible teams with registered student rosters.</p>
+            </div>
+
+            <?php if ($tournaments === []): ?>
+                <div class="matches-empty">
+                    <h2>No tournaments available</h2>
+                    <p>Create a tournament to schedule a tournament fixture. Administrators can also create a standalone match without a tournament.</p>
+                    <?php if ($userRole === 'admin'): ?>
+                        <a href="/matches/create.php?mode=standalone" class="button button-accent">Create standalone match</a>
+                    <?php endif; ?>
+                </div>
+            <?php else: ?>
+                <form method="get" action="/matches/create.php" class="match-create-form match-tournament-picker">
+                    <input type="hidden" name="mode" value="tournament">
+                    <div class="match-field">
+                        <label for="tournament">Tournament</label>
+                        <select name="tournament" id="tournament" required>
+                            <option value="">Choose tournament</option>
+                            <?php foreach ($tournaments as $tournament): ?>
+                                <option value="<?= (int) $tournament['t_id'] ?>"
+                                    <?= $tournamentId === (int) $tournament['t_id'] ? 'selected' : '' ?>>
+                                    <?= sportsHubEscape($tournament['t_name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
+                    <button type="submit" class="button button-accent">Load teams</button>
+                </form>
 
-                <?php else: ?>
-
-                    <form method="post"
-                        action="/matches/create.php"
-                        class="match-create-form">
-
-                        <input type="hidden"
-                            name="csrf_token"
-                            value="<?= fixtureEscape($csrfToken) ?>">
-
-                        <input type="hidden"
-                            name="tournament_id"
-                            value="<?= $tournamentId ?>">
-
-                        <label for="match_title">Match title</label>
-                        <input id="match_title"
-                            name="title"
-                            type="text"
-                            maxlength="100"
-                            required
-                            value="<?= fixtureEscape($form['title']) ?>"
-                            placeholder="Example: Semi-final 1">
-
-                        <label for="home_team_id">Home team</label>
-                        <select id="home_team_id"
-                            name="home_team_id"
-                            required>
-                            <option value="">Select home team</option>
-                            <?php foreach ($teamsById as $team): ?>
-                                <option
-                                    value="<?= (int) $team['team_id'] ?>"
-                                    <?= (string) $team['team_id'] === $form['home_team_id']
-                                        ? 'selected' : '' ?>>
-                                    <?= fixtureEscape($team['team_name']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-
-                        <label for="away_team_id">Away team</label>
-                        <select id="away_team_id"
-                            name="away_team_id"
-                            required>
-                            <option value="">Select away team</option>
-                            <?php foreach ($teamsById as $team): ?>
-                                <option
-                                    value="<?= (int) $team['team_id'] ?>"
-                                    <?= (string) $team['team_id'] === $form['away_team_id']
-                                        ? 'selected' : '' ?>>
-                                    <?= fixtureEscape($team['team_name']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-
-                        <label for="match_date">Match date</label>
-                        <input id="match_date"
-                            type="date"
-                            name="date"
-                            min="<?= fixtureEscape($today) ?>"
-                            required
-                            value="<?= fixtureEscape($form['date']) ?>">
-
-                        <label for="venue">Venue</label>
-                        <input id="venue"
-                            name="venue"
-                            type="text"
-                            maxlength="255"
-                            required
-                            value="<?= fixtureEscape($form['venue']) ?>">
-
-                        <p class="section-description">
-                            Team representatives are selected
-                            automatically from their rosters,
-                            prioritizing captains.
-                        </p>
-
-                        <button type="submit"
-                            class="button button-accent">
-                            Create fixture
-                        </button>
-
-                    </form>
-
+                <?php if ($errors !== []): ?>
+                    <div class="match-create-errors" role="alert">
+                        <?php foreach ($errors as $error): ?>
+                            <p><?= sportsHubEscape($error) ?></p>
+                        <?php endforeach; ?>
+                    </div>
                 <?php endif; ?>
 
+                <?php if ($selectedTournament !== null): ?>
+                    <?php if (count($teamsById) < 2): ?>
+                        <div class="matches-empty">
+                            <h2>Two registered teams are required</h2>
+                            <p>Add at least two tournament teams with rostered students before scheduling this fixture.</p>
+                        </div>
+                    <?php else: ?>
+                        <form method="post" action="/matches/create.php?mode=tournament"
+                              class="match-create-form tournament-fixture-form">
+                            <input type="hidden" name="csrf_token" value="<?= sportsHubEscape($csrfToken) ?>">
+                            <input type="hidden" name="match_mode" value="tournament">
+                            <input type="hidden" name="tournament_id" value="<?= $tournamentId ?>">
+                            <div class="match-field">
+                                <label for="match_title">Match title</label>
+                                <input id="match_title" name="title" maxlength="100" required
+                                       placeholder="e.g. Semi-final 1" value="<?= sportsHubEscape($form['title']) ?>">
+                            </div>
+                            <div class="match-field">
+                                <label for="home_team_id">Home team</label>
+                                <select id="home_team_id" name="home_team_id" required>
+                                    <option value="">Select home team</option>
+                                    <?php foreach ($teamsById as $team): ?>
+                                        <option value="<?= (int) $team['team_id'] ?>"
+                                            <?= (string) $team['team_id'] === $form['home_team_id'] ? 'selected' : '' ?>>
+                                            <?= sportsHubEscape($team['team_name']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="match-field">
+                                <label for="away_team_id">Away team</label>
+                                <select id="away_team_id" name="away_team_id" required>
+                                    <option value="">Select away team</option>
+                                    <?php foreach ($teamsById as $team): ?>
+                                        <option value="<?= (int) $team['team_id'] ?>"
+                                            <?= (string) $team['team_id'] === $form['away_team_id'] ? 'selected' : '' ?>>
+                                            <?= sportsHubEscape($team['team_name']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="match-field">
+                                <label for="match_date">Match date</label>
+                                <input id="match_date" type="date" name="date" min="<?= sportsHubEscape($today) ?>"
+                                       required value="<?= sportsHubEscape($form['date']) ?>">
+                            </div>
+                            <div class="match-field">
+                                <label for="venue">Venue</label>
+                                <input id="venue" name="venue" maxlength="255" required
+                                       value="<?= sportsHubEscape($form['venue']) ?>">
+                            </div>
+                            <div class="match-form-footer">
+                                <p>Team representatives are selected from their rosters, prioritizing captains.</p>
+                                <button type="submit" class="button button-accent">Create tournament match</button>
+                            </div>
+                        </form>
+                    <?php endif; ?>
+                <?php endif; ?>
             <?php endif; ?>
-
         <?php endif; ?>
 
     </section>

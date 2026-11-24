@@ -1,9 +1,37 @@
 <?php
-// NSBM SportsHub - Shared Authentication Helpers
+
 
 declare(strict_types=1);
 
-// Start a session when needed
+// Validate new student passwords before hashing.
+function student_password_error(string $password): ?string
+{
+    // PHP 8.3 uses bcrypt for PASSWORD_DEFAULT, which accepts at most 72 bytes.
+    if (strlen($password) > 72) {
+        return 'Password must not exceed 72 bytes.';
+    }
+
+    if (preg_match('//u', $password) !== 1 || preg_match('/[\x00\r\n]/', $password)) {
+        return 'Password contains invalid characters.';
+    }
+
+    if (preg_match('/\A.{8,}\z/us', $password) !== 1) {
+        return 'Password must contain at least 8 characters.';
+    }
+
+    if (
+        !preg_match('/\p{Lu}/u', $password) ||
+        !preg_match('/\p{Ll}/u', $password) ||
+        !preg_match('/\p{Nd}/u', $password) ||
+        !preg_match('/[\p{P}\p{S}]/u', $password)
+    ) {
+        return 'Password must include an uppercase letter, a lowercase letter, a number and a special character.';
+    }
+
+    return null;
+}
+
+
 function auth_start(): void
 {
     if (session_status() === PHP_SESSION_ACTIVE) {
@@ -24,7 +52,7 @@ function auth_start(): void
     session_start();
 }
 
-// Return the logged-in user's internal ID
+
 function current_user_id(): ?int
 {
     auth_start();
@@ -102,7 +130,7 @@ function current_user_role(): ?string
     }
 }
 
-// Check whether a user is logged in
+
 function is_logged_in(): bool
 {
     return current_user_role() !== null;

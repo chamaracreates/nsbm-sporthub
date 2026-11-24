@@ -58,7 +58,7 @@ try {
 
     // Use the same parent-row lock as team roster changes.
     $statement = $pdo->prepare(
-        "SELECT t.status, t.start_date
+        "SELECT t.status, t.start_date, t.is_historical
          FROM tournaments AS t
          INNER JOIN sports_clubs AS sc ON sc.club_id = t.club_id
          WHERE t.t_id = :tournament_id AND sc.status = 'active'
@@ -70,7 +70,8 @@ try {
     if (
         !is_array($tournament)
         || strtolower(trim((string) $tournament['status'])) !== 'upcoming'
-        || (string) $tournament['start_date'] <= $today
+        || (int) $tournament['is_historical'] !== 0
+        || (string) $tournament['start_date'] <= date('Y-m-d')
     ) {
         $pdo->rollBack();
         withdrawReturn($tournamentId, 'Withdrawal is not available for this tournament.', false);

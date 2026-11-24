@@ -1,5 +1,5 @@
 <?php
-// NSBM SportsHub - Student Participation History
+
 
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/db.php';
@@ -22,10 +22,11 @@ try {
             student_name,
             email,
             total_clubs_joined,
-            training_sessions_attended,
+            (SELECT COUNT(DISTINCT ta.session_id) FROM training_attendance ta
+             WHERE ta.user_id = v.user_id AND ta.att_status = 'present') AS training_sessions_attended,
             tournaments_registered,
             facility_bookings_made
-         FROM v_student_participation_summary
+         FROM v_student_participation_summary v
          WHERE user_id = :user_id
          LIMIT 1"
     );
@@ -269,730 +270,352 @@ require __DIR__ . '/../includes/header.php';
 ?>
 
 <main class="student-history-page">
-    <div class="shell history-layout">
+    <div class="shell student-history-shell">
+        <section class="student-history-hero" aria-labelledby="history-title">
+            <div class="student-history-hero-copy">
+                <h1 id="history-title">My Sports Participation History</h1>
+                <p class="student-history-subtitle">
+                    Track your club memberships, training attendance, tournament registrations, match activity and booking history in one modern dashboard.
+                </p>
+            </div>
 
-        <header class="history-heading">
-            <p class="history-eyebrow">STUDENT ACTIVITY</p>
+        </section>
 
-            <h1>My Sports Participation History</h1>
-
-            <p class="history-subtitle">
-                Track your sports activities, registrations
-                and achievements.
+        <?php if ($errorMessage): ?>
+            <p class="student-history-message student-history-message-error" role="alert">
+                <?= htmlspecialchars($errorMessage, ENT_QUOTES, 'UTF-8') ?>
             </p>
-        </header>
+        <?php elseif (!$summary): ?>
+            <p class="student-history-message">
+                No participation summary is available for your account yet.
+            </p>
+        <?php else: ?>
+            <section class="student-history-overview-surface" aria-labelledby="history-overview-summary-title">
+                <div class="student-history-overview-head">
+                    <div>
+                        <h2 id="history-overview-summary-title">Your SportsHub activity at a glance</h2>
+                    </div>
+                    <p class="student-history-overview-note">All your participation details are grouped here for quick review.</p>
+                </div>
 
+                <div class="student-history-student-grid">
+                    <article class="student-history-mini-card">
+                        <span class="student-history-mini-label">Student name</span>
+                        <strong><?= htmlspecialchars((string) $summary['student_name'], ENT_QUOTES, 'UTF-8') ?></strong>
+                    </article>
+                    <article class="student-history-mini-card">
+                        <span class="student-history-mini-label">Email address</span>
+                        <strong><?= htmlspecialchars((string) $summary['email'], ENT_QUOTES, 'UTF-8') ?></strong>
+                    </article>
+                </div>
 
-<p>User ID (Internal): <?= (int) $userId ?></p>
+                <div class="history-stats-grid student-history-stats-grid">
+                    <article class="history-stat-card student-history-stat-card">
+                        <span class="history-stat-number"><?= (int) $summary['total_clubs_joined'] ?></span>
+                        <p>Clubs joined</p>
+                    </article>
+                    <article class="history-stat-card student-history-stat-card">
+                        <span class="history-stat-number"><?= (int) $summary['training_sessions_attended'] ?></span>
+                        <p>Training sessions attended</p>
+                    </article>
+                    <article class="history-stat-card student-history-stat-card">
+                        <span class="history-stat-number"><?= (int) $summary['tournaments_registered'] ?></span>
+                        <p>Tournaments registered</p>
+                    </article>
+                    <article class="history-stat-card student-history-stat-card">
+                        <span class="history-stat-number"><?= (int) $summary['facility_bookings_made'] ?></span>
+                        <p>Facility bookings made</p>
+                    </article>
+                </div>
+            </section>
+        <?php endif; ?>
 
-<?php if ($errorMessage): ?>
+        <section class="history-section history-membership-section" aria-labelledby="membership-history-title">
+            <div class="student-history-section-head">
+                <h3 id="membership-history-title">Club membership history</h3>
+            </div>
 
-    <p role="alert">
-        <?= htmlspecialchars($errorMessage, ENT_QUOTES, 'UTF-8') ?>
-    </p>
+            <?php if ($membershipError): ?>
+                <p class="history-section-error" role="alert"><?= htmlspecialchars($membershipError, ENT_QUOTES, 'UTF-8') ?></p>
+            <?php elseif (empty($memberships)): ?>
+                <div class="history-empty-state">
+                    <p>You have not applied to any sports clubs yet.</p>
+                    <p class="history-empty-hint">Your club applications will appear here.</p>
+                </div>
+            <?php else: ?>
+                <div class="history-table-scroll" role="region" aria-label="Club membership records" tabindex="0">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Club Name</th>
+                                <th>Sport</th>
+                                <th>Membership Status</th>
+                                <th>Joined Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($memberships as $membership): ?>
+                                <tr>
+                                    <td><?= htmlspecialchars((string) $membership['club_name'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars((string) $membership['sport'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars(ucfirst((string) $membership['membership_status']), ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars((string) ($membership['joined_date'] ?? 'Not recorded'), ENT_QUOTES, 'UTF-8') ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </section>
 
-<?php elseif (!$summary): ?>
+        <section class="history-section history-training-section" aria-labelledby="training-history-title">
+            <div class="student-history-section-head">
+                <h3 id="training-history-title">Training attendance history</h3>
+            </div>
 
-    <p>No participation summary is available for your account yet.</p>
+            <?php if ($trainingError): ?>
+                <p class="history-section-error" role="alert"><?= htmlspecialchars($trainingError, ENT_QUOTES, 'UTF-8') ?></p>
+            <?php elseif (empty($trainingHistory)): ?>
+                <div class="history-empty-state">
+                    <p>You have no recorded training attendance yet.</p>
+                    <p class="history-empty-hint">Your training attendance records will appear here.</p>
+                </div>
+            <?php else: ?>
+                <div class="history-table-scroll" role="region" aria-label="Training attendance records" tabindex="0">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Training Session</th>
+                                <th>Sports Club</th>
+                                <th>Date</th>
+                                <th>Start Time</th>
+                                <th>End Time</th>
+                                <th>Attendance Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($trainingHistory as $training): ?>
+                                <tr>
+                                    <td><?= htmlspecialchars((string) $training['title'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars((string) $training['club_name'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars((string) $training['date'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars((string) $training['start_time'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars((string) $training['end_time'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars((string) $training['att_status'], ENT_QUOTES, 'UTF-8') ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </section>
 
-<?php else: ?>
+        <section class="history-section history-tournament-section" aria-labelledby="tournament-history-title">
+            <div class="student-history-section-head">
+                <h3 id="tournament-history-title">Tournament registration history</h3>
+            </div>
 
-    <section class="history-student-card"
-         aria-labelledby="history-student-title">
+            <?php if ($tournamentError): ?>
+                <p class="history-section-error" role="alert"><?= htmlspecialchars($tournamentError, ENT_QUOTES, 'UTF-8') ?></p>
+            <?php elseif (empty($tournamentHistory)): ?>
+                <div class="history-empty-state">
+                    <p>You have not registered for any tournaments yet.</p>
+                    <p class="history-empty-hint">Your tournament registrations will appear here.</p>
+                </div>
+            <?php else: ?>
+                <div class="history-table-scroll" role="region" aria-label="Tournament registration records" tabindex="0">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Tournament Name</th>
+                                <th>Sport</th>
+                                <th>Tournament Dates</th>
+                                <th>Venue</th>
+                                <th>Registration Date</th>
+                                <th>Registration Status</th>
+                                <th>Tournament Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($tournamentHistory as $tournament): ?>
+                                <tr>
+                                    <td><?= htmlspecialchars((string) $tournament['t_name'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars((string) $tournament['sport'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars((string) $tournament['start_date'] . ' to ' . (string) $tournament['end_date'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars((string) $tournament['venue'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars((string) $tournament['reg_date'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars(ucfirst((string) $tournament['registration_status']), ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars((string) $tournament['tournament_status'], ENT_QUOTES, 'UTF-8') ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </section>
 
-    <h3 id="history-student-title">
-        Student Information
-    </h3>
+        <section class="history-section history-team-matches-section" aria-labelledby="team-match-history-title">
+            <div class="student-history-section-head">
+                <h3 id="team-match-history-title">Matches involving my teams</h3>
+            </div>
+            <p class="student-history-section-note">Fixtures involving teams on your current roster. This is not a record of individual match registration or confirmed playing time.</p>
 
-    <div class="history-student-grid">
+            <?php if ($teamMatchError !== null): ?>
+                <p class="history-section-error" role="alert"><?= htmlspecialchars($teamMatchError, ENT_QUOTES, 'UTF-8') ?></p>
+            <?php elseif ($teamMatchHistory === []): ?>
+                <div class="history-empty-state">
+                    <p>No fixtures are associated with your current teams yet.</p>
+                </div>
+            <?php else: ?>
+                <div class="history-table-scroll" role="region" aria-label="Fixtures involving my teams" tabindex="0">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Fixture</th>
+                                <th>Teams</th>
+                                <th>Sport</th>
+                                <th>Date</th>
+                                <th>Venue</th>
+                                <th>Status</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($teamMatchHistory as $teamMatch): ?>
+                                <tr>
+                                    <td>
+                                        <a href="/matches/view.php?id=<?= (int) $teamMatch['m_id'] ?>">
+                                            <?= htmlspecialchars((string) $teamMatch['match_title'], ENT_QUOTES, 'UTF-8') ?>
+                                        </a>
+                                    </td>
+                                    <td><?= htmlspecialchars((string) $teamMatch['home_name'] . ' vs ' . (string) $teamMatch['away_name'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars((string) $teamMatch['sport'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars((string) $teamMatch['match_date'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars((string) $teamMatch['venue'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars(ucfirst((string) $teamMatch['match_status']), ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td>
+                                        <?php if (in_array(strtolower((string) $teamMatch['match_status']), ['completed', 'finished'], true)): ?>
+                                            <?= (int) $teamMatch['home_score'] ?> - <?= (int) $teamMatch['away_score'] ?>
+                                        <?php else: ?>
+                                            Not finalized
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </section>
 
-    <p>
-        Student Name:
-        <?= htmlspecialchars(
-            (string) $summary['student_name'],
-            ENT_QUOTES,
-            'UTF-8'
-        ) ?>
-    </p>
+        <section class="history-section history-match-section" aria-labelledby="match-history-title">
+            <div class="student-history-section-head">
+                <h3 id="match-history-title">Match registration history</h3>
+            </div>
 
-    <p>
-        Email:
-        <?= htmlspecialchars(
-            (string) $summary['email'],
-            ENT_QUOTES,
-            'UTF-8'
-        ) ?>
-    </p>
+            <?php if ($matchError): ?>
+                <p class="history-section-error" role="alert"><?= htmlspecialchars($matchError, ENT_QUOTES, 'UTF-8') ?></p>
+            <?php elseif (empty($matchHistory)): ?>
+                <div class="history-empty-state">
+                    <p>You have not registered for any matches yet.</p>
+                    <p class="history-empty-hint">Your match registrations and results will appear here.</p>
+                </div>
+            <?php else: ?>
+                <div class="history-table-scroll" role="region" aria-label="Match registration records" tabindex="0">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Match Title</th>
+                                <th>Teams</th>
+                                <th>Sport</th>
+                                <th>Date</th>
+                                <th>Venue</th>
+                                <th>Registration Date</th>
+                                <th>Registration Status</th>
+                                <th>Match Status</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($matchHistory as $match): ?>
+                                <tr>
+                                    <td><?= htmlspecialchars((string) $match['match_title'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars((string) $match['home_name'] . ' vs ' . (string) $match['away_name'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars((string) $match['sport'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars((string) $match['match_date'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars((string) $match['venue'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars((string) $match['requested_at'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars(ucfirst((string) $match['registration_status']), ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars(ucfirst((string) $match['match_status']), ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td>
+                                        <?php $status = strtolower(trim((string) $match['match_status'])); ?>
+                                        <?php if (in_array($status, ['completed', 'finished'], true)): ?>
+                                            <?= (int) $match['home_score'] ?> - <?= (int) $match['away_score'] ?>
+                                        <?php else: ?>
+                                            Not finalized
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </section>
+
+        <section class="history-section history-booking-section" aria-labelledby="booking-history-title">
+            <div class="student-history-section-head">
+                <h3 id="booking-history-title">Facility and equipment booking history</h3>
+            </div>
+
+            <?php if ($bookingError): ?>
+                <p class="history-section-error" role="alert"><?= htmlspecialchars($bookingError, ENT_QUOTES, 'UTF-8') ?></p>
+            <?php elseif (empty($bookingHistory)): ?>
+                <div class="history-empty-state">
+                    <p>You have no facility or equipment bookings yet.</p>
+                    <p class="history-empty-hint">Your booking requests and approval statuses will appear here.</p>
+                </div>
+            <?php else: ?>
+                <div class="history-table-scroll" role="region" aria-label="Facility and equipment booking records" tabindex="0">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Resource Name</th>
+                                <th>Resource Type</th>
+                                <th>Location</th>
+                                <th>Booking Date</th>
+                                <th>Start Time</th>
+                                <th>End Time</th>
+                                <th>Purpose</th>
+                                <th>Booking Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($bookingHistory as $booking): ?>
+                                <tr>
+                                    <?php $fields = ['res_name', 'res_type', 'location', 'date', 'starts_at', 'ends_at', 'purpose', 'booking_status']; ?>
+                                    <?php foreach ($fields as $field): ?>
+                                        <td>
+                                            <?php
+                                            $value = $booking[$field] ?? null;
+                                            if ($value === null || $value === '') {
+                                                $value = 'Not provided';
+                                            }
+                                            echo htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+                                            ?>
+                                        </td>
+                                    <?php endforeach; ?>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </section>
+
+        <div class="history-back-action">
+            <a href="profile.php" class="history-back-link">Back to My Profile</a>
         </div>
-
-</section>
-
-
-<section class="history-overview"
-         aria-labelledby="participation-overview-title">
-
-    <h3 id="participation-overview-title">
-        Participation Overview
-    </h3>
-
-    <div class="history-stats-grid">
-
-        <article class="history-stat-card">
-            <span class="history-stat-number">
-                <?= (int) $summary['total_clubs_joined'] ?>
-            </span>
-            <p>Clubs Joined</p>
-        </article>
-
-        <article class="history-stat-card">
-            <span class="history-stat-number">
-                <?= (int) $summary['training_sessions_attended'] ?>
-            </span>
-            <p>Training Sessions Attended</p>
-        </article>
-
-        <article class="history-stat-card">
-            <span class="history-stat-number">
-                <?= (int) $summary['tournaments_registered'] ?>
-            </span>
-            <p>Tournaments Registered</p>
-        </article>
-
-        <article class="history-stat-card">
-            <span class="history-stat-number">
-                <?= (int) $summary['facility_bookings_made'] ?>
-            </span>
-            <p>Facility Bookings Made</p>
-        </article>
-
-    </div>
-
-</section>
-
-
-<?php endif; ?>
-
-
-<section class="history-section history-membership-section"
-         aria-labelledby="membership-history-title">
-
-    <h3 id="membership-history-title">
-        My Club Membership History
-    </h3>
-
-<?php if ($membershipError): ?>
-<p class="history-section-error" role="alert">
-        <?= htmlspecialchars(
-            $membershipError,
-            ENT_QUOTES,
-            'UTF-8'
-        ) ?>
-    </p>
-
-<?php elseif (empty($memberships)): ?>
-<div class="history-empty-state">
-    <p>You have not applied to any sports clubs yet.</p>
-
-    <p class="history-empty-hint">
-        Your club applications will appear here.
-    </p>
-</div>
-
-
-<?php else: ?>
-
-
-<div class="history-table-scroll"
-     role="region"
-     aria-label="Club membership records"
-     tabindex="0">
-
-    <table class="history-table">
-
-        <thead>
-            <tr>
-                <th>Club Name</th>
-                <th>Sport</th>
-                <th>Membership Status</th>
-                <th>Joined Date</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            <?php foreach ($memberships as $membership): ?>
-                <tr>
-                    <td>
-                        <?= htmlspecialchars(
-                            (string) $membership['club_name'],
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>
-                    </td>
-
-                    <td>
-                        <?= htmlspecialchars(
-                            (string) $membership['sport'],
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>
-                    </td>
-
-                    <td>
-                        <?= htmlspecialchars(
-                            ucfirst((string) $membership['membership_status']),
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>
-                    </td>
-
-                    <td>
-                        <?= htmlspecialchars(
-                            (string) ($membership['joined_date'] ?? 'Not recorded'),
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
-    </div>
-
-<?php endif; ?>
-</section>
-
-
-<section class="history-section history-training-section"
-         aria-labelledby="training-history-title">
-
-    <h3 id="training-history-title">
-        My Training Attendance History
-    </h3>
-
-
-<?php if ($trainingError): ?>
-
-    <p class="history-section-error" role="alert">
-        <?= htmlspecialchars($trainingError, ENT_QUOTES, 'UTF-8') ?>
-    </p>
-
-<?php elseif (empty($trainingHistory)): ?>
-
-
-<div class="history-empty-state">
-    <p>You have no recorded training attendance yet.</p>
-
-    <p class="history-empty-hint">
-        Your training attendance records will appear here.
-    </p>
-</div>
-
-
-<?php else: ?>
-
-
-<div class="history-table-scroll"
-     role="region"
-     aria-label="Training attendance records"
-     tabindex="0">
-
-    <table class="history-table">
-
-        <thead>
-            <tr>
-                <th>Training Session</th>
-                <th>Sports Club</th>
-                <th>Date</th>
-                <th>Start Time</th>
-                <th>End Time</th>
-                <th>Attendance Status</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            <?php foreach ($trainingHistory as $training): ?>
-                <tr>
-                    <td>
-                        <?= htmlspecialchars(
-                            (string) $training['title'],
-                            ENT_QUOTES, 'UTF-8'
-                        ) ?>
-                    </td>
-
-                    <td>
-                        <?= htmlspecialchars(
-                            (string) $training['club_name'],
-                            ENT_QUOTES, 'UTF-8'
-                        ) ?>
-                    </td>
-
-                    <td>
-                        <?= htmlspecialchars(
-                            (string) $training['date'],
-                            ENT_QUOTES, 'UTF-8'
-                        ) ?>
-                    </td>
-
-                    <td>
-                        <?= htmlspecialchars(
-                            (string) $training['start_time'],
-                            ENT_QUOTES, 'UTF-8'
-                        ) ?>
-                    </td>
-
-                    <td>
-                        <?= htmlspecialchars(
-                            (string) $training['end_time'],
-                            ENT_QUOTES, 'UTF-8'
-                        ) ?>
-                    </td>
-
-                    <td>
-                        <?= htmlspecialchars(
-                            (string) $training['att_status'],
-                            ENT_QUOTES, 'UTF-8'
-                        ) ?>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
-</div>
-
-<?php endif; ?>
-</section>
-
-
-<section class="history-section history-tournament-section"
-         aria-labelledby="tournament-history-title">
-
-    <h3 id="tournament-history-title">
-        My Tournament Registration History
-    </h3>
-
-
-<?php if ($tournamentError): ?>
-
-    <p class="history-section-error" role="alert">
-        <?= htmlspecialchars(
-            $tournamentError,
-            ENT_QUOTES,
-            'UTF-8'
-        ) ?>
-    </p>
-
-<?php elseif (empty($tournamentHistory)): ?>
-
-
-<div class="history-empty-state">
-    <p>You have not registered for any tournaments yet.</p>
-
-    <p class="history-empty-hint">
-        Your tournament registrations will appear here.
-    </p>
-</div>
-
-<?php else: ?>
-
-
-<div class="history-table-scroll"
-     role="region"
-     aria-label="Tournament registration records"
-     tabindex="0">
-
-    <table class="history-table">
-
-        <thead>
-            <tr>
-                <th>Tournament Name</th>
-                <th>Sport</th>
-                <th>Tournament Dates</th>
-                <th>Venue</th>
-                <th>Registration Date</th>
-                <th>Registration Status</th>
-                <th>Tournament Status</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            <?php foreach ($tournamentHistory as $tournament): ?>
-                <tr>
-                    <td>
-                        <?= htmlspecialchars(
-                            (string) $tournament['t_name'],
-                            ENT_QUOTES, 'UTF-8'
-                        ) ?>
-                    </td>
-
-                    <td>
-                        <?= htmlspecialchars(
-                            (string) $tournament['sport'],
-                            ENT_QUOTES, 'UTF-8'
-                        ) ?>
-                    </td>
-
-                    <td>
-                        <?= htmlspecialchars(
-                            (string) $tournament['start_date']
-                            . ' to ' .
-                            (string) $tournament['end_date'],
-                            ENT_QUOTES, 'UTF-8'
-                        ) ?>
-                    </td>
-
-                    <td>
-                        <?= htmlspecialchars(
-                            (string) $tournament['venue'],
-                            ENT_QUOTES, 'UTF-8'
-                        ) ?>
-                    </td>
-
-                    <td>
-                        <?= htmlspecialchars(
-                            (string) $tournament['reg_date'],
-                            ENT_QUOTES, 'UTF-8'
-                        ) ?>
-                    </td>
-
-                    <td>
-                        <?= htmlspecialchars(
-                            ucfirst((string) $tournament['registration_status']),
-                            ENT_QUOTES, 'UTF-8'
-                        ) ?>
-                    </td>
-
-                    <td>
-                        <?= htmlspecialchars(
-                            (string) $tournament['tournament_status'],
-                            ENT_QUOTES, 'UTF-8'
-                        ) ?>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
-</div>
-
-<?php endif; ?>
-</section>
-
-
-
-<section class="history-section history-team-matches-section"
-         aria-labelledby="team-match-history-title">
-    <h3 id="team-match-history-title">Matches Involving My Teams</h3>
-    <p>Fixtures involving teams on your current roster. This is not a record of individual match registration or confirmed playing time.</p>
-
-    <?php if ($teamMatchError !== null): ?>
-        <p class="history-section-error" role="alert">
-            <?= htmlspecialchars($teamMatchError, ENT_QUOTES, 'UTF-8') ?>
-        </p>
-    <?php elseif ($teamMatchHistory === []): ?>
-        <div class="history-empty-state">
-            <p>No fixtures are associated with your current teams yet.</p>
-        </div>
-    <?php else: ?>
-        <div class="history-table-scroll" role="region"
-             aria-label="Fixtures involving my teams" tabindex="0">
-            <table class="history-table">
-                <thead>
-                    <tr>
-                        <th>Fixture</th>
-                        <th>Teams</th>
-                        <th>Sport</th>
-                        <th>Date</th>
-                        <th>Venue</th>
-                        <th>Status</th>
-                        <th>Score</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($teamMatchHistory as $teamMatch): ?>
-                        <tr>
-                            <td>
-                                <a href="/matches/view.php?id=<?= (int) $teamMatch['m_id'] ?>">
-                                    <?= htmlspecialchars((string) $teamMatch['match_title'], ENT_QUOTES, 'UTF-8') ?>
-                                </a>
-                            </td>
-                            <td><?= htmlspecialchars(
-                                (string) $teamMatch['home_name'] . ' vs ' . (string) $teamMatch['away_name'],
-                                ENT_QUOTES, 'UTF-8'
-                            ) ?></td>
-                            <td><?= htmlspecialchars((string) $teamMatch['sport'], ENT_QUOTES, 'UTF-8') ?></td>
-                            <td><?= htmlspecialchars((string) $teamMatch['match_date'], ENT_QUOTES, 'UTF-8') ?></td>
-                            <td><?= htmlspecialchars((string) $teamMatch['venue'], ENT_QUOTES, 'UTF-8') ?></td>
-                            <td><?= htmlspecialchars(ucfirst((string) $teamMatch['match_status']), ENT_QUOTES, 'UTF-8') ?></td>
-                            <td>
-                                <?php if (in_array(strtolower((string) $teamMatch['match_status']), ['completed', 'finished'], true)): ?>
-                                    <?= (int) $teamMatch['home_score'] ?> - <?= (int) $teamMatch['away_score'] ?>
-                                <?php else: ?>
-                                    Not finalized
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-    <?php endif; ?>
-</section>
-
-<section class="history-section history-match-section"
-         aria-labelledby="match-history-title">
-
-    <h3 id="match-history-title">
-        My Match Registration History
-    </h3>
-
-
-<?php if ($matchError): ?>
-
-    <p class="history-section-error" role="alert">
-        <?= htmlspecialchars(
-            $matchError,
-            ENT_QUOTES,
-            'UTF-8'
-        ) ?>
-    </p>
-
-<?php elseif (empty($matchHistory)): ?>
-
-
-<div class="history-empty-state">
-
-    <p>You have not registered for any matches yet.</p>
-
-    <p class="history-empty-hint">
-        Your match registrations and results will appear here.
-    </p>
-
-</div>
-
-
-<?php else: ?>
-
-
-<div class="history-table-scroll"
-     role="region"
-     aria-label="Match registration records"
-     tabindex="0">
-
-    <table class="history-table">
-
-        <thead>
-            <tr>
-                <th>Match Title</th>
-                <th>Teams</th>
-                <th>Sport</th>
-                <th>Date</th>
-                <th>Venue</th>
-                <th>Registration Date</th>
-                <th>Registration Status</th>
-                <th>Match Status</th>
-                <th>Score</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            <?php foreach ($matchHistory as $match): ?>
-                <tr>
-                    <td>
-                        <?= htmlspecialchars(
-                            (string) $match['match_title'],
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>
-                    </td>
-
-                    <td>
-                        <?= htmlspecialchars(
-                            (string) $match['home_name']
-                            . ' vs ' .
-                            (string) $match['away_name'],
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>
-                    </td>
-
-                    <td>
-                        <?= htmlspecialchars(
-                            (string) $match['sport'],
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>
-                    </td>
-
-                    <td>
-                        <?= htmlspecialchars(
-                            (string) $match['match_date'],
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>
-                    </td>
-
-                    <td>
-                        <?= htmlspecialchars(
-                            (string) $match['venue'],
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>
-                    </td>
-
-                    <td>
-                        <?= htmlspecialchars(
-                            (string) $match['requested_at'],
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>
-                    </td>
-
-                    <td>
-                        <?= htmlspecialchars(
-                            ucfirst((string) $match['registration_status']),
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>
-                    </td>
-
-                    <td>
-                        <?= htmlspecialchars(
-                            ucfirst((string) $match['match_status']),
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>
-                    </td>
-
-                    <td>
-                        <?php
-                        $status = strtolower(
-                            trim((string) $match['match_status'])
-                        );
-                        ?>
-
-                        <?php if (in_array(
-                            $status,
-                            ['completed', 'finished'],
-                            true
-                        )): ?>
-
-                            <?= (int) $match['home_score'] ?>
-                            -
-                            <?= (int) $match['away_score'] ?>
-
-                        <?php else: ?>
-
-                            Not finalized
-
-                        <?php endif; ?>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-        </tbody>
-   </table>
-</div>
-
-<?php endif; ?>
-</section>
-
-<section class="history-section history-booking-section"
-         aria-labelledby="booking-history-title">
-
-    <h3 id="booking-history-title">
-        My Facility and Equipment Booking History
-    </h3>
-
-<?php if ($bookingError): ?>
-
-    <p class="history-section-error" role="alert">
-        <?= htmlspecialchars(
-            $bookingError,
-            ENT_QUOTES,
-            'UTF-8'
-        ) ?>
-    </p>
-
-<?php elseif (empty($bookingHistory)): ?>
-
-    <div class="history-empty-state">
-
-    <p>You have no facility or equipment bookings yet.</p>
-
-    <p class="history-empty-hint">
-        Your booking requests and approval statuses will appear here.
-    </p>
-
-</div>
-
-<?php else: ?>
-
-   <div class="history-table-scroll"
-     role="region"
-     aria-label="Facility and equipment booking records"
-     tabindex="0">
-
-    <table class="history-table">
-        <thead>
-            <tr>
-                <th>Resource Name</th>
-                <th>Resource Type</th>
-                <th>Location</th>
-                <th>Booking Date</th>
-                <th>Start Time</th>
-                <th>End Time</th>
-                <th>Purpose</th>
-                <th>Booking Status</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            <?php foreach ($bookingHistory as $booking): ?>
-                <tr>
-                    <?php
-                    $fields = [
-                        'res_name',
-                        'res_type',
-                        'location',
-                        'date',
-                        'starts_at',
-                        'ends_at',
-                        'purpose',
-                        'booking_status'
-                    ];
-                    ?>
-
-                    <?php foreach ($fields as $field): ?>
-                        <td>
-                            <?php
-                            $value = $booking[$field] ?? null;
-
-                            if ($value === null || $value === '') {
-                                $value = 'Not provided';
-                            }
-
-                            echo htmlspecialchars(
-                                (string) $value,
-                                ENT_QUOTES,
-                                'UTF-8'
-                            );
-                            ?>
-                        </td>
-                    <?php endforeach; ?>
-                </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
-</div>
-<?php endif; ?>
-</section>
-
-
-<div class="history-back-action">
-    <a href="profile.php" class="history-back-link">
-        &larr; Back to My Profile
-    </a>
-</div>
-
-
     </div>
 </main>
 

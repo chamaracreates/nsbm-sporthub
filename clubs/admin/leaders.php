@@ -1,24 +1,18 @@
 <?php
-// NSBM SportsHub - Club Leadership Management
-// Member 03 - Club Management
+
+// Club leadership administration.
 
 require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/helpers.php';
+
 require_once __DIR__ . '/../../includes/db.php';
 
 // Only administrators can access this page.
 require_admin();
 
 // Escape text before displaying it in HTML.
-function leaderEscape($value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
 
-// Create a CSRF token for leadership forms.
+
 if (
     empty($_SESSION['club_leaders_csrf']) ||
     !is_string($_SESSION['club_leaders_csrf'])
@@ -98,12 +92,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 303
             );
             exit;
-
         } catch (Throwable $exception) {
 
             error_log(
                 'Club leadership removal error: ' .
-                $exception->getMessage()
+                    $exception->getMessage()
             );
 
             http_response_code(500);
@@ -183,9 +176,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$stmt->fetchColumn()) {
             $pdo->rollBack();
             http_response_code(400);
-            exit(
-                'Select an approved student member of this club.'
-            );
+            exit('Select an approved student member of this club.');
         }
 
         // Prevent one student from holding
@@ -208,9 +199,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($stmt->fetchColumn()) {
             $pdo->rollBack();
             http_response_code(409);
-            exit(
-                'This student already holds another leadership role in this club.'
-            );
+            exit('This student already holds another leadership role in this club.');
         }
 
         // Insert the new leader or replace the
@@ -239,7 +228,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             303
         );
         exit;
-
     } catch (Throwable $exception) {
 
         if (
@@ -251,7 +239,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         error_log(
             'Club leadership assignment error: ' .
-            $exception->getMessage()
+                $exception->getMessage()
         );
 
         http_response_code(500);
@@ -321,21 +309,21 @@ try {
     );
 
     $currentLeaders = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
 } catch (PDOException $exception) {
     error_log($exception->getMessage());
 
     $errorMessage = 'Unable to load club leadership information.';
 }
 
-    require __DIR__ . '/../../includes/header.php';
+$pageStylesheets = ['/assets/css/clubs.css'];
+
+require __DIR__ . '/../../includes/header.php';
 ?>
 
-<link rel="stylesheet" href="/assets/css/clubs.css">
 
-<main class="clubs-page">
+<main class="clubs-page sports-hub-workflow">
 
-    <section class="shell club-admin-page">
+    <section class="shell club-admin-page leadership-admin-v15">
 
         <p class="clubs-eyebrow">
             NSBM SportsHub / Administration
@@ -343,261 +331,259 @@ try {
 
         <h1>Club Leadership Management</h1>
 
-    <p>
-        Assign captains and vice-captains
-        to NSBM sports clubs.
-    </p>
-
-    <?php if ($errorMessage !== ''): ?>
-        <p role="alert">
-            <?= leaderEscape($errorMessage) ?>
+        <p>
+            Assign captains and vice-captains
+            to NSBM sports clubs.
         </p>
-    <?php endif; ?>
 
-    <section class="club-staff-admin-panel">
-        <h2>Assign Club Leader</h2>
+        <?php if ($errorMessage !== ''): ?>
+            <p role="alert">
+                <?= sportsHubEscape($errorMessage) ?>
+            </p>
+        <?php endif; ?>
 
-        <form
-            method="POST"
-            action="/clubs/admin/leaders.php"
-            class="club-staff-admin-form"
-        >
+        <section class="club-staff-admin-panel">
+            <h2>Assign Club Leader</h2>
 
-            <input
-                type="hidden"
-                name="csrf_token"
-                value="<?= leaderEscape($csrfToken) ?>"
-            >
+            <form
+                method="POST"
+                action="/clubs/admin/leaders.php"
+                class="club-staff-admin-form">
 
-            <input
-                type="hidden"
-                name="action"
-                value="assign"
-            >
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="<?= sportsHubEscape($csrfToken) ?>">
 
-            <div class="club-staff-form-field">
-                <label for="club_id">
-                    Sports Club
-                </label>
+                <input
+                    type="hidden"
+                    name="action"
+                    value="assign">
 
-                <select
-                    name="club_id"
-                    id="club_id"
-                    required
-                >
-                    <option value="">
-                        Select a club
-                    </option>
+                <div class="club-staff-form-field">
+                    <label for="club_id">
+                        Sports Club
+                    </label>
 
-                    <?php foreach ($clubs as $club): ?>
-                        <option value="<?= (int) $club['club_id'] ?>">
-                            <?= leaderEscape($club['club_name']) ?>
+                    <select
+                        name="club_id"
+                        id="club_id"
+                        required>
+                        <option value="">
+                            Select a club
                         </option>
-                    <?php endforeach; ?>
 
-                </select>
-            </div>
+                        <?php foreach ($clubs as $club): ?>
+                            <option value="<?= (int) $club['club_id'] ?>">
+                                <?= sportsHubEscape($club['club_name']) ?>
+                            </option>
+                        <?php endforeach; ?>
 
-            <div class="club-staff-form-field">
-                <label for="user_id">
-                    Eligible Student
-                </label>
+                    </select>
+                </div>
 
-                <select
-                    name="user_id"
-                    id="user_id"
-                    required
-                >
-                    <option value="">
-                        Select a student
-                    </option>
+                <div class="club-staff-form-field">
+                    <label for="user_id">
+                        Eligible Student
+                    </label>
 
-                    <?php foreach ($eligibleStudents as $student): ?>
-                        <option
-                            value="<?= (int) $student['user_id'] ?>"
-                            data-club-id="<?= (int) $student['club_id'] ?>"
-                        >
-                            <?= leaderEscape($student['name']) ?>
-                            -
-                            <?= leaderEscape($student['email']) ?>
+                    <select
+                        name="user_id"
+                        id="user_id"
+                        required>
+                        <option value="">
+                            Select a student
                         </option>
-                    <?php endforeach; ?>
 
-                </select>
-            </div>
+                        <?php foreach ($eligibleStudents as $student): ?>
+                            <option
+                                value="<?= (int) $student['user_id'] ?>"
+                                data-club-id="<?= (int) $student['club_id'] ?>">
+                                <?= sportsHubEscape($student['name']) ?>
+                                -
+                                <?= sportsHubEscape($student['email']) ?>
+                            </option>
+                        <?php endforeach; ?>
 
-            <div class="club-staff-form-field">
-                <label for="leader_role">
-                    Leadership Role
-                </label>
+                    </select>
+                </div>
 
-                <select
-                    name="leader_role"
-                    id="leader_role"
-                    required
-                >
-                    <option value="">
-                        Select a role
-                    </option>
-                    <option value="captain">
-                        Captain
-                    </option>
-                    <option value="vice_captain">
-                        Vice-Captain
-                    </option>
-                </select>
-            </div>
+                <div class="club-staff-form-field">
+                    <label for="leader_role">
+                        Leadership Role
+                    </label>
 
-            <button
-                type="submit"
-                class="club-admin-approve"
-            >
-                Assign Leader
-            </button>
+                    <select
+                        name="leader_role"
+                        id="leader_role"
+                        required>
+                        <option value="">
+                            Select a role
+                        </option>
+                        <option value="captain">
+                            Captain
+                        </option>
+                        <option value="vice_captain">
+                            Vice-Captain
+                        </option>
+                    </select>
+                </div>
 
-        </form>
-    </section>
+                <div class="v16-form-actions">
+                    <button
+                        type="submit"
+                        class="club-admin-approve">
+                        Assign Leader
+                    </button>
+                </div>
 
-    <section class="club-leaders-table-section">
-        <h2>Current Club Leaders</h2>
+            </form>
+        </section>
 
-        <div class="club-leaders-table-wrapper">
-            <table class="club-admin-table">
-            <thead>
-                <tr>
-                    <th>Club</th>
-                    <th>Student</th>
-                    <th>Role</th>
-                    <th>Appointed At</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
+        <section class="club-leaders-table-section">
+            <h2>Current Club Leaders</h2>
 
-            <tbody>
-                <?php foreach ($currentLeaders as $leader): ?>
-                    <tr>
-                        <td>
-                            <?= leaderEscape($leader['club_name']) ?>
-                        </td>
-                        <td>
-                            <?= leaderEscape($leader['student_name']) ?>
-                        </td>
-                        <td>
-                            <?= leaderEscape(
-                                ucwords(
-                                    str_replace(
-                                        '_',
-                                        ' ',
-                                        $leader['leader_role']
-                                    )
-                                )
-                            ) ?>
-                        </td>
-                        <td>
-                            <?= leaderEscape($leader['appointed_at']) ?>
-                        </td>
-                        <td>
-                            <form
-                                method="POST"
-                                onsubmit="return confirm('Remove this club leader?');"
-                            >
-                                <input
-                                    type="hidden"
-                                    name="csrf_token"
-                                    value="<?= leaderEscape($csrfToken) ?>"
-                                >
+            <?php if (empty($currentLeaders)): ?>
+                <div class="v16-empty-state" role="status">
+                    <h3>No leaders assigned yet</h3>
+                    <p>Approved student members will appear here after you assign them as a captain or vice-captain.</p>
+                </div>
+            <?php else: ?>
+                <div class="club-leaders-table-wrapper">
+                    <table class="club-admin-table">
+                        <thead>
+                            <tr>
+                                <th>Club</th>
+                                <th>Student</th>
+                                <th>Role</th>
+                                <th>Appointed At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
 
-                                <input
-                                    type="hidden"
-                                    name="action"
-                                    value="remove"
-                                >
+                        <tbody>
+                            <?php foreach ($currentLeaders as $leader): ?>
+                                <tr>
+                                    <td>
+                                        <?= sportsHubEscape($leader['club_name']) ?>
+                                    </td>
+                                    <td>
+                                        <?= sportsHubEscape($leader['student_name']) ?>
+                                    </td>
+                                    <td>
+                                        <?= sportsHubEscape(
+                                            ucwords(
+                                                str_replace(
+                                                    '_',
+                                                    ' ',
+                                                    $leader['leader_role']
+                                                )
+                                            )
+                                        ) ?>
+                                    </td>
+                                    <td>
+                                        <?= sportsHubEscape($leader['appointed_at']) ?>
+                                    </td>
+                                    <td>
+                                        <form
+                                            method="POST"
+                                            onsubmit="return confirm('Remove this club leader?');">
+                                            <input
+                                                type="hidden"
+                                                name="csrf_token"
+                                                value="<?= sportsHubEscape($csrfToken) ?>">
 
-                                <input
-                                    type="hidden"
-                                    name="leader_id"
-                                    value="<?= (int) $leader['leader_id'] ?>"
-                                >
+                                            <input
+                                                type="hidden"
+                                                name="action"
+                                                value="remove">
 
-                                <button
-                                    type="submit"
-                                    class="club-admin-reject"
-                                >
-                                    Remove
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
+                                            <input
+                                                type="hidden"
+                                                name="leader_id"
+                                                value="<?= (int) $leader['leader_id'] ?>">
 
-                <?php if (empty($currentLeaders)): ?>
-                    <tr>
-                        <td colspan="5">
-                            No club leaders assigned yet.
-                        </td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
-            </table>
-        </div>
-    </section>
+                                            <button
+                                                type="submit"
+                                                class="club-admin-reject">
+                                                Remove
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+
+                            <?php if (empty($currentLeaders)): ?>
+                                <tr>
+                                    <td colspan="5">
+                                        No club leaders assigned yet. Assign captains and vice-captains
+                                        only when their appointments and club memberships are confirmed.
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+
+            <?php endif; ?>
+        </section>
     </section>
 
 </main>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
 
-    const clubSelect = document.getElementById('club_id');
-    const studentSelect = document.getElementById('user_id');
+        const clubSelect = document.getElementById('club_id');
+        const studentSelect = document.getElementById('user_id');
 
-    if (!clubSelect || !studentSelect) {
-        return;
-    }
+        if (!clubSelect || !studentSelect) {
+            return;
+        }
 
-    // Save all eligible student options.
-    const allStudents = Array.from(studentSelect.options)
-        .filter(option => option.value !== '')
-        .map(option => option.cloneNode(true));
+        // Save all eligible student options.
+        const allStudents = Array.from(studentSelect.options)
+            .filter(option => option.value !== '')
+            .map(option => option.cloneNode(true));
 
-    function updateEligibleStudents() {
+        function updateEligibleStudents() {
 
-        const selectedClubId = clubSelect.value;
+            const selectedClubId = clubSelect.value;
 
-        // Remove previous student options.
-        studentSelect.replaceChildren();
+            // Remove previous student options.
+            studentSelect.replaceChildren();
 
-        // Add the default option.
-        const placeholder = document.createElement('option');
-        placeholder.value = '';
-        placeholder.textContent = 'Select a student';
+            // Add the default option.
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = 'Select a student';
 
-        studentSelect.appendChild(placeholder);
+            studentSelect.appendChild(placeholder);
 
-        // Add only students belonging to the selected club.
-        allStudents.forEach(function (option) {
+            // Add only students belonging to the selected club.
+            allStudents.forEach(function(option) {
 
-            if (
-                selectedClubId !== '' &&
-                option.dataset.clubId === selectedClubId
-            ) {
-                studentSelect.appendChild(option.cloneNode(true));
-            }
+                if (
+                    selectedClubId !== '' &&
+                    option.dataset.clubId === selectedClubId
+                ) {
+                    studentSelect.appendChild(option.cloneNode(true));
+                }
 
-        });
+            });
 
-        // Reset the student selection.
-        studentSelect.value = '';
-    }
+            // Reset the student selection.
+            studentSelect.value = '';
+        }
 
-    clubSelect.addEventListener(
-        'change',
-        updateEligibleStudents
-    );
+        clubSelect.addEventListener(
+            'change',
+            updateEligibleStudents
+        );
 
-    updateEligibleStudents();
+        updateEligibleStudents();
 
-});
+    });
 </script>
 
 <?php require __DIR__ . '/../../includes/footer.php'; ?>

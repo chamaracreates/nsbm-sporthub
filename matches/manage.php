@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 /*
  * NSBM SportsHub
- * Member 06 - Match Management Dashboard
+ * Match management operations.
  */
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/helpers.php';
+
 require_once __DIR__ . '/../includes/db.php';
 
 $userId = require_login();
@@ -24,26 +26,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') {
     exit('Method not allowed.');
 }
 
-function matchManageEscape(mixed $value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
-
-function matchManageDate(string $value): string
-{
-    $date = DateTimeImmutable::createFromFormat(
-        '!Y-m-d',
-        $value
-    );
-
-    return $date !== false
-        ? $date->format('d M Y')
-        : $value;
-}
 
 // Validate the selected filter.
 $allowedFilters = ['all', 'scheduled', 'completed'];
@@ -101,35 +83,36 @@ try {
      * tournament and its associated sports club.
      */
 
+    // Left joins retain fixtures without tournament or team relationships.
+    // The tournament branch retains the original team/club integrity checks.
     $statement = $pdo->prepare(
         "SELECT
-            m.m_id,
-            m.title,
-            m.date,
-            m.venue,
-            m.match_status,
-            m.home_score,
-            m.away_score,
+            m.m_id, m.title, m.date, m.venue, m.match_status,
+            m.home_score, m.away_score,
             t.t_id,
-            t.t_name,
-            t.sport,
-            home.team_name AS home_team,
-            away.team_name AS away_team
+            COALESCE(t.t_name, 'Standalone match') AS t_name,
+            m.sport,
+            m.home_name AS home_team,
+            m.away_name AS away_team
          FROM matches AS m
-         INNER JOIN tournaments AS t
-            ON t.t_id = m.t_id
-         INNER JOIN sports_clubs AS sc
-            ON sc.club_id = t.club_id
-           AND sc.status = 'active'
-         INNER JOIN teams AS home
+         LEFT JOIN tournaments AS t ON t.t_id = m.t_id
+         LEFT JOIN sports_clubs AS sc
+            ON sc.club_id = t.club_id AND sc.status = 'active'
+         LEFT JOIN teams AS home
             ON home.team_id = m.home_team_id
-           AND home.t_id = t.t_id
-           AND home.club_id = t.club_id
-         INNER JOIN teams AS away
+           AND home.t_id = t.t_id AND home.club_id = t.club_id
+         LEFT JOIN teams AS away
             ON away.team_id = m.away_team_id
-           AND away.t_id = t.t_id
-           AND away.club_id = t.club_id
-         WHERE m.home_team_id <> m.away_team_id
+           AND away.t_id = t.t_id AND away.club_id = t.club_id
+         WHERE (
+             (m.t_id IS NULL
+              AND m.home_team_id IS NULL AND m.away_team_id IS NULL
+              AND m.home_u_id IS NULL AND m.away_u_id IS NULL)
+             OR
+             (m.t_id IS NOT NULL AND sc.club_id IS NOT NULL
+              AND home.team_id IS NOT NULL AND away.team_id IS NOT NULL
+              AND m.home_team_id <> m.away_team_id)
+         )
          $scope
          ORDER BY m.date DESC, m.m_id DESC"
     );
@@ -191,7 +174,7 @@ include __DIR__ . '/../includes/header.php';
 
 ?>
 
-<main class="matches-page">
+<main class="matches-page sports-hub-workflow">
 
     <section class="section-container matches-section">
 
@@ -204,8 +187,7 @@ include __DIR__ . '/../includes/header.php';
             <h1>Manage matches.</h1>
 
             <p class="section-description">
-                Manage match fixtures, review scheduled
-                events and record tournament results.
+                Schedule independent and tournament fixtures, review matches and record results.
             </p>
 
         </div>
@@ -247,31 +229,7 @@ include __DIR__ . '/../includes/header.php';
 
         <?php else: ?>
 
-            <div class="match-management-summary">
-
-                <div class="match-management-stat">
-                    <span>Total matches</span>
-                    <strong>
-                        <?= number_format($counts['all']) ?>
-                    </strong>
-                </div>
-
-                <div class="match-management-stat">
-                    <span>Scheduled matches</span>
-                    <strong>
-                        <?= number_format($counts['scheduled']) ?>
-                    </strong>
-                </div>
-
-                <div class="match-management-stat">
-                    <span>Completed matches</span>
-                    <strong>
-                        <?= number_format($counts['completed']) ?>
-                    </strong>
-                </div>
-
-            </div>
-
+            <!-- Match filters and fixture records. -->
             <nav
                 class="matches-tabs"
                 aria-label="Match management filters">
@@ -306,8 +264,12 @@ include __DIR__ . '/../includes/header.php';
                     <h2>No matches found.</h2>
 
                     <p>
-                        No matches are available for the
-                        selected filter and your assigned clubs.
+                        <?php if ($userRole === 'admin'): ?>
+                            No matches match this filter yet. Schedule a standalone
+                            or tournament fixture to get started.
+                        <?php else: ?>
+                            No matches match this filter in your assigned clubs.
+                        <?php endif; ?>
                     </p>
 
                     <a
@@ -347,11 +309,11 @@ include __DIR__ . '/../includes/header.php';
                             <div class="match-card-meta">
 
                                 <span>
-                                    <?= matchManageEscape($match['sport']) ?>
+                                    <?= sportsHubEscape($match['sport']) ?>
                                 </span>
 
                                 <span>
-                                    <?= matchManageEscape(
+                                    <?= sportsHubEscape(
                                         ucfirst($status)
                                     ) ?>
                                 </span>
@@ -359,27 +321,27 @@ include __DIR__ . '/../includes/header.php';
                             </div>
 
                             <h2>
-                                <?= matchManageEscape($match['title']) ?>
+                                <?= sportsHubEscape($match['title']) ?>
                             </h2>
 
                             <p class="match-management-tournament">
-                                <?= matchManageEscape($match['t_name']) ?>
+                                <?= sportsHubEscape($match['t_name']) ?>
                             </p>
 
                             <div class="match-card-teams">
 
                                 <span>
-                                    <?= matchManageEscape(
+                                    <?= sportsHubEscape(
                                         $match['home_team']
                                     ) ?>
                                 </span>
 
                                 <strong>
-                                    <?= matchManageEscape($scoreLabel) ?>
+                                    <?= sportsHubEscape($scoreLabel) ?>
                                 </strong>
 
                                 <span>
-                                    <?= matchManageEscape(
+                                    <?= sportsHubEscape(
                                         $match['away_team']
                                     ) ?>
                                 </span>
@@ -389,13 +351,13 @@ include __DIR__ . '/../includes/header.php';
                             <div class="match-card-details">
 
                                 <span>
-                                    <?= matchManageEscape(
-                                        matchManageDate($match['date'])
+                                    <?= sportsHubEscape(
+                                        sportsHubDisplayDate($match['date'])
                                     ) ?>
                                 </span>
 
                                 <span>
-                                    <?= matchManageEscape($match['venue']) ?>
+                                    <?= sportsHubEscape($match['venue']) ?>
                                 </span>
 
                             </div>
@@ -413,6 +375,14 @@ include __DIR__ . '/../includes/header.php';
                                     class="button button-accent">
                                     Manage fixture
                                 </a>
+
+                                <?php if ($userRole === 'admin'): ?>
+                                    <a
+                                        href="/admin/delete.php?type=match&amp;id=<?= (int) $match['m_id'] ?>"
+                                        class="button button-danger-outline">
+                                        Delete fixture
+                                    </a>
+                                <?php endif; ?>
 
                             </div>
 

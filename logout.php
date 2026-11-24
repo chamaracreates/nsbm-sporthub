@@ -1,5 +1,5 @@
 <?php
-// NSBM SportsHub - Secure Logout
+
 
 require_once __DIR__ . '/includes/auth.php';
 
@@ -24,7 +24,7 @@ if (
     exit('Invalid logout request.');
 }
 
-// Clear session variables
+
 $_SESSION = [];
 
 // Delete the browser's session cookie
@@ -41,9 +41,9 @@ if (ini_get('session.use_cookies')) {
     ]);
 }
 
-// Destroy the session
+
 session_destroy();
 
-// Return to the login page
+
 header('Location: /login.php');
 exit;

@@ -33,7 +33,7 @@ if (
     exit('Invalid form submission.');
 }
 
-// Validate booking ID.
+
 $bookingId = filter_var(
     $_POST['b_id'] ?? null,
     FILTER_VALIDATE_INT,

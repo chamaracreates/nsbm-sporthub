@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 /*
  * NSBM SportsHub
- * Member 06 - Match Editing and Result Management
+ * Match editing and result management.
  */
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/helpers.php';
+
 require_once __DIR__ . '/../includes/db.php';
 
 $userId = require_login();
@@ -26,31 +28,6 @@ if (!in_array($method, ['GET', 'POST'], true)) {
     exit('Method not allowed.');
 }
 
-function matchEditEscape(mixed $value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
-
-function matchEditInput(string $key): string
-{
-    $value = $_POST[$key] ?? '';
-    return is_string($value) ? trim($value) : '';
-}
-
-function matchEditValidDate(string $value): bool
-{
-    $date = DateTimeImmutable::createFromFormat(
-        '!Y-m-d',
-        $value
-    );
-
-    return $date !== false
-        && $date->format('Y-m-d') === $value;
-}
 
 /*
  * Retrieve a match only when the current user
@@ -83,39 +60,36 @@ function matchEditFind(
         $params['staff_role'] = $userRole;
     }
 
+    // Independent fixtures do not require tournament or team references.
+    // Staff scope below excludes standalone records; admin may access both.
     $sql = "
         SELECT
-            m.m_id,
-            m.title,
-            m.date,
-            m.venue,
-            m.match_status,
-            m.home_score,
-            m.away_score,
-            t.t_id,
-            t.t_name,
-            t.sport,
-            t.start_date,
-            t.end_date,
+            m.m_id, m.title, m.date, m.venue, m.match_status,
+            m.home_score, m.away_score,
+            t.t_id, COALESCE(t.t_name, 'Standalone match') AS t_name,
+            m.sport, t.start_date, t.end_date,
             t.status AS tournament_status,
-            home.team_name AS home_team,
-            away.team_name AS away_team
+            m.home_name AS home_team, m.away_name AS away_team
         FROM matches AS m
-        INNER JOIN tournaments AS t
-            ON t.t_id = m.t_id
-        INNER JOIN sports_clubs AS sc
-            ON sc.club_id = t.club_id
-           AND sc.status = 'active'
-        INNER JOIN teams AS home
+        LEFT JOIN tournaments AS t ON t.t_id = m.t_id
+        LEFT JOIN sports_clubs AS sc
+            ON sc.club_id = t.club_id AND sc.status = 'active'
+        LEFT JOIN teams AS home
             ON home.team_id = m.home_team_id
-           AND home.t_id = t.t_id
-           AND home.club_id = t.club_id
-        INNER JOIN teams AS away
+           AND home.t_id = t.t_id AND home.club_id = t.club_id
+        LEFT JOIN teams AS away
             ON away.team_id = m.away_team_id
-           AND away.t_id = t.t_id
-           AND away.club_id = t.club_id
+           AND away.t_id = t.t_id AND away.club_id = t.club_id
         WHERE m.m_id = :match_id
-          AND m.home_team_id <> m.away_team_id
+          AND (
+              (m.t_id IS NULL
+               AND m.home_team_id IS NULL AND m.away_team_id IS NULL
+               AND m.home_u_id IS NULL AND m.away_u_id IS NULL)
+              OR
+              (m.t_id IS NOT NULL AND sc.club_id IS NOT NULL
+               AND home.team_id IS NOT NULL AND away.team_id IS NOT NULL
+               AND m.home_team_id <> m.away_team_id)
+          )
           $scope
         LIMIT 1
     ";
@@ -161,7 +135,7 @@ $errors = [];
 $loadError = false;
 
 $submittedAction = $method === 'POST'
-    ? matchEditInput('action')
+    ? sportsHubInput('action')
     : '';
 
 $saved = $_GET['saved'] ?? '';
@@ -178,7 +152,7 @@ if (!is_int($matchId)) {
             if (
                 !hash_equals(
                     $csrfToken,
-                    matchEditInput('csrf_token')
+                    sportsHubInput('csrf_token')
                 )
             ) {
                 $errors[] = 'Invalid form token. Refresh and try again.';
@@ -223,11 +197,12 @@ if (!is_int($matchId)) {
                                 'Only scheduled fixtures can be edited.';
                         }
 
+                        $isStandalone = $lockedMatch['t_id'] === null;
                         $tournamentStatus = strtolower(trim(
                             (string) $lockedMatch['tournament_status']
                         ));
 
-                        if (!in_array(
+                        if (!$isStandalone && !in_array(
                             $tournamentStatus,
                             ['upcoming', 'ongoing'],
                             true
@@ -236,9 +211,12 @@ if (!is_int($matchId)) {
                                 'This tournament is not accepting fixture changes.';
                         }
 
-                        $title = matchEditInput('title');
-                        $date = matchEditInput('date');
-                        $venue = matchEditInput('venue');
+                        $title = sportsHubInput('title');
+                        $date = sportsHubInput('date');
+                        $venue = sportsHubInput('venue');
+                        $homeName = sportsHubInput('home_name');
+                        $awayName = sportsHubInput('away_name');
+                        $sport = sportsHubInput('sport');
 
                         $titleLength = function_exists('mb_strlen')
                             ? mb_strlen($title, 'UTF-8')
@@ -258,32 +236,70 @@ if (!is_int($matchId)) {
                                 'Venue must contain 2–255 characters.';
                         }
 
-                        if (!matchEditValidDate($date)) {
+                        if ($isStandalone) {
+                            foreach ([
+                                ['Home team', $homeName, 2, 255],
+                                ['Away team', $awayName, 2, 255],
+                                ['Sport', $sport, 2, 255],
+                            ] as [$label, $value, $minimum, $maximum]) {
+                                $size = function_exists('mb_strlen')
+                                    ? mb_strlen($value, 'UTF-8') : strlen($value);
+                                if ($size < $minimum || $size > $maximum) {
+                                    $errors[] = sprintf('%s must contain %d–%d characters.', $label, $minimum, $maximum);
+                                }
+                            }
+                            if (strcasecmp($homeName, $awayName) === 0) {
+                                $errors[] = 'Home and away teams must differ.';
+                            }
+                        }
+
+                        if (!sportsHubValidDate($date)) {
                             $errors[] = 'Enter a valid match date.';
                         } elseif (
                             $date < $today ||
-                            $date < $lockedMatch['start_date'] ||
-                            $date > $lockedMatch['end_date']
+                            (!$isStandalone && (
+                                $date < $lockedMatch['start_date'] ||
+                                $date > $lockedMatch['end_date']
+                            ))
                         ) {
-                            $errors[] =
-                                'Match date must be upcoming and within the tournament dates.';
+                            $errors[] = $isStandalone
+                                ? 'Match date cannot be in the past.'
+                                : 'Match date must be upcoming and within the tournament dates.';
                         }
 
                         if ($errors === []) {
-                            $update = $pdo->prepare(
-                                "UPDATE matches
-                                 SET title = :title,
-                                     date = :match_date,
-                                     venue = :venue
-                                 WHERE m_id = :match_id"
-                            );
-
-                            $update->execute([
-                                'title' => $title,
-                                'match_date' => $date,
-                                'venue' => $venue,
-                                'match_id' => $matchId
-                            ]);
+                            if ($isStandalone) {
+                                $update = $pdo->prepare(
+                                    "UPDATE matches
+                                     SET title = :title, date = :match_date,
+                                         venue = :venue, home_name = :home_name,
+                                         away_name = :away_name, sport = :sport
+                                     WHERE m_id = :match_id AND t_id IS NULL"
+                                );
+                                $update->execute([
+                                    'title' => $title,
+                                    'match_date' => $date,
+                                    'venue' => $venue,
+                                    'home_name' => $homeName,
+                                    'away_name' => $awayName,
+                                    'sport' => $sport,
+                                    'match_id' => $matchId,
+                                ]);
+                            } else {
+                                $update = $pdo->prepare(
+                                    "UPDATE matches
+                                     SET title = :title,
+                                         date = :match_date,
+                                         venue = :venue
+                                     WHERE m_id = :match_id"
+                                );
+                                $update->execute([
+                                    'title' => $title,
+                                    'match_date' => $date,
+                                    'venue' => $venue,
+                                    'match_id' => $matchId
+                                ]);
+                            }
                         }
                     } elseif ($submittedAction === 'result') {
 
@@ -300,7 +316,7 @@ if (!is_int($matchId)) {
                         }
 
                         $homeScore = filter_var(
-                            matchEditInput('home_score'),
+                            sportsHubInput('home_score'),
                             FILTER_VALIDATE_INT,
                             [
                                 'options' => [
@@ -311,7 +327,7 @@ if (!is_int($matchId)) {
                         );
 
                         $awayScore = filter_var(
-                            matchEditInput('away_score'),
+                            sportsHubInput('away_score'),
                             FILTER_VALIDATE_INT,
                             [
                                 'options' => [
@@ -415,11 +431,12 @@ $isCompleted = in_array(
 );
 
 $tournamentActive = $match !== null
-    && in_array(
-        strtolower(trim((string) $match['tournament_status'])),
-        ['upcoming', 'ongoing'],
-        true
-    );
+    && ($match['t_id'] === null && $userRole === 'admin'
+        || in_array(
+            strtolower(trim((string) $match['tournament_status'])),
+            ['upcoming', 'ongoing'],
+            true
+        ));
 
 $canEditFixture = $isScheduled && $tournamentActive;
 
@@ -432,7 +449,7 @@ $pageStylesheets = ['/assets/css/matches.css'];
 include __DIR__ . '/../includes/header.php';
 ?>
 
-<main class="matches-page">
+<main class="matches-page sports-hub-workflow">
     <section class="section-container matches-section">
 
         <div class="matches-header">
@@ -443,7 +460,7 @@ include __DIR__ . '/../includes/header.php';
             <h1>Manage fixture.</h1>
 
             <p class="section-description">
-                Update match details and record tournament results.
+                Update fixtures and record results.
             </p>
         </div>
 
@@ -484,31 +501,31 @@ include __DIR__ . '/../includes/header.php';
 
             <div class="match-edit-summary">
                 <p class="section-label">
-                    <?= matchEditEscape($match['t_name']) ?>
+                    <?= sportsHubEscape($match['t_name']) ?>
                 </p>
 
                 <h2>
-                    <?= matchEditEscape($match['title']) ?>
+                    <?= sportsHubEscape($match['title']) ?>
                 </h2>
 
                 <p>
-                    <?= matchEditEscape($match['home_team']) ?>
+                    <?= sportsHubEscape($match['home_team']) ?>
                     vs
-                    <?= matchEditEscape($match['away_team']) ?>
+                    <?= sportsHubEscape($match['away_team']) ?>
                 </p>
 
                 <p>
-                    <?= matchEditEscape($match['sport']) ?>
+                    <?= sportsHubEscape($match['sport']) ?>
                     ·
-                    <?= matchEditEscape($match['date']) ?>
+                    <?= sportsHubEscape($match['date']) ?>
                     ·
-                    <?= matchEditEscape($match['venue']) ?>
+                    <?= sportsHubEscape($match['venue']) ?>
                 </p>
 
                 <p>
                     Status:
                     <strong>
-                        <?= matchEditEscape(ucfirst($status)) ?>
+                        <?= sportsHubEscape(ucfirst($status)) ?>
                     </strong>
                 </p>
             </div>
@@ -520,14 +537,14 @@ include __DIR__ . '/../includes/header.php';
             <?php elseif ($saved === 'result'): ?>
                 <div class="match-edit-success" role="status">
                     Match result saved successfully.
-                    Tournament standings will reflect the result.
+                    <?php if ($match['t_id'] !== null): ?>Tournament standings will reflect the result.<?php endif; ?>
                 </div>
             <?php endif; ?>
 
             <?php if ($errors !== []): ?>
                 <div class="match-create-errors" role="alert">
                     <?php foreach ($errors as $error): ?>
-                        <p><?= matchEditEscape($error) ?></p>
+                        <p><?= sportsHubEscape($error) ?></p>
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
@@ -537,8 +554,8 @@ include __DIR__ . '/../includes/header.php';
                 <div class="match-edit-heading">
                     <h2>Edit fixture details</h2>
                     <p>
-                        Modify the title, match date or venue.
-                        The participating teams remain unchanged.
+                        Update title, date and venue.
+                        Tournament team selections stay unchanged.
                     </p>
                 </div>
 
@@ -550,7 +567,7 @@ include __DIR__ . '/../includes/header.php';
                     <input
                         type="hidden"
                         name="csrf_token"
-                        value="<?= matchEditEscape($csrfToken) ?>">
+                        value="<?= sportsHubEscape($csrfToken) ?>">
 
                     <input
                         type="hidden"
@@ -567,9 +584,9 @@ include __DIR__ . '/../includes/header.php';
                         type="text"
                         maxlength="100"
                         required
-                        value="<?= matchEditEscape(
+                        value="<?= sportsHubEscape(
                                     $submittedAction === 'fixture'
-                                        ? matchEditInput('title')
+                                        ? sportsHubInput('title')
                                         : $match['title']
                                 ) ?>">
 
@@ -582,10 +599,10 @@ include __DIR__ . '/../includes/header.php';
                         name="date"
                         type="date"
                         required
-                        min="<?= matchEditEscape($today) ?>"
-                        value="<?= matchEditEscape(
+                        min="<?= sportsHubEscape($today) ?>"
+                        value="<?= sportsHubEscape(
                                     $submittedAction === 'fixture'
-                                        ? matchEditInput('date')
+                                        ? sportsHubInput('date')
                                         : $match['date']
                                 ) ?>">
 
@@ -599,11 +616,29 @@ include __DIR__ . '/../includes/header.php';
                         type="text"
                         maxlength="255"
                         required
-                        value="<?= matchEditEscape(
+                        value="<?= sportsHubEscape(
                                     $submittedAction === 'fixture'
-                                        ? matchEditInput('venue')
+                                        ? sportsHubInput('venue')
                                         : $match['venue']
                                 ) ?>">
+
+                    <?php if ($match['t_id'] === null && $userRole === 'admin'): ?>
+                        <label for="standalone_edit_home">Home team</label>
+                        <input id="standalone_edit_home" name="home_name" maxlength="255" required
+                               value="<?= sportsHubEscape(
+                                   $submittedAction === 'fixture' ? sportsHubInput('home_name') : $match['home_team']
+                               ) ?>">
+                        <label for="standalone_edit_away">Away team</label>
+                        <input id="standalone_edit_away" name="away_name" maxlength="255" required
+                               value="<?= sportsHubEscape(
+                                   $submittedAction === 'fixture' ? sportsHubInput('away_name') : $match['away_team']
+                               ) ?>">
+                        <label for="standalone_edit_sport">Sport</label>
+                        <input id="standalone_edit_sport" name="sport" maxlength="255" required
+                               value="<?= sportsHubEscape(
+                                   $submittedAction === 'fixture' ? sportsHubInput('sport') : $match['sport']
+                               ) ?>">
+                    <?php endif; ?>
 
                     <button
                         type="submit"
@@ -632,7 +667,7 @@ include __DIR__ . '/../includes/header.php';
                     <input
                         type="hidden"
                         name="csrf_token"
-                        value="<?= matchEditEscape($csrfToken) ?>">
+                        value="<?= sportsHubEscape($csrfToken) ?>">
 
                     <input
                         type="hidden"
@@ -640,7 +675,7 @@ include __DIR__ . '/../includes/header.php';
                         value="result">
 
                     <label for="home_score">
-                        <?= matchEditEscape($match['home_team']) ?>
+                        <?= sportsHubEscape($match['home_team']) ?>
                         score
                     </label>
 
@@ -652,14 +687,14 @@ include __DIR__ . '/../includes/header.php';
                         max="999"
                         step="1"
                         required
-                        value="<?= matchEditEscape(
+                        value="<?= sportsHubEscape(
                                     $submittedAction === 'result'
-                                        ? matchEditInput('home_score')
+                                        ? sportsHubInput('home_score')
                                         : $match['home_score']
                                 ) ?>">
 
                     <label for="away_score">
-                        <?= matchEditEscape($match['away_team']) ?>
+                        <?= sportsHubEscape($match['away_team']) ?>
                         score
                     </label>
 
@@ -671,9 +706,9 @@ include __DIR__ . '/../includes/header.php';
                         max="999"
                         step="1"
                         required
-                        value="<?= matchEditEscape(
+                        value="<?= sportsHubEscape(
                                     $submittedAction === 'result'
-                                        ? matchEditInput('away_score')
+                                        ? sportsHubInput('away_score')
                                         : $match['away_score']
                                 ) ?>">
 

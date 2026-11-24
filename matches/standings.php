@@ -2,15 +2,18 @@
 
 require_once __DIR__ . '/../includes/db.php';
 
-function standingsEscape($value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES,
-        'UTF-8'
-    );
-}
 
+require_once __DIR__ . '/../includes/helpers.php';
+
+// Filter tournament standings with a server-side search query.
+$searchQuery = $_GET['search'] ?? '';
+$searchQuery = is_string($searchQuery) ? trim($searchQuery) : '';
+$searchQuery = substr($searchQuery, 0, 100);
+$selectedSport = $_GET['sport'] ?? '';
+$selectedSport = is_string($selectedSport) ? trim($selectedSport) : '';
+$selectedSport = substr($selectedSport, 0, 100);
+$availableSports = [];
+$matchingTournaments = [];
 $tournaments = [];
 $selectedTournament = null;
 $standings = [];
@@ -32,13 +35,29 @@ try {
         ['options' => ['min_range' => 1]]
     );
 
-    // Select the first tournament by default.
-    $selectedTournament = $tournaments[0] ?? null;
-
+    // Build sport options from current tournaments, then filter by name and sport.
+    // Keep selection explicit: an imported tournament need not have team standings.
     foreach ($tournaments as $tournament) {
-        if ((int) $tournament['t_id'] === $requestedId) {
-            $selectedTournament = $tournament;
-            break;
+        $sportName = trim((string) ($tournament['sport'] ?? ''));
+        if ($sportName !== '') {
+            $availableSports[$sportName] = $sportName;
+        }
+        $nameMatches = $searchQuery === '' ||
+            stripos((string) $tournament['t_name'], $searchQuery) !== false;
+        $sportMatches = $selectedSport === '' ||
+            strcasecmp($sportName, $selectedSport) === 0;
+        if ($nameMatches && $sportMatches) {
+            $matchingTournaments[] = $tournament;
+        }
+    }
+    natcasesort($availableSports);
+
+    if ($requestedId !== null && $requestedId !== false) {
+        foreach ($matchingTournaments as $tournament) {
+            if ((int) $tournament['t_id'] === (int) $requestedId) {
+                $selectedTournament = $tournament;
+                break;
+            }
         }
     }
 
@@ -164,6 +183,8 @@ try {
 
 $pageStylesheets = ['/assets/css/matches.css'];
 
+$pageTitle = 'Standings';
+
 include __DIR__ . '/../includes/header.php';
 
 ?>
@@ -173,10 +194,6 @@ include __DIR__ . '/../includes/header.php';
     <section class="section-container matches-section">
 
         <div class="matches-header">
-
-            <p class="section-label">
-                NSBM SPORTSHUB / STANDINGS
-            </p>
 
             <h1>Team standings.</h1>
 
@@ -230,72 +247,62 @@ include __DIR__ . '/../includes/header.php';
             </div>
 
         <?php else: ?>
-
-            <!-- Tournament Selection -->
-
-            <form
-                action="/matches/standings.php"
-                method="get"
-                class="standings-filter">
-
-                <label for="tournament">
-                    Select tournament
-                </label>
-
-                <select id="tournament" name="tournament">
-
-                    <?php foreach ($tournaments as $tournament): ?>
-
-                        <option
-                            value="<?php echo (int) $tournament['t_id']; ?>"
-                            <?php
-                            echo (int) $selectedTournament['t_id'] ===
-                                (int) $tournament['t_id']
-                                ? 'selected'
-                                : '';
-                            ?>>
-                            <?php
-                            echo standingsEscape($tournament['t_name']);
-                            ?>
-                        </option>
-
-                    <?php endforeach; ?>
-
-                </select>
-
-                <button type="submit" class="button button-accent">
-                    View standings
-                </button>
-
+            <!-- Tournament search and sport filters. -->
+            <form action="/matches/standings.php" method="get" class="standings-search-form" role="search">
+                <div class="standings-filter-grid">
+                    <div class="standings-filter-item">
+                        <label for="standings-tournament-search">Search tournaments</label>
+                        <input class="standings-filter-input" type="search"
+                               id="standings-tournament-search" name="search"
+                               value="<?= sportsHubEscape($searchQuery) ?>"
+                               placeholder="Search by tournament name"
+                               maxlength="100" autocomplete="off">
+                    </div>
+                    <div class="standings-filter-item">
+                        <label for="standings-sport">Sport</label>
+                        <select class="standings-filter-select" id="standings-sport" name="sport">
+                            <option value="">All sports</option>
+                            <?php foreach ($availableSports as $sport): ?>
+                                <option value="<?= sportsHubEscape($sport) ?>"
+                                        <?= strcasecmp($selectedSport, $sport) === 0 ? 'selected' : '' ?>>
+                                    <?= sportsHubEscape($sport) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <button type="submit" class="standings-filter-submit">Search tournaments</button>
+                </div>
             </form>
 
-            <div class="standings-heading">
+            <?php if (($searchQuery !== '' || $selectedSport !== '') && $matchingTournaments): ?>
+                <div class="standings-search-results" aria-label="Matching tournaments">
+                    <?php foreach ($matchingTournaments as $candidate): ?>
+                        <?php $isSelected = $selectedTournament !== null &&
+                            (int) $candidate['t_id'] === (int) $selectedTournament['t_id']; ?>
+                        <a href="/matches/standings.php?<?= http_build_query(['search' => $searchQuery, 'sport' => $selectedSport, 'tournament' => (int) $candidate['t_id']]) ?>"
+                           class="standings-search-result<?= $isSelected ? ' is-selected' : '' ?>"
+                           <?= $isSelected ? 'aria-current="true"' : '' ?>>
+                            <span><?= sportsHubEscape($candidate['t_name']) ?></span>
+                            <small><?= sportsHubEscape($candidate['sport']) ?></small>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
 
-                <h2>
-                    <?php
-                    echo standingsEscape($selectedTournament['t_name']);
-                    ?>
-                </h2>
+            <?php if ($selectedTournament !== null): ?>
 
-                <p>
-                    <?php
-                    echo standingsEscape($selectedTournament['sport']);
-                    ?>
-                    / <?php echo $completedMatchCount; ?> completed matches
-                </p>
-
+            <div class="standings-selected-event" aria-label="Selected tournament">
+                <span class="standings-selected-label">Selected tournament</span>
+                <strong><?= sportsHubEscape($selectedTournament['t_name']) ?></strong>
             </div>
 
             <?php if (empty($standings)): ?>
 
                 <div class="matches-empty">
 
-                    <h2>No teams registered yet.</h2>
+                    <h2>Standings aren't available yet</h2>
 
-                    <p>
-                        Standings will appear when teams
-                        are registered for this tournament.
-                    </p>
+                    <p>This tournament has no registered teams in SportsHub. Rankings will appear when participating teams and results are recorded.</p>
 
                 </div>
 
@@ -343,7 +350,7 @@ include __DIR__ . '/../includes/header.php';
 
                                     <th scope="row">
                                         <?php
-                                        echo standingsEscape($team['name']);
+                                        echo sportsHubEscape($team['name']);
                                         ?>
                                     </th>
 
@@ -375,15 +382,22 @@ include __DIR__ . '/../includes/header.php';
 
             <?php endif; ?>
 
+            <?php else: ?>
+                <div class="standings-intro" role="status">
+                    <?php if ($searchQuery === '' && $selectedSport === ''): ?>
+                        <h2>Find tournament standings</h2>
+                        <p>Search for a tournament by name, then select it to view its participating teams and results.</p>
+                    <?php elseif ($matchingTournaments): ?>
+                        <h2>Select a tournament</h2>
+                        <p>Choose one of the matching tournaments above to view its standings.</p>
+                    <?php else: ?>
+                        <h2>No tournaments found</h2>
+                        <p>Try a different tournament name.</p>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+
         <?php endif; ?>
-
-        <div class="standings-back">
-
-            <a href="/matches/index.php" class="button button-outline">
-                Back to matches
-            </a>
-
-        </div>
 
     </section>
 

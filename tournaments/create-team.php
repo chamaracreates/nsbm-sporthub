@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/helpers.php';
+
 require_once __DIR__ . '/../includes/db.php';
 
 /* Require an authorized staff account. */
@@ -22,23 +24,7 @@ if (!in_array($method, ['GET', 'POST'], true)) {
     exit('Method not allowed.');
 }
 
-function teamCreateEscape(mixed $value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
 
-function teamCreateInput(string $key): string
-{
-    $value = $_POST[$key] ?? '';
-
-    return is_string($value) ? trim($value) : '';
-}
-
-/* Create a CSRF token for the current session. */
 if (
     !isset($_SESSION['team_create_csrf']) ||
     !is_string($_SESSION['team_create_csrf'])
@@ -133,11 +119,11 @@ try {
     $loadError = true;
 }
 
-/* Process a submitted team creation form. */
+
 if ($method === 'POST' && !$loadError) {
 
-    $teamName = teamCreateInput('team_name');
-    $selectedTournament = teamCreateInput('tournament_id');
+    $teamName = sportsHubInput('team_name');
+    $selectedTournament = sportsHubInput('tournament_id');
 
     $submittedToken = $_POST['csrf_token'] ?? '';
 
@@ -312,7 +298,7 @@ require __DIR__ . '/../includes/header.php';
 
 ?>
 
-<main class="tournaments-page">
+<main class="tournaments-page sports-hub-workflow">
 
     <section class="tournaments-container section-container">
 
@@ -370,7 +356,7 @@ require __DIR__ . '/../includes/header.php';
                     <ul>
                         <?php foreach ($errors as $error): ?>
                             <li>
-                                <?= teamCreateEscape($error) ?>
+                                <?= sportsHubEscape($error) ?>
                             </li>
                         <?php endforeach; ?>
                     </ul>
@@ -387,7 +373,7 @@ require __DIR__ . '/../includes/header.php';
                 <input
                     type="hidden"
                     name="csrf_token"
-                    value="<?= teamCreateEscape($csrfToken) ?>">
+                    value="<?= sportsHubEscape($csrfToken) ?>">
 
                 <div class="tournament-form-grid">
 
@@ -415,11 +401,11 @@ require __DIR__ . '/../includes/header.php';
                                         ? 'selected'
                                         : '' ?>>
 
-                                    <?= teamCreateEscape(
+                                    <?= sportsHubEscape(
                                         $tournament['t_name']
                                     ) ?>
                                     —
-                                    <?= teamCreateEscape(
+                                    <?= sportsHubEscape(
                                         $tournament['club_name']
                                     ) ?>
 
@@ -449,7 +435,7 @@ require __DIR__ . '/../includes/header.php';
                             maxlength="255"
                             required
                             placeholder="Enter team name"
-                            value="<?= teamCreateEscape($teamName) ?>">
+                            value="<?= sportsHubEscape($teamName) ?>">
 
                     </div>
 

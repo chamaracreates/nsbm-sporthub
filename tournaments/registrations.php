@@ -2,6 +2,8 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/helpers.php';
+
 require_once __DIR__ . '/../includes/db.php';
 
 $userId = require_login();
@@ -19,14 +21,6 @@ if (!in_array($method, ['GET', 'POST'], true)) {
     exit('Method not allowed.');
 }
 
-function tournamentReviewEscape(mixed $value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
 
 if (
     !isset($_SESSION['tournament_review_csrf']) ||
@@ -270,7 +264,7 @@ require __DIR__ . '/../includes/header.php';
 ?>
 
 
-<main class="tournaments-page">
+<main class="tournaments-page sports-hub-workflow">
     <section class="tournaments-container section-container">
         <header class="tournaments-heading">
             <p class="section-label">NSBM SPORTSHUB / TOURNAMENT REGISTRATIONS</p>
@@ -286,7 +280,7 @@ require __DIR__ . '/../includes/header.php';
 
         <?php if (is_string($successMessage)): ?>
             <div class="tournament-form-success" role="status">
-                <?= tournamentReviewEscape($successMessage) ?>
+                <?= sportsHubEscape($successMessage) ?>
             </div>
         <?php endif; ?>
 
@@ -295,7 +289,7 @@ require __DIR__ . '/../includes/header.php';
                 <strong>Review could not be completed:</strong>
                 <ul>
                     <?php foreach ($errors as $error): ?>
-                        <li><?= tournamentReviewEscape($error) ?></li>
+                        <li><?= sportsHubEscape($error) ?></li>
                     <?php endforeach; ?>
                 </ul>
             </div>
@@ -332,37 +326,37 @@ require __DIR__ . '/../includes/header.php';
                         <article class="tournament-card">
                             <div class="tournament-card-top">
                                 <span class="tournament-sport">
-                                    <?= tournamentReviewEscape($registration['club_name']) ?>
+                                    <?= sportsHubEscape($registration['club_name']) ?>
                                 </span>
                                 <span class="tournament-status">
-                                    <?= tournamentReviewEscape(ucfirst((string) $registration['registration_status'])) ?>
+                                    <?= sportsHubEscape(ucfirst((string) $registration['registration_status'])) ?>
                                 </span>
                             </div>
-                            <h2><?= tournamentReviewEscape($registration['student_name']) ?></h2>
+                            <h2><?= sportsHubEscape($registration['student_name']) ?></h2>
                             <p class="tournament-club">
-                                <?= tournamentReviewEscape($registration['student_email']) ?>
+                                <?= sportsHubEscape($registration['student_email']) ?>
                             </p>
                             <div class="tournament-details">
-                                <p><strong>Tournament</strong><span><?= tournamentReviewEscape($registration['t_name']) ?></span></p>
-                                <p><strong>Applied</strong><span><?= tournamentReviewEscape($registration['reg_date']) ?></span></p>
-                                <p><strong>Starts</strong><span><?= tournamentReviewEscape($registration['start_date']) ?></span></p>
+                                <p><strong>Tournament</strong><span><?= sportsHubEscape($registration['t_name']) ?></span></p>
+                                <p><strong>Applied</strong><span><?= sportsHubEscape($registration['reg_date']) ?></span></p>
+                                <p><strong>Starts</strong><span><?= sportsHubEscape($registration['start_date']) ?></span></p>
                                 <?php if ($registration['reviewer_name'] !== null): ?>
-                                    <p><strong>Reviewed by</strong><span><?= tournamentReviewEscape($registration['reviewer_name']) ?></span></p>
-                                    <p><strong>Reviewed at</strong><span><?= tournamentReviewEscape($registration['reviewed_at']) ?></span></p>
+                                    <p><strong>Reviewed by</strong><span><?= sportsHubEscape($registration['reviewer_name']) ?></span></p>
+                                    <p><strong>Reviewed at</strong><span><?= sportsHubEscape($registration['reviewed_at']) ?></span></p>
                                 <?php endif; ?>
                             </div>
 
                             <?php if ($reviewAllowed): ?>
                                 <div class="tournament-management-actions">
                                     <form method="post" action="/tournaments/registrations.php">
-                                        <input type="hidden" name="csrf_token" value="<?= tournamentReviewEscape($csrfToken) ?>">
+                                        <input type="hidden" name="csrf_token" value="<?= sportsHubEscape($csrfToken) ?>">
                                         <input type="hidden" name="registration_id" value="<?= (int) $registration['reg_id'] ?>">
                                         <input type="hidden" name="decision" value="approve">
                                         <button type="submit" class="button button-accent">Approve</button>
                                     </form>
                                     <?php if (!$studentInTeam): ?>
                                         <form method="post" action="/tournaments/registrations.php">
-                                            <input type="hidden" name="csrf_token" value="<?= tournamentReviewEscape($csrfToken) ?>">
+                                            <input type="hidden" name="csrf_token" value="<?= sportsHubEscape($csrfToken) ?>">
                                             <input type="hidden" name="registration_id" value="<?= (int) $registration['reg_id'] ?>">
                                             <input type="hidden" name="decision" value="reject">
                                             <button type="submit" class="button button-outline">Reject</button>

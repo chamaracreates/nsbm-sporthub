@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/helpers.php';
+
 require_once __DIR__ . '/../includes/db.php';
 
 $userId = require_login();
@@ -14,14 +16,6 @@ if (current_user_role() !== 'student') {
 
 date_default_timezone_set('Asia/Colombo');
 
-function bookingRequestEscape(mixed $value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
 
 $requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
@@ -76,6 +70,25 @@ try {
 
     http_response_code(500);
     $loadError = true;
+}
+
+// Preselect only facilities currently available for booking.
+if ($requestMethod === 'GET' && !$loadError) {
+    $requestedId = filter_input(
+        INPUT_GET,
+        'res_id',
+        FILTER_VALIDATE_INT,
+        ['options' => ['min_range' => 1]]
+    );
+
+    if (is_int($requestedId)) {
+        foreach ($facilities as $facility) {
+            if ((int) $facility['res_id'] === $requestedId) {
+                $form['res_id'] = (string) $requestedId;
+                break;
+            }
+        }
+    }
 }
 
 if ($requestMethod === 'POST' && !$loadError) {
@@ -143,6 +156,25 @@ if ($requestMethod === 'POST' && !$loadError) {
         $errors[] = 'End time must be later than start time.';
     }
 
+    // Keep requested time slots aligned to the half-hour choices in the form.
+    if (
+        $startTime && $endTime &&
+        $startTime->format('H:i') === $form['starts_at'] &&
+        $endTime->format('H:i') === $form['ends_at'] &&
+        (!in_array(substr($form['starts_at'], -2), ['00', '30'], true) ||
+         !in_array(substr($form['ends_at'], -2), ['00', '30'], true))
+    ) {
+        $errors[] = 'Please choose start and end times in 30-minute increments.';
+    }
+    // do not accept a booking in an elapsed time slot.
+    if (
+        $selectedDate && $selectedDate->format('Y-m-d') === $form['date'] &&
+        $startTime && $startTime->format('H:i') === $form['starts_at'] &&
+        $form['date'] === $today && $form['starts_at'] <= date('H:i')
+    ) {
+        $errors[] = 'Please choose a future start time.';
+    }
+
     if (strlen($form['purpose']) > 255) {
         $errors[] = 'Purpose cannot exceed 255 characters.';
     }
@@ -191,6 +223,53 @@ if ($requestMethod === 'POST' && !$loadError) {
                 if ($overlapCheck->fetch()) {
                     $errors[] =
                         'This facility is already booked for that time.';
+                }
+            }
+
+            // Reject overlapping pending requests from the same student.
+            // Other students may request the same slot; only one can be approved.
+            if (empty($errors)) {
+                $duplicateCheck = $pdo->prepare(
+                    "SELECT b_id FROM booking_request
+                     WHERE res_id = :res_id AND user_id = :user_id
+                       AND date = :booking_date AND booking_status = 'pending'
+                       AND starts_at < :end_time AND ends_at > :start_time
+                     LIMIT 1"
+                );
+                $duplicateCheck->execute([
+                    'res_id' => $facilityId,
+                    'user_id' => $userId,
+                    'booking_date' => $form['date'],
+                    'end_time' => $form['ends_at'],
+                    'start_time' => $form['starts_at']
+                ]);
+                if ($duplicateCheck->fetchColumn() !== false) {
+                    $errors[] = 'You already have a pending request for this time.';
+                }
+            }
+
+            // Check training conflicts under the facility lock.
+            if (empty($errors)) {
+                $trainingCheck = $pdo->prepare(
+                    "SELECT session_id
+                     FROM training_sessions
+                     WHERE location = :resource_id
+                       AND date = :session_date
+                       AND start_time < :requested_end
+                       AND end_time > :requested_start
+                     LIMIT 1"
+                );
+
+                $trainingCheck->execute([
+                    'resource_id' => $facilityId,
+                    'session_date' => $form['date'],
+                    'requested_end' => $form['ends_at'],
+                    'requested_start' => $form['starts_at']
+                ]);
+
+                if ($trainingCheck->fetchColumn() !== false) {
+                    $errors[] =
+                        'This facility is reserved for training during that time.';
                 }
             }
 
@@ -264,25 +343,28 @@ if ($requestMethod === 'POST' && !$loadError) {
 $feedback = $_SESSION['booking_request_feedback'] ?? null;
 unset($_SESSION['booking_request_feedback']);
 
+$pageStylesheets = ['/assets/css/bookings.css'];
+
 require_once __DIR__ . '/../includes/header.php';
 
 ?>
 
-<link rel="stylesheet" href="/assets/css/bookings.css">
 
-<main class="facility-admin-page">
+<main class="facility-admin-page booking-workflow-page booking-request-page">
 
-    <h1>Request a Facility Booking</h1>
-
-    <p>
-        Select an available facility and submit your preferred
-        date and time for administrator approval.
-    </p>
+    <header class="booking-request-heading">
+        <nav class="booking-request-links" aria-label="Facility booking navigation">
+            <a href="/bookings/index.php">&larr; Back to facilities</a>
+            <a href="/bookings/history.php">My bookings &rarr;</a>
+        </nav>
+        <h1>Request a facility booking</h1>
+        <p>Select a facility and preferred time. Your request will be reviewed by an administrator.</p>
+    </header>
 
     <?php if (is_string($feedback)): ?>
 
         <div class="facility-admin-success" role="status">
-            <?= bookingRequestEscape($feedback) ?>
+            <?= sportsHubEscape($feedback) ?>
         </div>
 
     <?php endif; ?>
@@ -307,7 +389,7 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="facility-admin-error" role="alert">
                 <ul>
                     <?php foreach ($errors as $error): ?>
-                        <li><?= bookingRequestEscape($error) ?></li>
+                        <li><?= sportsHubEscape($error) ?></li>
                     <?php endforeach; ?>
                 </ul>
             </div>
@@ -317,16 +399,22 @@ require_once __DIR__ . '/../includes/header.php';
         <form
             method="POST"
             action="/bookings/request.php"
-            class="facility-admin-form"
+            class="facility-admin-form booking-request-form"
+            aria-labelledby="booking-details-title"
         >
 
             <input
                 type="hidden"
                 name="csrf_token"
-                value="<?= bookingRequestEscape($csrfToken) ?>"
+                value="<?= sportsHubEscape($csrfToken) ?>"
             >
 
-            <div class="facility-admin-field">
+            <div class="booking-request-section-heading">
+                <h2 id="booking-details-title">Booking details</h2>
+                <p>Choose the facility, date and time for your request.</p>
+            </div>
+
+            <div class="facility-admin-field booking-request-facility">
 
                 <label for="res_id">Facility</label>
 
@@ -340,7 +428,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 ? 'selected'
                                 : '' ?>
                         >
-                            <?= bookingRequestEscape(
+                            <?= sportsHubEscape(
                                 $facility['res_name']
                             ) ?>
                         </option>
@@ -350,60 +438,56 @@ require_once __DIR__ . '/../includes/header.php';
 
             </div>
 
-            <div class="facility-admin-field">
+            <div class="facility-admin-field booking-request-date">
 
-                <label for="date">Booking Date</label>
+                <label for="date">Booking date</label>
 
                 <input
                     type="date"
                     id="date"
                     name="date"
-                    min="<?= bookingRequestEscape($today) ?>"
-                    value="<?= bookingRequestEscape($form['date']) ?>"
+                    min="<?= sportsHubEscape($today) ?>"
+                    value="<?= sportsHubEscape($form['date']) ?>"
                     required
                 >
 
             </div>
 
-            <div class="facility-admin-field">
+            <!-- Booking date and time slot inputs. -->
+            <fieldset class="booking-slot-group">
+                <legend>Time slot</legend>
+                <div class="booking-slot-grid">
+                    <div class="facility-admin-field">
+                        <label for="starts_at">Start time</label>
+                        <input type="time" id="starts_at" name="starts_at" step="1800"
+                               value="<?= sportsHubEscape($form['starts_at']) ?>" required>
+                    </div>
+                    <div class="facility-admin-field">
+                        <label for="ends_at">End time</label>
+                        <input type="time" id="ends_at" name="ends_at" step="1800"
+                               value="<?= sportsHubEscape($form['ends_at']) ?>" required>
+                    </div>
+                </div>
+                <p class="booking-slot-note">Choose times in 30-minute increments. Existing bookings and training reservations are checked when you submit.</p>
+            </fieldset>
 
-                <label for="starts_at">Start Time</label>
+            <div class="facility-admin-field booking-request-purpose">
 
-                <input
-                    type="time"
-                    id="starts_at"
-                    name="starts_at"
-                    value="<?= bookingRequestEscape($form['starts_at']) ?>"
-                    required
-                >
-
-            </div>
-
-            <div class="facility-admin-field">
-
-                <label for="ends_at">End Time</label>
-
-                <input
-                    type="time"
-                    id="ends_at"
-                    name="ends_at"
-                    value="<?= bookingRequestEscape($form['ends_at']) ?>"
-                    required
-                >
-
-            </div>
-
-            <div class="facility-admin-field">
-
-                <label for="purpose">Booking Purpose</label>
+                <label for="purpose">Booking purpose <span class="booking-optional">(optional)</span></label>
 
                 <textarea
                     id="purpose"
                     name="purpose"
                     maxlength="255"
-                    rows="4"
-                ><?= bookingRequestEscape($form['purpose']) ?></textarea>
+                    rows="3"
+                    placeholder="Describe how you plan to use the facility"
+                ><?= sportsHubEscape($form['purpose']) ?></textarea>
 
+            </div>
+
+            <div class="booking-request-review">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v1" stroke-linecap="round"/></svg>
+                <p>Submitting a request does not reserve the facility. Wait for approval before using the requested time slot.</p>
             </div>
 
             <div class="facility-admin-actions">
@@ -417,7 +501,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                 <a
                     href="/bookings/"
-                    class="facility-admin-button"
+                    class="facility-admin-button facility-button-secondary"
                 >
                     Cancel
                 </a>

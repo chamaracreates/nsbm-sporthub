@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/helpers.php';
+
 require_once __DIR__ . '/../includes/db.php';
 
 $userId = require_login();
@@ -18,20 +20,6 @@ if (!in_array($method, ['GET', 'POST'], true)) {
     exit('Method not allowed.');
 }
 
-function registerEscape(mixed $value): string
-{
-    return htmlspecialchars((string) ($value ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-}
-
-function registerWindowOpen(array $tournament, string $today): bool
-{
-    return strtolower(trim((string) $tournament['status'])) === 'upcoming'
-        && !empty($tournament['reg_open_at'])
-        && !empty($tournament['reg_end_at'])
-        && (string) $tournament['reg_open_at'] <= $today
-        && (string) $tournament['reg_end_at'] >= $today
-        && (string) $tournament['start_date'] > $today;
-}
 
 $tournamentId = filter_var(
     $_GET['id'] ?? null,
@@ -89,7 +77,7 @@ if (!is_int($tournamentId)) {
 
         $statement = $pdo->prepare(
             "SELECT t.t_id, t.t_name, t.sport, t.venue, t.status,
-                    t.reg_open_at, t.reg_end_at, t.start_date, sc.club_name
+                    t.reg_open_at, t.reg_end_at, t.start_date, t.is_historical, sc.club_name
              FROM tournaments AS t
              INNER JOIN sports_clubs AS sc ON sc.club_id = t.club_id
              WHERE t.t_id = :tournament_id AND sc.status = 'active'
@@ -103,7 +91,7 @@ if (!is_int($tournamentId)) {
             $pageError = 'Tournament not found.';
         } else {
             $tournament = $row;
-            $isOpen = registerWindowOpen($tournament, $today);
+            $isOpen = sportsHubRegistrationOpen($tournament, $today);
 
             $statement = $pdo->prepare(
                 "SELECT reg_id, registration_status, reg_date
@@ -158,7 +146,7 @@ if (
             $pdo->beginTransaction();
 
             $statement = $pdo->prepare(
-                "SELECT t.status, t.reg_open_at, t.reg_end_at, t.start_date
+                "SELECT t.status, t.reg_open_at, t.reg_end_at, t.start_date, t.is_historical
                  FROM tournaments AS t
                  INNER JOIN sports_clubs AS sc ON sc.club_id = t.club_id
                  WHERE t.t_id = :tournament_id AND sc.status = 'active'
@@ -167,7 +155,7 @@ if (
             $statement->execute(['tournament_id' => $tournamentId]);
             $current = $statement->fetch(PDO::FETCH_ASSOC);
 
-            if (!is_array($current) || !registerWindowOpen($current, $today)) {
+            if (!is_array($current) || !sportsHubRegistrationOpen($current, date('Y-m-d'))) {
                 $pdo->rollBack();
                 $errors[] = 'The registration window is no longer open.';
             } else {
@@ -217,49 +205,49 @@ require __DIR__ . '/../includes/header.php';
         <?php if ($pageError !== null): ?>
             <div class="tournaments-notice" role="alert">
                 <h2>Registration unavailable</h2>
-                <p><?= registerEscape($pageError) ?></p>
+                <p><?= sportsHubEscape($pageError) ?></p>
             </div>
         <?php elseif ($tournament !== null): ?>
             <article class="tournament-view-panel">
                 <div class="tournament-card-top">
-                    <span class="tournament-sport"><?= registerEscape($tournament['sport']) ?></span>
-                    <span class="tournament-status"><?= registerEscape($tournament['status']) ?></span>
+                    <span class="tournament-sport"><?= sportsHubEscape($tournament['sport']) ?></span>
+                    <span class="tournament-status"><?= sportsHubEscape($tournament['status']) ?></span>
                 </div>
 
-                <h2><?= registerEscape($tournament['t_name']) ?></h2>
+                <h2><?= sportsHubEscape($tournament['t_name']) ?></h2>
                 <p class="tournament-view-description">
-                    Organized by <?= registerEscape($tournament['club_name']) ?>
+                    Organized by <?= sportsHubEscape($tournament['club_name']) ?>
                 </p>
 
                 <dl class="tournament-view-facts">
                     <div>
                         <dt>Registration opens</dt>
-                        <dd><?= registerEscape($tournament['reg_open_at']) ?></dd>
+                        <dd><?= sportsHubEscape($tournament['reg_open_at']) ?></dd>
                     </div>
                     <div>
                         <dt>Registration closes</dt>
-                        <dd><?= registerEscape($tournament['reg_end_at']) ?></dd>
+                        <dd><?= sportsHubEscape($tournament['reg_end_at']) ?></dd>
                     </div>
                     <div>
                         <dt>Tournament starts</dt>
-                        <dd><?= registerEscape($tournament['start_date']) ?></dd>
+                        <dd><?= sportsHubEscape($tournament['start_date']) ?></dd>
                     </div>
                     <div>
                         <dt>Venue</dt>
-                        <dd><?= registerEscape($tournament['venue']) ?></dd>
+                        <dd><?= sportsHubEscape($tournament['venue']) ?></dd>
                     </div>
                 </dl>
 
                 <?php if ($successMessage !== null): ?>
                     <div class="tournament-form-success" role="status">
-                        <?= registerEscape($successMessage) ?>
+                        <?= sportsHubEscape($successMessage) ?>
                     </div>
                 <?php endif; ?>
 
                 <?php if ($withdrawMessage !== null): ?>
                     <div class="<?= $withdrawSucceeded ? 'tournament-form-success' : 'tournament-form-alert' ?>"
                         role="<?= $withdrawSucceeded ? 'status' : 'alert' ?>">
-                        <?= registerEscape($withdrawMessage) ?>
+                        <?= sportsHubEscape($withdrawMessage) ?>
                     </div>
                 <?php endif; ?>
 
@@ -267,7 +255,7 @@ require __DIR__ . '/../includes/header.php';
                     <div class="tournament-form-alert" role="alert">
                         <ul>
                             <?php foreach ($errors as $error): ?>
-                                <li><?= registerEscape($error) ?></li>
+                                <li><?= sportsHubEscape($error) ?></li>
                             <?php endforeach; ?>
                         </ul>
                     </div>
@@ -276,7 +264,7 @@ require __DIR__ . '/../includes/header.php';
                 <?php if ($registration !== null): ?>
                     <div class="tournament-form-success">
                         <strong>Your registration status:</strong>
-                        <?= registerEscape(ucfirst((string) $registration['registration_status'])) ?>
+                        <?= sportsHubEscape(ucfirst((string) $registration['registration_status'])) ?>
                     </div>
 
                     <?php
@@ -285,6 +273,7 @@ require __DIR__ . '/../includes/header.php';
                         ['pending', 'approved'],
                         true
                     ) && strtolower(trim((string) $tournament['status'])) === 'upcoming'
+                        && (int) ($tournament['is_historical'] ?? 1) === 0
                         && (string) $tournament['start_date'] > $today;
                     ?>
 
@@ -296,7 +285,7 @@ require __DIR__ . '/../includes/header.php';
                         <form method="post" action="/tournaments/withdraw.php"
                             class="tournament-form-actions"
                             onsubmit="return confirm('Withdraw this registration? You will not be able to reapply automatically.');">
-                            <input type="hidden" name="csrf_token" value="<?= registerEscape($csrfToken) ?>">
+                            <input type="hidden" name="csrf_token" value="<?= sportsHubEscape($csrfToken) ?>">
                             <input type="hidden" name="tournament_id" value="<?= (int) $tournamentId ?>">
                             <button type="submit" class="button button-outline">Withdraw Registration</button>
                         </form>
@@ -308,7 +297,7 @@ require __DIR__ . '/../includes/header.php';
                     <form method="post"
                         action="/tournaments/register.php?id=<?= (int) $tournamentId ?>"
                         class="tournament-form-actions">
-                        <input type="hidden" name="csrf_token" value="<?= registerEscape($csrfToken) ?>">
+                        <input type="hidden" name="csrf_token" value="<?= sportsHubEscape($csrfToken) ?>">
                         <button type="submit" class="button button-accent">Submit Registration</button>
                     </form>
                 <?php else: ?>

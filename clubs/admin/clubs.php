@@ -1,16 +1,18 @@
 <?php
 declare(strict_types=1);
 
-// NSBM SportsHub - Admin Club Management
-// Member 03 - Club Management
+
+// Sports club administration.
 
 require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/helpers.php';
+
 require_once __DIR__ . '/../../includes/db.php';
 
 // Restrict access to administrators.
 require_admin();
 
-// Create a CSRF token for club administration forms.
+
 if (
     empty($_SESSION['club_admin_csrf']) ||
     !is_string($_SESSION['club_admin_csrf'])
@@ -20,14 +22,6 @@ if (
 
 $csrfToken = $_SESSION['club_admin_csrf'];
 
-function adminClubEscape(mixed $value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
 
 $clubs = [];
 $loadError = false;
@@ -160,23 +154,23 @@ if ($action === 'update') {
                             'Another club already uses this name.';
                     }
 
-                    // Exclude the current club from duplicate checks.
-                    $duplicateName = $pdo->prepare(
+                    // Reject a sport already assigned to another club.
+                    $duplicateSport = $pdo->prepare(
                         "SELECT club_id
                         FROM sports_clubs
-                        WHERE LOWER(club_name) = LOWER(:club_name)
+                        WHERE LOWER(sport) = LOWER(:sport)
                         AND club_id <> :club_id
                         LIMIT 1"
                     );
 
-                    $duplicate->execute([
+                    $duplicateSport->execute([
                         'sport' => $sport,
                         'club_id' => $clubId
                     ]);
 
                     if (
                         $errorMessage === '' &&
-                        $duplicate->fetchColumn() !== false
+                        $duplicateSport->fetchColumn() !== false
                     ) {
                         $errorMessage =
                             'Another club already uses this sport.';
@@ -449,12 +443,13 @@ try {
     $loadError = true;
 }
 
+$pageStylesheets = ['/assets/css/clubs.css'];
+
 require __DIR__ . '/../../includes/header.php';
 ?>
 
-<link rel="stylesheet" href="/assets/css/clubs.css">
 
-<main class="clubs-page">
+<main class="clubs-page sports-hub-workflow">
     <section class="shell clubs-directory">
 
         <h1>Manage Sports Clubs</h1>
@@ -478,7 +473,7 @@ require __DIR__ . '/../../includes/header.php';
     $successMessage !== ''
 ): ?>
     <p class="club-create-success" role="status">
-        <?= adminClubEscape($successMessage) ?>
+        <?= sportsHubEscape($successMessage) ?>
     </p>
 <?php endif; ?>
 
@@ -487,7 +482,7 @@ require __DIR__ . '/../../includes/header.php';
     $errorMessage !== ''
 ): ?>
     <p class="club-create-error" role="alert">
-        <?= adminClubEscape($errorMessage) ?>
+        <?= sportsHubEscape($errorMessage) ?>
     </p>
 <?php endif; ?>
 
@@ -500,7 +495,7 @@ require __DIR__ . '/../../includes/header.php';
         <input
             type="hidden"
             name="csrf_token"
-            value="<?= adminClubEscape($csrfToken) ?>"
+            value="<?= sportsHubEscape($csrfToken) ?>"
         >
 
         <input
@@ -518,7 +513,7 @@ require __DIR__ . '/../../includes/header.php';
                 name="club_name"
                 maxlength="150"
                 required
-                value="<?= adminClubEscape($formValues['club_name']) ?>"
+                value="<?= sportsHubEscape($formValues['club_name']) ?>"
                 placeholder="e.g. Basketball Club"
             >
         </div>
@@ -532,7 +527,7 @@ require __DIR__ . '/../../includes/header.php';
                 name="sport"
                 maxlength="100"
                 required
-                value="<?= adminClubEscape($formValues['sport']) ?>"
+                value="<?= sportsHubEscape($formValues['sport']) ?>"
                 placeholder="e.g. Basketball"
             >
         </div>
@@ -546,7 +541,7 @@ require __DIR__ . '/../../includes/header.php';
                 name="club_email"
                 maxlength="255"
                 required
-                value="<?= adminClubEscape($formValues['club_email']) ?>"
+                value="<?= sportsHubEscape($formValues['club_email']) ?>"
                 placeholder="e.g. basketball@nsbm.ac.lk"
             >
         </div>
@@ -582,7 +577,7 @@ require __DIR__ . '/../../includes/header.php';
                 rows="4"
                 required
                 placeholder="Describe the sports club..."
-            ><?= adminClubEscape($formValues['description']) ?></textarea>
+            ><?= sportsHubEscape($formValues['description']) ?></textarea>
         </div>
 
         <div class="club-create-actions">
@@ -597,7 +592,7 @@ require __DIR__ . '/../../includes/header.php';
 
 <?php if ($editError !== ''): ?>
     <p class="club-create-error" role="alert">
-        <?= adminClubEscape($editError) ?>
+        <?= sportsHubEscape($editError) ?>
     </p>
 <?php endif; ?>
 
@@ -609,7 +604,7 @@ require __DIR__ . '/../../includes/header.php';
 
     <p>
         Update the details of
-        <?= adminClubEscape($editClub['club_name']) ?>.
+        <?= sportsHubEscape($editClub['club_name']) ?>.
     </p>
 
 <?php if (
@@ -617,7 +612,7 @@ require __DIR__ . '/../../includes/header.php';
     $successMessage !== ''
 ): ?>
     <p class="club-create-success" role="status">
-        <?= adminClubEscape($successMessage) ?>
+        <?= sportsHubEscape($successMessage) ?>
     </p>
 <?php endif; ?>
 
@@ -626,7 +621,7 @@ require __DIR__ . '/../../includes/header.php';
     $errorMessage !== ''
 ): ?>
     <p class="club-create-error" role="alert">
-        <?= adminClubEscape($errorMessage) ?>
+        <?= sportsHubEscape($errorMessage) ?>
     </p>
 <?php endif; ?>
 
@@ -639,7 +634,7 @@ require __DIR__ . '/../../includes/header.php';
         <input
             type="hidden"
             name="csrf_token"
-            value="<?= adminClubEscape($csrfToken) ?>"
+            value="<?= sportsHubEscape($csrfToken) ?>"
         >
 
         <input
@@ -662,7 +657,7 @@ require __DIR__ . '/../../includes/header.php';
                 name="club_name"
                 maxlength="150"
                 required
-                value="<?= adminClubEscape($editClub['club_name']) ?>"
+                value="<?= sportsHubEscape($editClub['club_name']) ?>"
             >
         </div>
 
@@ -674,7 +669,7 @@ require __DIR__ . '/../../includes/header.php';
                 name="sport"
                 maxlength="100"
                 required
-                value="<?= adminClubEscape($editClub['sport']) ?>"
+                value="<?= sportsHubEscape($editClub['sport']) ?>"
             >
         </div>
 
@@ -686,7 +681,7 @@ require __DIR__ . '/../../includes/header.php';
                 name="club_email"
                 maxlength="255"
                 required
-                value="<?= adminClubEscape($editClub['club_email']) ?>"
+                value="<?= sportsHubEscape($editClub['club_email']) ?>"
             >
         </div>
 
@@ -720,7 +715,7 @@ require __DIR__ . '/../../includes/header.php';
                 maxlength="255"
                 rows="4"
                 required
-            ><?= adminClubEscape($editClub['description']) ?></textarea>
+            ><?= sportsHubEscape($editClub['description']) ?></textarea>
         </div>
 
         <div class="club-create-actions">
@@ -773,25 +768,25 @@ require __DIR__ . '/../../includes/header.php';
                     <?php foreach ($clubs as $club): ?>
                         <tr>
                             <td>
-                                <?= adminClubEscape(
+                                <?= sportsHubEscape(
                                     $club['club_name']
                                 ) ?>
                             </td>
 
                             <td>
-                                <?= adminClubEscape(
+                                <?= sportsHubEscape(
                                     $club['sport']
                                 ) ?>
                             </td>
 
                             <td>
-                                <?= adminClubEscape(
+                                <?= sportsHubEscape(
                                     $club['club_email']
                                 ) ?>
                             </td>
 
                             <td>
-                                <?= adminClubEscape(
+                                <?= sportsHubEscape(
                                     ucfirst($club['status'])
                                 ) ?>
                             </td>

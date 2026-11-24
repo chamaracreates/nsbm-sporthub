@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/helpers.php';
+
 require_once __DIR__ . '/../includes/db.php';
 
 // Only logged-in students may view their bookings.
@@ -15,20 +17,11 @@ if (current_user_role() !== 'student') {
 
 date_default_timezone_set('Asia/Colombo');
 
-// Escape output safely.
-function bookingHistoryEscape(mixed $value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
 
 $bookings = [];
 $loadError = false;
 
-// Generate a CSRF token for booking cancellation.
+
 if (
     !isset($_SESSION['booking_cancel_csrf']) ||
     !is_string($_SESSION['booking_cancel_csrf'])
@@ -40,7 +33,7 @@ if (
 
 $cancelCsrfToken = $_SESSION['booking_cancel_csrf'];
 
-// Retrieve and clear cancellation feedback.
+
 $feedback = $_SESSION['booking_history_feedback'] ?? null;
 unset($_SESSION['booking_history_feedback']);
 
@@ -82,23 +75,20 @@ try {
     $loadError = true;
 }
 
+$pageStylesheets = ['/assets/css/bookings.css'];
+
 require_once __DIR__ . '/../includes/header.php';
 
 ?>
 
-<link rel="stylesheet" href="/assets/css/bookings.css">
 
-<main class="booking-page">
+<main class="booking-page booking-workflow-page booking-history-page">
 
     <div class="booking-container">
 
         <section class="booking-introduction">
 
-            <p class="booking-eyebrow">
-                NSBM SPORTSHUB
-            </p>
-
-            <h1>My Booking History</h1>
+<h1>My Booking History</h1>
 
             <p class="booking-intro-text">
                 View your facility booking requests
@@ -111,7 +101,7 @@ require_once __DIR__ . '/../includes/header.php';
             <?php if (is_string($feedback)): ?>
 
     <div class="facility-admin-success" role="status">
-        <?= bookingHistoryEscape($feedback) ?>
+        <?= sportsHubEscape($feedback) ?>
     </div>
 
 <?php endif; ?>
@@ -119,13 +109,6 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="booking-section-heading">
 
                 <h2>My Requests</h2>
-
-                <span class="booking-count">
-                    <?= count($bookings) ?>
-                    <?= count($bookings) === 1
-                        ? 'booking'
-                        : 'bookings' ?>
-                </span>
 
             </div>
 
@@ -135,12 +118,12 @@ require_once __DIR__ . '/../includes/header.php';
                     href="/bookings/request.php"
                     class="facility-admin-button"
                 >
-                    + Request New Booking
+                    Request New Booking
                 </a>
 
                 <a
                     href="/bookings/"
-                    class="facility-admin-button"
+                    class="facility-admin-button facility-button-secondary"
                 >
                     View Facilities
                 </a>
@@ -178,8 +161,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                         <thead>
                             <tr>
-                                <th>Booking ID</th>
-                                <th>Facility</th>
+                                                                <th>Facility</th>
                                 <th>Date</th>
                                 <th>Time</th>
                                 <th>Purpose</th>
@@ -195,23 +177,19 @@ require_once __DIR__ . '/../includes/header.php';
                                 <tr>
 
                                     <td>
-                                        #<?= (int) $booking['b_id'] ?>
-                                    </td>
-
-                                    <td>
-                                        <?= bookingHistoryEscape(
+                                        <?= sportsHubEscape(
                                             $booking['res_name']
                                         ) ?>
                                     </td>
 
                                     <td>
-                                        <?= bookingHistoryEscape(
+                                        <?= sportsHubEscape(
                                             $booking['date']
                                         ) ?>
                                     </td>
 
                                     <td>
-                                        <?= bookingHistoryEscape(
+                                        <?= sportsHubEscape(
                                             substr(
                                                 (string) $booking['starts_at'],
                                                 0,
@@ -219,7 +197,7 @@ require_once __DIR__ . '/../includes/header.php';
                                             )
                                         ) ?>
                                         –
-                                        <?= bookingHistoryEscape(
+                                        <?= sportsHubEscape(
                                             substr(
                                                 (string) $booking['ends_at'],
                                                 0,
@@ -229,14 +207,14 @@ require_once __DIR__ . '/../includes/header.php';
                                     </td>
 
                                     <td>
-                                        <?= bookingHistoryEscape(
+                                        <?= sportsHubEscape(
                                             $booking['purpose']
                                                 ?: 'Not specified'
                                         ) ?>
                                     </td>
 
                                     <td>
-                                        <?= bookingHistoryEscape(
+                                        <?= sportsHubEscape(
                                             ucfirst(
                                                 (string) $booking['booking_status']
                                             )
@@ -254,7 +232,7 @@ require_once __DIR__ . '/../includes/header.php';
             <input
                 type="hidden"
                 name="csrf_token"
-                value="<?= bookingHistoryEscape($cancelCsrfToken) ?>"
+                value="<?= sportsHubEscape($cancelCsrfToken) ?>"
             >
 
             <input

@@ -1,0 +1,14 @@
+.git
+.env
+.env.*
+!.env.example
+includes/db.local.php
+**/.DS_Store
+__MACOSX
+backups
+*.zip
+*.sql.gz
+*.dump
+assets/uploads/club-news/*
+!assets/uploads/club-news/.gitignore
+!assets/uploads/club-news/.htaccess

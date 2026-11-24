@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/helpers.php';
+
 require_once __DIR__ . '/timezone.php';
 
 /* Restrict attendance management to authorized staff. */
@@ -24,14 +26,7 @@ if (!in_array($requestMethod, ['GET', 'POST'], true)) {
 }
 
 /* Escape dynamic values before rendering HTML. */
-function attendanceEscape(mixed $value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
+
 
 /* Initialize CSRF protection. */
 if (
@@ -322,13 +317,13 @@ try {
     $loadError = true;
 }
 
-/* Load the shared SportsHub header. */
+
 $pageStylesheets = ['/assets/css/training.css'];
 require __DIR__ . '/../includes/header.php';
 
 ?>
 
-<main class="training-page">
+<main class="training-page sports-hub-workflow">
 
     <div class="training-container">
 
@@ -373,7 +368,7 @@ require __DIR__ . '/../includes/header.php';
                     class="training-attendance-feedback"
                     role="status">
                     <?php
-                    echo attendanceEscape($feedback);
+                    echo sportsHubEscape($feedback);
                     ?>
                 </p>
 
@@ -425,7 +420,7 @@ require __DIR__ . '/../includes/header.php';
 
                                 <strong>
                                     <?php
-                                    echo attendanceEscape(
+                                    echo sportsHubEscape(
                                         $session['title']
                                     );
                                     ?>
@@ -433,7 +428,7 @@ require __DIR__ . '/../includes/header.php';
 
                                 <span>
                                     <?php
-                                    echo attendanceEscape(
+                                    echo sportsHubEscape(
                                         $session['club_name']
                                     );
                                     ?>
@@ -441,7 +436,7 @@ require __DIR__ . '/../includes/header.php';
 
                                 <span>
                                     <?php
-                                    echo attendanceEscape(
+                                    echo sportsHubEscape(
                                         $session['date']
                                     );
                                     ?>
@@ -469,7 +464,7 @@ require __DIR__ . '/../includes/header.php';
 
                     <h2 id="attendance-roster-title">
                         <?php
-                        echo attendanceEscape(
+                        echo sportsHubEscape(
                             $selectedSession['title']
                         );
                         ?>
@@ -477,13 +472,13 @@ require __DIR__ . '/../includes/header.php';
 
                     <p class="training-attendance-context">
                         <?php
-                        echo attendanceEscape(
+                        echo sportsHubEscape(
                             $selectedSession['club_name']
                         );
                         ?>
                         —
                         <?php
-                        echo attendanceEscape(
+                        echo sportsHubEscape(
                             $selectedSession['date']
                         );
                         ?>
@@ -548,7 +543,7 @@ require __DIR__ . '/../includes/header.php';
                                         type="hidden"
                                         name="csrf_token"
                                         value="<?php
-                                                echo attendanceEscape(
+                                                echo sportsHubEscape(
                                                     $csrfToken
                                                 );
                                                 ?>">
@@ -574,7 +569,7 @@ require __DIR__ . '/../includes/header.php';
 
                                     <strong>
                                         <?php
-                                        echo attendanceEscape(
+                                        echo sportsHubEscape(
                                             $student['name']
                                         );
                                         ?>

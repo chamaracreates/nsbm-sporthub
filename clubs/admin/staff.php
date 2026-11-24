@@ -1,8 +1,10 @@
 <?php
-// NSBM SportsHub - MIC and Coach Management
-// Member 03 - Club Management
+
+// MIC and coach assignment administration.
 
 require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/helpers.php';
+
 require_once __DIR__ . '/../../includes/db.php';
 
 // Only administrators can access this page.
@@ -10,16 +12,8 @@ require_once __DIR__ . '/../../includes/db.php';
 require_admin();
 
 // Escape text before displaying it in HTML.
-function staffEscape($value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
 
-// Create a CSRF token for administrator forms.
+
 if (
     empty($_SESSION['club_staff_csrf']) ||
     !is_string($_SESSION['club_staff_csrf'])
@@ -349,25 +343,36 @@ try {
 }
 
 // Load the shared website header.
+$pageStylesheets = ['/assets/css/clubs.css'];
 require __DIR__ . '/../../includes/header.php';
 ?>
 
-<link rel="stylesheet" href="/assets/css/clubs.css">
 
-<main class="clubs-page">
+<main class="clubs-page sports-hub-workflow">
 
-    <section class="shell club-admin-page">
+    <section class="shell club-admin-page staff-admin-v15">
 
         <p class="clubs-eyebrow">
             NSBM SportsHub / Administration
         </p>
 
-        <h1>MIC &amp; Coach Management</h1>
+        <div class="v15-page-heading">
+            <div>
+                <h1>MIC &amp; Coach Management</h1>
+                <p>Create confirmed staff accounts, assign MICs and coaches to clubs, and manage their appointments.</p>
+            </div>
+            <div class="v15-page-actions">
+                <a class="v15-action v15-action-primary" href="/clubs/admin/create-staff.php">Create staff account</a>
+                <a class="v15-action v15-action-secondary" href="/clubs/admin/leaders.php">Club leadership</a>
+            </div>
+        </div>
 
-        <p>
-            Assign Members in Charge and coaches to sports clubs,
-            manage specializations, and control active assignments.
-        </p>
+        <!-- Staff-account creation confirmation -->
+        <?php if (($_GET['result'] ?? '') === 'account_created'): ?>
+            <p class="club-admin-success" role="status">
+                Staff account created. You can now assign this person to a sports club.
+            </p>
+        <?php endif; ?>
 
         <!-- Success messages -->
 
@@ -405,17 +410,17 @@ require __DIR__ . '/../../includes/header.php';
 
                 <?php if (empty($staffUsers)): ?>
 
-                    <p>
-                        No MIC or coach accounts exist yet.
-                        An administrator must create staff accounts
-                        before assigning them to clubs.
-                    </p>
+                    <div class="v16-empty-state" role="status">
+                        <h3>No staff accounts yet</h3>
+                        <p>Create a coach or MIC account using the action above, then return here to assign them to a club.</p>
+                    </div>
 
                 <?php elseif (empty($clubs)): ?>
 
-                    <p>
-                        No active sports clubs are available.
-                    </p>
+                    <div class="v16-empty-state" role="status">
+                        <h3>No active clubs available</h3>
+                        <p>Activate a sports club before assigning an MIC or coach.</p>
+                    </div>
 
                 <?php else: ?>
 
@@ -434,7 +439,7 @@ require __DIR__ . '/../../includes/header.php';
                         <input
                             type="hidden"
                             name="csrf_token"
-                            value="<?= staffEscape($csrfToken) ?>"
+                            value="<?= sportsHubEscape($csrfToken) ?>"
                         >
 
                         <div class="club-staff-form-field">
@@ -459,8 +464,8 @@ require __DIR__ . '/../../includes/header.php';
                                 <option
                                     value="<?= (int) $person['user_id'] ?>"
                                 >
-                                    <?= staffEscape($person['name']) ?>
-                                    (<?= staffEscape(
+                                    <?= sportsHubEscape($person['name']) ?>
+                                    (<?= sportsHubEscape(
                                         strtoupper($person['role'])
                                     ) ?>)
                                 </option>
@@ -490,7 +495,7 @@ require __DIR__ . '/../../includes/header.php';
                                     <option
                                         value="<?= (int) $club['club_id'] ?>"
                                     >
-                                        <?= staffEscape($club['club_name']) ?>
+                                        <?= sportsHubEscape($club['club_name']) ?>
                                     </option>
 
                                 <?php endforeach; ?>
@@ -512,12 +517,14 @@ require __DIR__ . '/../../includes/header.php';
                             >
                         </div>
 
-                        <button
+                        <div class="v16-form-actions">
+<button
                             type="submit"
                             class="club-admin-approve"
                         >
                             Save Assignment
                         </button>
+</div>
 
                     </form>
 
@@ -533,9 +540,10 @@ require __DIR__ . '/../../includes/header.php';
 
                 <?php if (empty($assignments)): ?>
 
-                    <p>
-                        No staff assignments found.
-                    </p>
+                    <div class="v16-empty-state" role="status">
+                        <h3>No staff assignments yet</h3>
+                        <p>Once an MIC or coach is assigned to a club, their appointment and status will appear here.</p>
+                    </div>
 
                 <?php else: ?>
 
@@ -563,19 +571,19 @@ require __DIR__ . '/../../includes/header.php';
                                 <tr>
 
                                     <td>
-                                        <?= staffEscape(
+                                        <?= sportsHubEscape(
                                             $assignment['staff_name']
                                         ) ?>
                                     </td>
 
                                     <td>
-                                        <?= staffEscape(
+                                        <?= sportsHubEscape(
                                             $assignment['club_name']
                                         ) ?>
                                     </td>
 
                                     <td>
-                                        <?= staffEscape(
+                                        <?= sportsHubEscape(
                                             strtoupper(
                                                 $assignment['staff_role']
                                             )
@@ -583,14 +591,14 @@ require __DIR__ . '/../../includes/header.php';
                                     </td>
 
                                     <td>
-                                        <?= staffEscape(
+                                        <?= sportsHubEscape(
                                             $assignment['specialization']
                                             ?: '—'
                                         ) ?>
                                     </td>
 
                                     <td>
-                                        <?= staffEscape(
+                                        <?= sportsHubEscape(
                                             ucfirst(
                                                 $assignment['status']
                                             )
@@ -614,7 +622,7 @@ require __DIR__ . '/../../includes/header.php';
                                             <input
                                                 type="hidden"
                                                 name="csrf_token"
-                                                value="<?= staffEscape($csrfToken) ?>"
+                                                value="<?= sportsHubEscape($csrfToken) ?>"
                                             >
 
                                             <?php if (
