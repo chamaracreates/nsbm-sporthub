@@ -1,58 +1,70 @@
 # NSBM SportsHub
-A web-based sports club management system for NSBM Green University.
 
-# Technologies
-- HTML, CSS, JavaScript
-- PHP
-- MySQL
+**Sports Club Management System - NSBM Green University**
 
-## Database Setup
+NSBM SportsHub is a web-based sports management system designed to centralize the administration of sports clubs, competitions, training sessions and facility reservations at NSBM Green University. The platform provides a unified interface for students, sports staff and administrators to coordinate sports activities, manage participation and access institutional sports information.
 
-NSBM SportsHub requires MySQL 8.4 and PHP with PDO MySQL enabled.
+## Features
 
-### Fresh installation
+| Module | Functionality |
+| --- | --- |
+| Sports Clubs | Club profiles, membership applications, staff assignments and club leadership management. |
+| Tournaments | Competition management, registration, team formation and roster management. |
+| Fixtures and Standings | Match scheduling, score recording, results and tournament standings. |
+| Training | Session scheduling, venue allocation and attendance management. |
+| Facility Bookings | Facility information, reservation requests, availability validation and administrative approval. |
+| News | Club news publishing, image management and chronological news display. |
+| Student Accounts | Registration, profile management, password changes and participation history. |
+| Administration and Reporting | Centralized management, operational statistics, filtered reports and CSV exports. |
 
-1. Create an empty MySQL database.
-2. Import `database/nsbm_sports_db.sql` into that database.
-3. Configure the application database environment variables:
-   - `DB_HOST`
-   - `DB_PORT`
-   - `DB_NAME`
-   - `DB_USER`
-   - `DB_PASSWORD`
-4. Start the PHP web server and verify the database connection.
+The public portal also provides global search and a responsive interface across desktop, tablet and mobile devices.
 
-The main SQL file already provides:
+## User Roles
 
-- `AUTO_INCREMENT` for `users.user_id`.
-- A unique constraint on `student_profiles.student_number`.
-- The student participation view without a hardcoded root definer.
+| Role | Responsibilities |
+| --- | --- |
+| Administrator | System-wide administration, club and staff management, content publishing, request approvals and reporting. |
+| Member in Charge (MIC) | Management of authorized sports activities within assigned clubs. |
+| Coach | Club-specific training, attendance and competition management within assigned permissions. |
+| Student | Club membership applications, tournament registration, facility reservation requests and personal participation records. |
 
-Do not apply `002_student_accounts_constraints.sql` again
-after importing the current main schema.
+Public sports information is accessible without authentication. Protected operations are subject to role-based authorization, club assignments and record ownership.
 
-### Existing installations
+## Technology Stack
 
-For databases created using an older schema:
+| Component | Technology |
+| --- | --- |
+| Frontend | HTML5, CSS3, JavaScript |
+| Backend | PHP 8.3 |
+| Database | MySQL 8.4 (InnoDB) |
+| Database Access | PHP Data Objects (PDO) |
+| Web Server | Apache HTTP Server |
+| Development Environment | Docker, Docker Compose |
+| Version Control | Git, GitHub |
 
-1. Back up the existing database.
-2. Inspect the current account ID and student number constraints.
-3. Apply only the missing changes from
-   `database/migrations/002_student_accounts_constraints.sql`.
-4. Verify the affected tables and indexes before continuing.
+## System Architecture
 
-Do not blindly rerun migrations or import the full schema
-over a database containing existing records.
+The system follows a modular, server-rendered architecture. Application modules handle business logic and request processing, while shared components provide authentication, authorization, validation and database connectivity. A centralized relational database maintains operational records and relationships between modules.
 
-### Database verification
+## Repository Structure
 
-After installation, verify the database structure:
-
-```sql
-SHOW CREATE TABLE users;
-SHOW INDEX FROM student_profiles;
-SHOW FULL TABLES;
+```text
+nsbm-sporthub/
+├── admin/          Administrative and content management
+├── assets/         Stylesheets, JavaScript and media assets
+├── bookings/       Facility reservation management
+├── clubs/          Sports club and membership management
+├── database/       Consolidated SQL schema
+├── includes/       Shared application components
+├── matches/        Fixtures, results and standings
+├── reports/        Administrative reporting and exports
+├── student/        Student accounts and participation history
+├── tournaments/    Competitions and team management
+└── training/       Training schedules and attendance
 ```
 
-Ensure that the application database account has the
-required permissions for the tables and views.
+## Database and Security
+
+The database uses relational constraints, unique indexes and transactional operations to maintain data integrity and support scheduling and participation workflows.
+
+Security controls include password hashing, session-based authentication, role-based authorization, parameterized database queries, CSRF protection, server-side validation and restricted file uploads. Environment-specific credentials are maintained outside version-controlled source code.
