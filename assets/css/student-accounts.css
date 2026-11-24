@@ -1,5 +1,6 @@
+/* Student account and profile interfaces */
 
-/* NSBM SportsHub - Member 02 Student Accounts */
+/* Student account forms and profile views. */
 
 /* Main account page layout */
 .accounts-page {
@@ -8,7 +9,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 70px 20px;
 }
 
 /* Login card */
@@ -22,13 +22,6 @@
 }
 
 /* Page heading */
-.accounts-container h1 {
-    margin: 0 0 30px;
-    color: var(--color-text);
-    font-size: 30px;
-    line-height: 1.25;
-    text-align: center;
-}
 
 /* Login form layout */
 .accounts-container form[action="login.php"] {
@@ -61,7 +54,6 @@
     outline-offset: 2px;
 }
 
-/* Login button */
 .accounts-container form[action="login.php"] button[type="submit"] {
     width: 100%;
     min-height: 48px;
@@ -178,42 +170,9 @@
 }
 
 /* Successful registration message */
-.accounts-container .form-success {
-    margin-bottom: 20px;
-    padding: 14px 16px;
-
-    background: #142719;
-    color: #b9f5c2;
-
-    border: 1px solid #37694a;
-    border-radius: 8px;
-
-    font-size: 14px;
-    line-height: 1.6;
-}
 
 /* Registration validation errors */
-.accounts-container .form-errors {
-    margin-bottom: 20px;
-    padding: 14px 16px;
 
-    background: #301a1a;
-    color: #ffcccc;
-
-    border: 1px solid #994444;
-    border-radius: 8px;
-
-    font-size: 14px;
-}
-
-.accounts-container .form-errors p {
-    margin-top: 0;
-}
-
-.accounts-container .form-errors ul {
-    margin-bottom: 0;
-    padding-left: 20px;
-}
 /* Shared account page layout */
 .accounts-page {
     padding: 56px 16px 80px;
@@ -340,7 +299,6 @@
     text-decoration: underline;
 }
 
-
 /* Logged-in account status */
 .accounts-container [role="status"] {
     text-align: center;
@@ -406,7 +364,6 @@
 
 .student-profile-page {
     width: 100%;
-    padding: 55px 0 85px;
     background: var(--color-background);
 }
 
@@ -589,7 +546,6 @@
     grid-template-columns: 1fr;
 }
 
-
 /* ========================================
    Edit Student Profile Form
 ======================================== */
@@ -603,8 +559,6 @@
 .edit-profile-page .edit-profile-form > p {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin: 0 0 22px;
 }
 
 /* Field labels */
@@ -649,7 +603,6 @@
 
 /* About Me textarea */
 .edit-profile-page .edit-profile-form textarea {
-    min-height: 120px;
     resize: vertical;
 }
 
@@ -857,8 +810,6 @@
     outline-offset: 3px;
 }
 
-
-
 /* ========================================
    Change Password - Visibility Controls
 ======================================== */
@@ -975,7 +926,6 @@
 ======================================== */
 
 .student-history-page {
-    padding: 70px 0 90px;
     background: var(--color-background);
 }
 
@@ -1038,29 +988,13 @@
 }
 
 /* Individual statistic card */
-.student-history-page .history-stat-card {
-    min-width: 0;
-    padding: 26px;
-
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 14px;
-
-    transition: border-color 0.2s ease;
-}
-
-.student-history-page .history-stat-card:hover {
-    border-color: var(--color-accent);
-}
 
 /* Lime accent */
 .student-history-page .history-stat-card::before {
     content: "";
-    display: block;
     width: 30px;
     height: 4px;
     margin-bottom: 24px;
-
     background: var(--color-accent);
     border-radius: 10px;
 }
@@ -1068,20 +1002,12 @@
 /* Large statistic number */
 .student-history-page .history-stat-number {
     display: block;
-    margin-bottom: 10px;
-
-    color: var(--color-text);
-    font-size: 40px;
     font-weight: 800;
-    line-height: 1.1;
 }
 
 /* Statistic description */
 .student-history-page .history-stat-card p {
     margin: 0;
-    color: var(--color-muted);
-    font-size: 14px;
-    line-height: 1.5;
 }
 
 /* Mobile responsiveness */
@@ -1144,7 +1070,6 @@
     overflow-wrap: anywhere;
 }
 
-/* Mobile layout */
 @media (max-width: 600px) {
     .student-history-page .history-student-card {
         padding: 20px;
@@ -1165,9 +1090,6 @@
 ======================================== */
 
 .student-history-page .history-section {
-    margin: 32px 0;
-    padding: 28px;
-
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: 16px;
@@ -1188,11 +1110,6 @@
 
 .student-history-page .history-empty-state {
     padding: 36px 20px;
-
-    background: var(--color-surface-alt);
-    border: 1px dashed #3a3d3c;
-    border-radius: 12px;
-
     text-align: center;
 }
 
@@ -1224,13 +1141,10 @@
 .student-history-page .history-table-scroll {
     width: 100%;
     overflow-x: auto;
-    border: 1px solid var(--color-border);
-    border-radius: 10px;
 }
 
 .student-history-page .history-table {
     width: 100%;
-    min-width: 640px;
     border-collapse: collapse;
     font-size: 14px;
     text-align: left;
@@ -1244,14 +1158,8 @@
 }
 
 .student-history-page .history-table th {
-    background: var(--color-surface-alt);
-    color: var(--color-text);
     font-weight: 700;
     white-space: nowrap;
-}
-
-.student-history-page .history-table td {
-    color: var(--color-muted);
 }
 
 .student-history-page .history-table tbody tr:last-child td {
@@ -1261,8 +1169,6 @@
 .student-history-page .history-table tbody tr:hover {
     background: var(--color-surface-alt);
 }
-
-/* Mobile layout */
 
 @media (max-width: 600px) {
     .student-history-page .history-section {
@@ -1318,230 +1224,6 @@
 .student-history-page .history-back-link:focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 3px;
-}
-
-/* ==========================================
-   Login Page - Two Column Layout
-   ========================================== */
-
-.accounts-page.login-layout-page {
-    display: block;
-    width: 100%;
-    padding: 0;
-}
-
-/* Main layout */
-.login-layout-page .login-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
-    align-items: center;
-    gap: 64px;
-
-    width: min(1200px, calc(100% - 48px));
-    max-width: 1200px;
-    min-height: 70vh;
-    margin: 0 auto;
-    padding: 64px 0;
-}
-
-/* Left welcome section */
-.login-layout-page .login-welcome {
-    min-width: 0;
-}
-
-
-/* Welcome heading - reference screenshot style */
-.login-layout-page .login-welcome h1 {
-    font-family: -apple-system, BlinkMacSystemFont,
-                 "Segoe UI", Arial, sans-serif;
-
-    font-size: clamp(54px, 5.5vw, 78px);
-    font-weight: 800;
-    font-style: normal;
-
-    line-height: 0.98;
-    letter-spacing: -0.055em;
-
-    margin: 0 0 24px;
-    color: var(--color-text);
-}
-
-/* Mobile heading */
-@media (max-width: 600px) {
-    .login-layout-page .login-welcome h1 {
-        font-size: 44px;
-        line-height: 1.05;
-    }
-}
-
-
-.login-layout-page .login-welcome p {
-    max-width: 500px;
-    margin: 0;
-
-    font-size: 20px;
-    line-height: 1.7;
-
-    color: var(--color-muted);
-}
-
-/* Right login card */
-.login-layout-page .accounts-container.login-card {
-    width: 100%;
-    max-width: 520px;
-    margin: 0;
-    box-sizing: border-box;
-}
-
-/* Login card heading */
-.login-layout-page .login-card #login-title {
-    margin: 0 0 28px;
-    font-size: 34px;
-    font-weight: 800;
-    line-height: 1.2;
-    text-align: left;
-}
-
-/* Make sure the form fills the card */
-.login-layout-page .login-card form {
-    width: 100%;
-}
-
-/* No arrow on login button */
-.login-layout-page .login-card form button[type="submit"]::after {
-    content: none;
-}
-
-/* Center the card when the user is logged in */
-.login-layout-page .login-layout > .login-card:only-child {
-    grid-column: 1 / -1;
-    justify-self: center;
-}
-
-/* Tablet */
-@media (max-width: 900px) {
-    .login-layout-page .login-layout {
-        grid-template-columns: 1fr;
-        gap: 36px;
-        min-height: auto;
-        padding: 56px 0;
-    }
-
-    .login-layout-page .login-welcome {
-        text-align: center;
-    }
-
-    .login-layout-page .login-welcome h1 {
-        font-size: clamp(44px, 8vw, 68px);
-    }
-
-    .login-layout-page .login-welcome p {
-        margin: 0 auto;
-        font-size: 17px;
-    }
-
-    .login-layout-page .accounts-container.login-card {
-        justify-self: center;
-    }
-}
-
-/* Mobile */
-@media (max-width: 600px) {
-    .login-layout-page .login-layout {
-        width: calc(100% - 32px);
-        gap: 28px;
-        padding: 40px 0;
-    }
-
-    .login-layout-page .login-welcome h1 {
-        font-size: 46px;
-        margin-bottom: 16px;
-    }
-
-    .login-layout-page .login-welcome p {
-        font-size: 16px;
-    }
-
-    .login-layout-page .login-card #login-title {
-        font-size: 28px;
-    }
-}
-
-/* Login page - refined typography */
-
-.login-layout-page .login-welcome h1 {
-    font-size: clamp(40px, 4.5vw, 64px);
-    font-weight: 600;
-    line-height: 1.12;
-    letter-spacing: -0.035em;
-    margin-bottom: 20px;
-}
-
-.login-layout-page .login-welcome p {
-    max-width: 430px;
-    font-size: 17px;
-    font-weight: 400;
-    line-height: 1.65;
-}
-
-.login-layout-page .login-card #login-title {
-    font-size: 30px;
-    font-weight: 600;
-    letter-spacing: -0.025em;
-    margin-bottom: 24px;
-}
-
-.login-layout-page .login-card label {
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.login-layout-page .login-card form button[type="submit"] {
-    font-size: 15px;
-    font-weight: 600;
-}
-
-@media (max-width: 900px) {
-    .login-layout-page .login-welcome h1 {
-        font-size: 48px;
-    }
-}
-
-@media (max-width: 600px) {
-    .login-layout-page .login-welcome h1 {
-        font-size: 40px;
-    }
-
-    .login-layout-page .login-welcome p {
-        font-size: 15px;
-    }
-
-    .login-layout-page .login-card #login-title {
-        font-size: 26px;
-    }
-}
-
-/* Rounded Log in button */
-.login-layout-page .login-card form button[type="submit"] {
-    border-radius: 999px;
-    min-height: 54px;
-    font-size: 15px;
-    font-weight: 600;
-}
-
-/* Login button - shorter pill shape */
-.login-layout-page .login-card form button[type="submit"] {
-    min-height: 44px;
-    height: 44px;
-    padding: 0 20px;
-    border-radius: 999px;
-    font-size: 15px;
-    font-weight: 600;
-}
-
-/* Welcome heading line spacing */
-.login-layout-page .login-welcome h1 {
-    line-height: 1.08;
 }
 
 /* ==========================================
@@ -1632,38 +1314,6 @@
     font-weight: 700;
 }
 
-/* Login welcome heading */
-.login-layout-page .login-welcome h1 {
-    font-size: clamp(52px, 5.5vw, 76px);
-    font-weight: 800;
-    line-height: 0.98;
-    letter-spacing: -0.045em;
-    margin-bottom: 24px;
-}
-
-/* Login description */
-.login-layout-page .login-welcome p {
-    font-size: 17px;
-    font-weight: 400;
-    line-height: 1.55;
-}
-
-/* Login form heading */
-.login-layout-page .login-card #login-title {
-    font-size: 30px;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-}
-
-/* Preserve shorter pill-shaped Log in button */
-.login-layout-page .login-card form button[type="submit"] {
-    height: 44px;
-    min-height: 44px;
-    border-radius: 999px;
-    font-size: 14px;
-    font-weight: 700;
-}
-
 /* Mobile typography */
 @media (max-width: 600px) {
     .accounts-page h1,
@@ -1672,11 +1322,6 @@
     .change-password-page h1,
     .student-history-page h1 {
         font-size: 34px;
-    }
-
-    .login-layout-page .login-welcome h1 {
-        font-size: 44px;
-        line-height: 1.05;
     }
 
     .accounts-page h2,
@@ -1723,14 +1368,6 @@
     letter-spacing: -0.02em;
 }
 
-/* Login card heading */
-.login-layout-page .login-card #login-title {
-    font-size: 30px;
-    font-weight: 700;
-    line-height: 1.2;
-    letter-spacing: -0.025em;
-}
-
 /* Supporting descriptions */
 .accounts-page p {
     font-size: 16px;
@@ -1761,13 +1398,6 @@
     font-weight: 700;
 }
 
-/* Preserve the login button */
-.login-layout-page .login-card form button[type="submit"] {
-    min-height: 44px;
-    height: 44px;
-    border-radius: 999px;
-}
-
 /* Mobile */
 @media (max-width: 600px) {
     .accounts-page:not(.login-layout-page) h1 {
@@ -1779,451 +1409,909 @@
         font-size: 22px;
     }
 
-    .login-layout-page .login-welcome h1 {
-        font-size: 44px;
-    }
-
-    .login-layout-page .login-card #login-title {
-        font-size: 26px;
-    }
 }
 
-
-
-/* =========================================
-   REGISTER PAGE - REFERENCE PROPORTIONS
-   ========================================= */
-
-@media (min-width: 901px) {
-
-    .register-layout-page .register-layout {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 488px;
-        align-items: start;
-        column-gap: 72px;
-
-        width: min(1228px, calc(100% - 48px));
-        max-width: 1228px;
-        min-height: 0;
-        margin: 0 auto;
-        padding: 32px 0 56px;
-    }
-
-    /* Position heading close to top of form */
-    .register-layout-page .register-welcome {
-        align-self: start;
-        padding-top: 60px;
-    }
-
-
-
-.register-layout-page .register-welcome h1 {
-    font-size: 64px;
-    font-weight: 700;
-    line-height: 1.05;
-    letter-spacing: -0.035em;
-    margin: 0 0 22px;
+/* Student actions use the shared primary button dimensions. */
+.accounts-page :is(.accounts-container,.register-card,.login-card,.profile-card,.history-stat-card) { border-radius: var(--ui-radius-card); }
+.accounts-page :is(input:not([type="hidden"]),select,textarea) { border-color: var(--color-border); border-radius: var(--ui-radius-control); background: var(--color-surface-alt); color: var(--color-text); font-family: inherit; }
+.accounts-page :is(.accounts-submit,.profile-action-primary,.accounts-profile-button,.register-card form button[type="submit"],.login-card form button[type="submit"]) {
+    min-height: 42px; border-radius: 999px; background: var(--color-accent); color: #000;
+    font-family: inherit; font-size: 14px; font-weight: 700; line-height: 1.25;
+    transition: background-color var(--ui-transition), transform var(--ui-transition);
 }
-
-
-
-    /* Left description */
-    .register-layout-page .register-welcome p {
-        max-width: 465px;
-        font-size: 17px;
-        line-height: 1.6;
-    }
-
-    /* Right form card */
-    .register-layout-page .accounts-container.register-card {
-        width: 100%;
-        max-width: 488px;
-        margin: 0;
-        padding: 30px;
-        justify-self: end;
-        box-sizing: border-box;
-        border-radius: 22px;
-    }
+.accounts-page :is(.accounts-submit,.profile-action-primary,.accounts-profile-button,.register-card form button[type="submit"],.login-card form button[type="submit"]):not(:disabled):hover {
+    background: var(--color-accent-hover); color: #000; transform: translateY(-1px);
 }
+.accounts-page :is(.edit-profile-back-link,.change-password-back-link,.history-back-link) { border-radius: var(--ui-radius-pill); }
+@media (max-width: 600px) { .accounts-page :is(.register-card,.login-card) { width: 100%; } }
 
-/* Registration card heading */
-.register-layout-page .register-card #register-title {
-    font-size: 30px;
-    font-weight: 700;
-    line-height: 1.2;
-    letter-spacing: -0.025em;
-    text-align: left;
-    margin: 0 0 22px;
-}
-
-/* Form field spacing */
-.register-layout-page .register-card form > p,
-.register-layout-page .register-card .form-group {
-    margin-top: 0;
-    margin-bottom: 14px;
-}
-
-/* Form labels */
-.register-layout-page .register-card label {
+/* Authentication forms and responsive field grouping. */
+.accounts-page.auth-page {
     display: block;
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 7px;
+    min-height: calc(100vh - 72px);
+    padding: clamp(36px, 6vw, 76px) 20px 72px;
+    background: var(--color-background);
 }
 
-/* Input dimensions */
-.register-layout-page .register-card input:not([type="hidden"]) {
+.accounts-page.auth-page .auth-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
     width: 100%;
-    height: 48px;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0;
+}
+
+.auth-page .auth-heading h1 {
+    margin: 0 0 10px;
+    color: var(--color-text);
+    font-size: clamp(34px, 4.2vw, 48px);
+    font-weight: 750;
+    line-height: 1.12;
+    letter-spacing: -0.045em;
+}
+
+.auth-page .auth-heading p {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: 16px;
+    line-height: 1.55;
+}
+
+.accounts-page.auth-page .accounts-container.auth-card {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: clamp(22px, 3vw, 36px);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--ui-radius-card);
+    box-shadow: none;
+}
+
+.auth-page .auth-card .auth-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px 20px;
+    margin: 0;
+}
+
+.auth-page .auth-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.auth-page .registration-field-wide,
+.auth-page .auth-actions {
+    grid-column: 1 / -1;
+}
+
+.auth-page .auth-card label {
+    margin: 0;
+    color: var(--color-text);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.auth-page .auth-card input:not([type="hidden"]) {
+    width: 100%;
+    min-width: 0;
     min-height: 48px;
-    box-sizing: border-box;
-    border-radius: 10px;
-    font-size: 15px;
+    padding: 12px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--ui-radius-control);
+    background: var(--color-surface-alt);
+    color: var(--color-text);
+    font-size: 16px;
+    line-height: 1.4;
 }
 
-/* Create Account button */
-.register-layout-page .register-card form button[type="submit"] {
-    width: 100%;
-    height: 46px;
-    min-height: 46px;
-    padding: 0 20px;
-    border-radius: 999px;
+.auth-page .auth-card input::placeholder {
+    color: var(--color-muted);
+    opacity: 1;
     font-size: 14px;
-    font-weight: 700;
 }
 
-/* Tablet and mobile */
-@media (max-width: 900px) {
-    .register-layout-page .register-layout {
-        grid-template-columns: 1fr;
-        width: calc(100% - 32px);
-        gap: 32px;
-        padding: 40px 0;
-        min-height: 0;
-    }
+.auth-page .auth-card .password-field input {
+    padding-right: 72px;
+}
 
-    .register-layout-page .register-welcome {
-        padding-top: 0;
-        text-align: center;
-    }
+.auth-page .auth-card .password-field .toggle-password {
+    right: 6px;
+    min-width: 58px;
+    min-height: 40px;
+    padding: 8px;
+    border-radius: 8px;
+    color: var(--color-accent);
+    font-size: 13px;
+}
 
+.auth-page #registration-password-requirements {
+    display: block;
+    margin: 0;
+    color: var(--color-muted);
+    font-size: 13px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
 
-.register-layout-page .register-welcome h1 {
-    font-size: clamp(38px, 6vw, 48px);
+.auth-page .auth-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding-top: 22px;
+    border-top: 1px solid var(--color-border);
+}
+
+.auth-page .auth-actions p {
+    margin: 0;
+    color: var(--color-muted);
+    text-align: left;
+    font-size: 14px;
+    line-height: 1.5;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+}
+
+.auth-page .auth-actions a {
+    color: var(--color-accent);
+    text-decoration: none;
     font-weight: 600;
-    line-height: 1.08;
 }
 
-
-    .register-layout-page .register-welcome p {
-        margin: 0 auto;
-    }
-
-    .register-layout-page .accounts-container.register-card {
-        width: 100%;
-        max-width: 488px;
-        margin: 0 auto;
-        padding: 26px;
-    }
+.auth-page .auth-actions a:hover {
+    text-decoration: underline;
 }
 
-
-/* Register page - correct vertical alignment */
-
-@media (min-width: 901px) {
-    .register-layout-page .register-layout {
-        align-items: start;
-        min-height: 0;
-        padding: 48px 0 60px;
-    }
-
-    .register-layout-page .register-welcome {
-        align-self: start;
-        padding-top: clamp(65px, 11vh, 110px);
-    }
-}
-
-/* Register form - compact proportions */
-
-.register-layout-page .accounts-container.register-card {
-    max-width: 490px;
-    padding: 28px 32px;
-    justify-self: end;
-}
-
-.register-layout-page .register-card #register-title {
-    font-size: 29px;
-    font-weight: 700;
-    margin-bottom: 20px;
-}
-
-.register-layout-page .register-card form > p,
-.register-layout-page .register-card .form-group {
-    margin-bottom: 14px;
-}
-
-.register-layout-page .register-card label {
-    margin-bottom: 6px;
-}
-
-.register-layout-page .register-card input:not([type="hidden"]) {
-    height: 46px;
+.auth-page .auth-card form[action] button[type="submit"] {
+    width: auto;
+    min-width: 166px;
     min-height: 46px;
+    height: auto;
+    margin: 0;
+    padding: 12px 24px;
+    border-radius: var(--ui-radius-pill);
+    font-size: 14px;
+    line-height: 1.4;
 }
 
-.register-layout-page .register-card form button[type="submit"] {
-    min-height: 44px;
-    height: 44px;
-    border-radius: 999px;
-}
-
-/* Preserve mobile-friendly alignment */
-@media (max-width: 900px) {
-    .register-layout-page .register-welcome {
-        padding-top: 0;
-    }
-
-    .register-layout-page .accounts-container.register-card {
-        justify-self: center;
-        width: 100%;
-    }
+.auth-page .auth-card .form-errors p {
+    margin: 0 0 8px;
+    text-align: left;
 }
 
 @media (max-width: 600px) {
-    .register-layout-page .accounts-container.register-card {
-        padding: 24px 20px;
-    }
-}
-
-/* ==========================================
-   Compact Registration Form
-   ========================================== */
-
-@media (min-width: 901px) {
-    .register-layout-page .register-layout {
-        grid-template-columns: minmax(0, 1fr) 440px;
-        column-gap: 64px;
-        padding-top: 28px;
-        padding-bottom: 36px;
-    }
-
-    .register-layout-page .register-welcome {
-        padding-top: 65px;
-    }
-}
-
-/* Smaller form card */
-.register-layout-page .accounts-container.register-card {
-    max-width: 440px;
-    padding: 24px 28px;
-    border-radius: 20px;
-}
-
-/* Smaller heading */
-.register-layout-page .register-card #register-title {
-    font-size: 27px;
-    font-weight: 700;
-    margin-bottom: 16px;
-}
-
-/* Reduce space between fields */
-.register-layout-page .register-card form > p,
-.register-layout-page .register-card .form-group {
-    margin-bottom: 10px;
-}
-
-/* Compact labels */
-.register-layout-page .register-card label {
-    font-size: 13px;
-    margin-bottom: 5px;
-}
-
-/* Shorter input fields */
-.register-layout-page .register-card input:not([type="hidden"]) {
-    height: 42px;
-    min-height: 42px;
-    padding-top: 9px;
-    padding-bottom: 9px;
-    font-size: 14px;
-}
-
-/* Smaller Create Account button */
-.register-layout-page .register-card form button[type="submit"] {
-    height: 42px;
-    min-height: 42px;
-    margin-top: 8px;
-    border-radius: 999px;
-    font-size: 14px;
-}
-
-/* Mobile */
-@media (max-width: 900px) {
-    .register-layout-page .accounts-container.register-card {
-        width: 100%;
-        max-width: 440px;
-        padding: 24px;
-    }
-}
-
-/* ==========================================
-   Register Page - Balanced Positioning
-   ========================================== */
-
-@media (min-width: 901px) {
-
-    /* Reduce empty space below navigation */
-    .accounts-page.register-layout-page {
-        padding-top: 0;
-        margin-top: 0;
-    }
-
-    .accounts-page.register-layout-page .register-layout {
-        padding-top: 18px;
-        padding-bottom: 32px;
+    .accounts-page.auth-page {
         min-height: 0;
-        align-items: start;
+        padding: 36px 16px 48px;
     }
 
-    /* Move left heading closer to the top */
-    .accounts-page.register-layout-page .register-welcome {
-        padding-top: 65px;
-        margin-top: 0;
+    .accounts-page.auth-page .auth-layout {
+        gap: 20px;
     }
 
-    /* Keep registration form near the top */
-    .accounts-page.register-layout-page .register-card {
-        margin-top: 0;
-        align-self: start;
-    }
-}
-
-
-/* Registration form - balanced final width */
-
-@media (min-width: 901px) {
-
-    .register-layout-page .register-layout {
-        grid-template-columns: minmax(0, 1fr) 475px;
-        column-gap: 64px;
-    }
-
-    .register-layout-page .accounts-container.register-card {
-        width: 465px;
-        max-width: 100%;
-        padding: 24px 30px;
+    .accounts-page.auth-page .accounts-container.auth-card {
+        padding: 22px 18px;
         border-radius: 20px;
-        transform: translateX(-25px);
+    }
+
+    .auth-page .auth-card .auth-form {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 18px;
+    }
+
+    .auth-page .auth-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+        padding-top: 18px;
+        gap: 16px;
+    }
+
+    .auth-page .auth-actions p {
+        text-align: center;
+    align-items: center;
+}
+
+    .auth-page .auth-card form[action] button[type="submit"] {
+        width: 100%;
     }
 }
 
-/* ==========================================
-   Registration Card - Soft Dark Appearance
-   ========================================== */
-
-.register-layout-page .accounts-container.register-card {
-    background: #0c0d10;
-
-    border: 1px solid rgba(255, 255, 255, 0.055);
-
-    box-shadow:
-        0 12px 35px rgba(0, 0, 0, 0.30),
-        0 25px 60px rgba(0, 0, 0, 0.18);
-
-    border-radius: 20px;
+/* Login uses a single-column form within the shared authentication layout. */
+.accounts-page.login-layout-page .auth-layout {
+    max-width: 520px;
+}
+.login-layout-page .auth-card .auth-form {
+    grid-template-columns: minmax(0, 1fr);
+}
+.login-layout-page .auth-card .auth-actions button[type="submit"] {
+    min-width: 112px;
+}
+@media (max-width: 600px) {
+    .login-layout-page .auth-card .auth-actions button[type="submit"] {
+        width: 100%;
+    }
 }
 
-/* Softer input background */
-.register-layout-page .register-card input:not([type="hidden"]) {
-    background: #151619;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    color: #f5f5f5;
+/* Student profile and participation history layouts. */
+.student-profile-page,
+.student-history-page {
+    background: var(--color-background);
 }
 
-/* Placeholder appearance */
-.register-layout-page .register-card input::placeholder {
-    color: #9298a3;
-    opacity: 1;
-    font-size: 13px;
-    font-weight: 400;
+.student-profile-page {
+    padding: 54px 0 86px;
 }
 
-/* Subtle input highlight on focus */
-.register-layout-page .register-card input:focus {
-    border-color: rgba(168, 255, 0, 0.65);
-    outline: 2px solid rgba(168, 255, 0, 0.15);
-    outline-offset: 1px;
+.student-history-page {
+    padding: 56px 0 90px;
 }
 
-/* Preserve bright green action button */
-.register-layout-page .register-card button[type="submit"] {
+.student-profile-shell,
+.student-history-shell {
+    max-width: 1120px;
+}
+
+.student-profile-hero,
+.student-history-hero {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+    gap: 22px;
+    margin-bottom: 28px;
+    padding: clamp(28px, 4vw, 42px);
+    background:
+        radial-gradient(circle at top right, rgba(168, 255, 0, 0.14), transparent 34%),
+        linear-gradient(180deg, rgba(18, 21, 26, 0.98), rgba(11, 13, 18, 0.98));
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 30px;
+    overflow: hidden;
+}
+
+.student-profile-hero::after,
+.student-history-hero::after {
+    content: "";
+    position: absolute;
+    inset: auto -70px -90px auto;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(168, 255, 0, 0.12), transparent 65%);
+    pointer-events: none;
+}
+
+.student-profile-kicker,
+.student-history-kicker,
+.student-profile-panel-kicker,
+.student-history-panel-kicker {
+    margin: 0 0 12px;
+    color: var(--color-accent);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+}
+
+.student-profile-hero h1,
+.student-history-hero h1 {
+    margin: 0;
+    color: #ffffff;
+    font-size: clamp(34px, 5vw, 62px);
+    line-height: 1.02;
+    letter-spacing: -0.045em;
+    text-wrap: balance;
+}
+
+.student-profile-lead,
+.student-history-subtitle {
+    margin: 16px 0 0;
+    max-width: 64ch;
+    color: #b3bbc7;
+    font-size: 17px;
+    line-height: 1.75;
+}
+
+.student-profile-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+}
+
+.student-profile-action,
+.history-back-link,
+.edit-profile-back-link,
+.change-password-back-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 12px 20px;
     border-radius: 999px;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
-/* ==========================================
-   Login & Registration - Dark Green Gradient
-   ========================================== */
+.student-profile-action:hover,
+.history-back-link:hover,
+.edit-profile-back-link:hover,
+.change-password-back-link:hover {
+    transform: translateY(-1px);
+}
 
-.accounts-page.login-layout-page,
-.accounts-page.register-layout-page {
-    background-color: #050706;
+.student-profile-action-primary {
+    background: var(--color-accent);
+    color: #000000;
+    border: 1px solid var(--color-accent);
+}
 
+.student-profile-action-primary:hover {
+    background: var(--color-accent-hover);
+    color: #000000;
+}
+
+.student-profile-action-secondary,
+.history-back-link,
+.edit-profile-back-link,
+.change-password-back-link {
+    background: rgba(255, 255, 255, 0.04);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.student-profile-action-secondary:hover,
+.history-back-link:hover,
+.edit-profile-back-link:hover,
+.change-password-back-link:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+.student-profile-aside,
+.student-history-identity {
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 22px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+}
+
+.student-profile-avatar,
+.student-history-identity-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 76px;
+    height: 76px;
+    flex: 0 0 76px;
+    border-radius: 22px;
+    background: linear-gradient(180deg, rgba(168, 255, 0, 0.24), rgba(168, 255, 0, 0.08));
+    border: 1px solid rgba(168, 255, 0, 0.24);
+    color: #ffffff;
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+}
+
+.student-profile-aside-text,
+.student-history-identity-text {
+    min-width: 0;
+}
+
+.student-profile-role,
+.student-history-identity-label {
+    margin: 0 0 6px;
+    color: var(--color-accent);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.student-profile-aside-text h2,
+.student-history-identity-text h2 {
+    margin: 0 0 8px;
+    color: #ffffff;
+    font-size: 24px;
+    line-height: 1.2;
+}
+
+.student-profile-student-id,
+.student-history-identity-text p {
+    margin: 0;
+    color: #c1c7d0;
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.student-profile-panel-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.student-profile-panel,
+.student-history-overview-surface,
+.student-history-page .history-section {
+    background: linear-gradient(180deg, rgba(14, 17, 23, 0.98), rgba(10, 12, 17, 0.98));
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 26px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+}
+
+.student-profile-panel {
+    padding: 28px;
+}
+
+.student-profile-panel-wide {
+    grid-column: 1 / -1;
+}
+
+.student-profile-panel-head h2,
+.student-history-overview-head h2,
+.student-history-page .history-section h3 {
+    margin: 0;
+    color: #ffffff;
+    font-size: clamp(24px, 2.5vw, 32px);
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+}
+
+.student-profile-fact-list {
+    list-style: none;
+    margin: 22px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 14px;
+}
+
+.student-profile-fact-list li,
+.student-history-mini-card {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 18px 20px;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 18px;
+}
+
+.student-profile-fact-label,
+.student-history-mini-label,
+.student-history-overview-note {
+    color: #98a1ad;
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.student-profile-fact-list strong,
+.student-history-mini-card strong {
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 650;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.student-profile-summary-text {
+    margin: 22px 0 0;
+    color: #d1d7dd;
+    font-size: 16px;
+    line-height: 1.85;
+}
+
+.student-history-overview-surface {
+    margin-bottom: 24px;
+    padding: 28px;
+}
+
+.student-history-overview-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.student-history-student-grid,
+.student-history-stats-grid {
+    display: grid;
+    gap: 18px;
+}
+
+.student-history-student-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-bottom: 20px;
+}
+
+.student-history-stats-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.student-history-page .history-stat-card {
+    min-width: 0;
+    padding: 22px;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 22px;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.student-history-page .history-stat-card:hover {
+    transform: translateY(-1px);
+    border-color: rgba(168, 255, 0, 0.28);
+}
+
+.student-history-page .history-stat-card::before {
+    display: none !important;
+}
+
+.student-history-page .history-stat-number {
+    margin-bottom: 8px;
+    color: #ffffff;
+    font-size: clamp(34px, 4vw, 48px);
+    line-height: 1;
+}
+
+.student-history-page .history-stat-card p {
+    color: #9aa3af;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.student-history-page .history-section {
+    margin: 24px 0;
+    padding: 28px;
+}
+
+.student-history-section-head {
+    margin-bottom: 18px;
+}
+
+.student-history-page .history-section h3 {
+    padding: 0;
+    border: 0;
+}
+
+.student-history-section-note {
+    margin: -4px 0 18px;
+    color: #98a1ad;
+    font-size: 14px;
+    line-height: 1.65;
+}
+
+.student-history-page .history-empty-state {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px dashed rgba(255, 255, 255, 0.16);
+    border-radius: 18px;
+}
+
+.student-history-page .history-table-scroll {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.student-history-page .history-table {
+    min-width: 720px;
+}
+
+.student-history-page .history-table th {
+    background: rgba(255, 255, 255, 0.045);
+    color: #ffffff;
+}
+
+.student-history-page .history-table td {
+    color: #c7ced6;
+}
+
+.student-history-page .history-table a {
+    color: var(--color-accent);
+    text-decoration: none;
+}
+
+.student-history-page .history-table a:hover {
+    text-decoration: underline;
+}
+
+.student-history-message {
+    margin: 0 0 24px;
+    padding: 18px 20px;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 18px;
+    color: #d3dae2;
+}
+
+.student-history-message-error {
+    background: #301a1a;
+    border-color: #994444;
+    color: #ffcccc;
+}
+
+.student-history-page .history-back-action,
+.edit-profile-page .edit-profile-back,
+.change-password-page .change-password-back {
+    margin-top: 26px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+}
+
+.student-history-page .history-back-link,
+.edit-profile-page .edit-profile-back-link,
+.change-password-page .change-password-back-link {
+    width: auto;
+    min-width: 0;
+}
+
+.edit-profile-page .edit-profile-form select {
+    appearance: none;
     background-image:
-        radial-gradient(
-            ellipse 65% 85% at 12% 42%,
-            rgba(153, 255, 0, 0.12) 0%,
-            transparent 68%
-        ),
-        radial-gradient(
-            ellipse 55% 75% at 90% 35%,
-            rgba(0, 105, 67, 0.22) 0%,
-            transparent 72%
-        ),
-        linear-gradient(
-            115deg,
-            #050706 0%,
-            #0b130e 52%,
-            #050807 100%
-        );
-
+        linear-gradient(45deg, transparent 50%, #9aa3af 50%),
+        linear-gradient(135deg, #9aa3af 50%, transparent 50%);
+    background-position:
+        calc(100% - 22px) calc(50% - 3px),
+        calc(100% - 15px) calc(50% - 3px);
+    background-size: 7px 7px, 7px 7px;
     background-repeat: no-repeat;
-    background-size: cover;
+    padding-right: 48px;
 }
 
-/* Match Register heading position to Login page */
-
-@media (min-width: 901px) {
-    .accounts-page.register-layout-page .register-welcome {
-        padding-top: 145px;
-    }
+.edit-profile-page .profile-card-grid {
+    align-items: stretch;
 }
-
-
-/* Mobile Registration - Fix Vertical Alignment */
 
 @media (max-width: 900px) {
-
-    /* Prevent the main page from centering its contents */
-    .accounts-page.register-layout-page {
-        display: block;
-        min-height: 0;
-        padding-top: 0;
-        padding-bottom: 24px;
+    .student-profile-hero,
+    .student-history-hero {
+        grid-template-columns: 1fr;
     }
 
-    /* Position registration content near the top */
-    .accounts-page.register-layout-page .register-layout {
-        width: calc(100% - 32px);
-        margin: 0 auto;
-        padding: 20px 0 0;
-        min-height: 0;
-        align-content: start;
+    .student-history-stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .student-profile-page,
+    .student-history-page {
+        padding: 34px 0 64px;
     }
 
-    /* Keep heading centered without extra top spacing */
-    .accounts-page.register-layout-page .register-welcome {
-        padding-top: 0;
-        margin-top: 0;
-        align-self: start;
-        text-align: center;
+    .student-profile-panel-grid,
+    .student-history-student-grid,
+    .student-history-stats-grid {
+        grid-template-columns: 1fr;
     }
+
+    .student-profile-panel,
+    .student-history-overview-surface,
+    .student-history-page .history-section {
+        padding: 22px;
+        border-radius: 22px;
+    }
+
+    .student-profile-avatar,
+    .student-history-identity-avatar {
+        width: 64px;
+        height: 64px;
+        flex-basis: 64px;
+        font-size: 26px;
+    }
+
+    .student-profile-actions {
+        flex-direction: column;
+    }
+
+    .student-profile-action,
+    .history-back-link,
+    .edit-profile-back-link,
+    .change-password-back-link {
+        width: 100%;
+    }
+
+    .student-history-overview-head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+/* Compact full-width profile headings. */
+.student-profile-page .student-profile-hero,
+.student-history-page .student-history-hero {
+    display: block;
+    min-height: 0;
+    padding: clamp(26px, 4vw, 42px);
+}
+.student-profile-page .student-profile-hero-copy,
+.student-history-page .student-history-hero-copy {
+    width: 100%;
+    max-width: 940px;
+}
+.student-profile-page .student-profile-hero h1,
+.student-history-page .student-history-hero h1 {
+    max-width: 920px;
+}
+.student-profile-page .student-profile-hero,
+.student-history-page .student-history-hero {
+    margin-bottom: 24px;
+}
+.student-profile-page .student-profile-panel-head,
+.student-history-page .student-history-section-head {
+    margin-top: 0;
+}
+
+/* Student identity and read-only profile information. */
+.student-profile-page.student-identity-page .student-profile-shell { max-width: 1020px; }
+.student-identity-page .student-identity-header {
+    display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 18px 20px; align-items: center;
+    padding: 8px 0 28px; border-bottom: 1px solid var(--color-border);
+}
+.student-identity-page .student-identity-avatar {
+    position: relative; width: 96px; height: 96px; display: grid; place-items: center; border-radius: 50%;
+    background: var(--color-surface-alt); color: var(--color-accent); border: 1px solid var(--color-border); text-decoration: none;
+}
+.student-identity-page .student-identity-avatar > svg { width: 42px; height: 42px; }
+.student-identity-page .student-identity-copy { min-width: 0; }
+.student-identity-page .student-identity-header h1 {
+    margin: 0 0 5px; font-size: clamp(28px, 3.2vw, 40px); line-height: 1.15; overflow-wrap: anywhere;
+}
+.student-identity-page .student-identity-program {
+    margin: 0; color: var(--color-muted); font-size: 15px; line-height: 1.5; overflow-wrap: anywhere;
+}
+.student-identity-page .student-identity-nav {
+    grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 10px; padding: 0;
+}
+.student-identity-page .student-identity-nav a {
+    box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; width: auto; min-width: 0; min-height: 44px; padding: 10px 16px; text-align: center; text-decoration: none; font-size: 14px; line-height: 1.35;
+}
+.student-identity-page .student-identity-section {
+    display: grid; grid-template-columns: minmax(150px, .8fr) minmax(0, 2fr); gap: 26px;
+    align-items: start; padding: 30px 0; border-bottom: 1px solid var(--color-border);
+}
+.student-identity-page .student-identity-section h2 {
+    margin: 0; color: var(--color-text); font-size: clamp(19px, 2vw, 23px); letter-spacing: -.025em; line-height: 1.3;
+}
+.student-identity-page .student-identity-about {
+    margin: 0; color: var(--color-muted); line-height: 1.75; overflow-wrap: anywhere;
+}
+.student-identity-page .student-identity-facts { margin: 0; min-width: 0; }
+.student-identity-page .student-identity-facts > div {
+    display: grid; grid-template-columns: minmax(120px, .8fr) minmax(0, 1.4fr); gap: 14px; align-items: baseline;
+    padding: 15px 0; border-bottom: 1px solid var(--color-border);
+}
+.student-identity-page .student-identity-facts > div:first-child { padding-top: 0; }
+.student-identity-page .student-identity-facts > div:last-child { border-bottom: 0; padding-bottom: 0; }
+.student-identity-page .student-identity-facts dt { color: var(--color-muted); font-size: 14px; line-height: 1.5; }
+.student-identity-page .student-identity-facts dd {
+    margin: 0; color: var(--color-text); font-size: 15px; font-weight: 550; line-height: 1.55; overflow-wrap: anywhere;
+}
+@media (min-width: 1100px) {
+    .student-identity-page .student-identity-header {
+        grid-template-columns: 96px minmax(0, 1fr) auto;
+    }
+    .student-identity-page .student-identity-nav {
+        grid-column: 3; justify-content: flex-end; flex-wrap: nowrap;
+    }
+    .student-identity-page .student-identity-nav a { white-space: nowrap; }
+}
+@media (max-width: 720px) {
+    .student-identity-page .student-identity-header {
+    grid-template-columns: 64px minmax(0, 1fr);
+}
+    .student-identity-page .student-identity-avatar { width: 64px; height: 64px; }
+    .student-identity-page .student-identity-avatar > svg { width: 32px; height: 32px; }
+    .student-identity-page .student-identity-nav { justify-content: flex-start; }
+    .student-identity-page .student-identity-section { grid-template-columns: minmax(0, 1fr); gap: 18px; padding: 24px 0; }
+}
+@media (max-width: 420px) {
+    .student-identity-page .student-identity-facts > div { grid-template-columns: minmax(0, 1fr); gap: 5px; }
+}
+
+/* Profile photo and account actions. */
+.student-identity-page .student-identity-avatar img,
+.edit-profile-page .student-photo-preview img {
+    display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover;
+}
+.student-identity-page .student-avatar-edit {
+    position: absolute; right: -2px; bottom: -2px; display: grid; place-items: center;
+    width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--color-background, #000);
+    background: var(--color-surface-alt); color: var(--color-text);
+}
+.student-identity-page .student-avatar-edit svg { width: 16px; height: 16px; }
+.student-identity-page .student-identity-avatar:hover,
+.student-identity-page .student-identity-avatar:focus-visible { border-color: var(--color-accent); }
+.edit-profile-page .student-photo-panel { scroll-margin-top: 100px; }
+.edit-profile-page .student-photo-settings { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 24px; align-items: start; }
+.edit-profile-page .student-photo-preview {
+    width: 96px; height: 96px; display: grid; place-items: center; border: 1px solid var(--color-border);
+    border-radius: 50%; background: var(--color-surface-alt); color: var(--color-accent);
+}
+.edit-profile-page .student-photo-preview > svg { width: 42px; height: 42px; }
+.edit-profile-page .student-photo-form { min-width: 0; display: grid; gap: 12px; }
+.edit-profile-page .student-photo-form label { color: var(--color-text); font-size: 14px; font-weight: 600; }
+.edit-profile-page .student-photo-form input[type="file"] {
+    width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; padding: 8px;
+    border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface-alt);
+    color: var(--color-text); font: inherit; font-size: 14px;
+}
+.edit-profile-page .student-photo-form input::file-selector-button {
+    padding: 9px 12px; margin-right: 10px; border: 1px solid var(--color-border); border-radius: 8px;
+    background: var(--color-surface, #121315); color: var(--color-text); font: inherit; cursor: pointer;
+}
+.edit-profile-page .student-photo-form p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--color-muted); }
+.edit-profile-page .student-photo-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.edit-profile-page .student-photo-actions button { width: auto; min-width: 0; min-height: 44px; font-family: inherit; cursor: pointer; }
+@media (max-width: 720px) {
+    .student-identity-page .student-identity-header { gap: 16px; }
+    .student-identity-page .student-avatar-edit { width: 26px; height: 26px; }
+    .student-identity-page .student-avatar-edit svg { width: 14px; height: 14px; }
+}
+@media (max-width: 480px) {
+    .student-identity-page .student-identity-nav { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+    .student-identity-page .student-identity-nav a { width: 100%; padding-inline: 14px; font-size: 14px; }
+    .student-identity-page .student-identity-nav .student-profile-action-primary { grid-column: 1 / -1; }
+    .edit-profile-page .student-photo-settings { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .edit-profile-page .student-photo-actions button { flex: 1 1 auto; }
+}
+
+/* Profile editing layout and form actions. */
+.edit-profile-page .profile-layout { max-width: 780px; }
+.edit-profile-page .profile-heading { margin: 0 0 24px; }
+.edit-profile-page .profile-heading h1 { margin: 0 0 8px; font-size: clamp(28px, 4vw, 38px); line-height: 1.15; }
+.edit-profile-page .profile-heading > p { margin: 0; line-height: 1.6; }
+.edit-profile-page :is(.student-photo-panel, .edit-profile-form) {
+    box-sizing: border-box; width: 100%; padding: clamp(18px, 3vw, 28px); margin: 0 0 20px;
+    border-radius: 20px; background: var(--color-surface); border: 1px solid var(--color-border);
+}
+.edit-profile-page .edit-profile-form {
+    display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 20px 16px;
+}
+.edit-profile-page .edit-profile-form > h2 { grid-column: 1 / -1; margin: 0; }
+.edit-profile-page .edit-profile-form > p { min-width: 0; margin: 0; gap: 8px; }
+.edit-profile-page .edit-profile-form > p:has(#phone),
+.edit-profile-page .edit-profile-form > p:has(#about),
+.edit-profile-page .student-edit-actions { grid-column: 1 / -1; }
+.edit-profile-page .edit-profile-form :is(input:not([type="hidden"]), select, textarea) { border-radius: 12px; min-height: 48px; }
+.edit-profile-page .edit-profile-form textarea { min-height: 120px; }
+.edit-profile-page .student-edit-actions {
+    display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 12px;
+    border-top: 1px solid var(--color-border); padding-top: 20px;
+}
+.edit-profile-page :is(.student-edit-actions, .student-photo-actions) .student-profile-action {
+    box-sizing: border-box; width: auto; min-width: 0; min-height: 44px; padding: 10px 18px;
+    font-family: inherit; font-size: 14px; line-height: 1.35; font-weight: 650; text-align: center; cursor: pointer;
+}
+.student-identity-page .student-identity-nav a:focus-visible,
+.edit-profile-page .student-profile-action:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+@media (max-width: 600px) {
+    .edit-profile-page .edit-profile-form { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+    .edit-profile-page .student-edit-actions { justify-content: stretch; }
+    .edit-profile-page .student-edit-actions .student-profile-action { flex: 1 1 auto; }
+}
+@media (max-width: 380px) {
+    .edit-profile-page .student-edit-actions .student-profile-action { flex-basis: 100%; }
+}
+
+/* Authentication background lighting. */
+main.accounts-page.login-layout-page.auth-page:has(form[action="login.php"]),
+main.accounts-page.register-layout-page.auth-page:has(form[action="register.php"]) {
+    background: radial-gradient(ellipse at 15% 35%, rgba(115, 170, 35, .16), transparent 55%),
+                radial-gradient(ellipse at 88% 45%, rgba(0, 105, 67, .17), transparent 56%),
+                #050706 !important;
 }

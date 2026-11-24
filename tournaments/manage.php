@@ -3,12 +3,14 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/helpers.php';
+
 require_once __DIR__ . '/../includes/db.php';
 
 /*
  * NSBM SportsHub
- * Member 05 - Tournaments & Teams Management
- * Tournament Management Dashboard
+ * Tournament and team management operations.
+ * Administrative tournament management.
  */
 
 /* Require an authenticated staff account. */
@@ -27,28 +29,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') {
     exit('Method not allowed.');
 }
 
-/* Escape database values before displaying them. */
-function tournamentManageEscape(mixed $value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
 
 /* Format dates for the tournament cards. */
-function tournamentManageDate(string $value): string
-{
-    $date = DateTimeImmutable::createFromFormat(
-        '!Y-m-d',
-        $value
-    );
 
-    return $date !== false
-        ? $date->format('d M Y')
-        : $value;
-}
 
 /* Determine the current staff access level. */
 $isAdmin = $userRole === 'admin';
@@ -66,6 +49,12 @@ $loadError = false;
 
 try {
     $pdo = db();
+    $columnNames = $pdo->query('SHOW COLUMNS FROM `tournaments`')->fetchAll(PDO::FETCH_COLUMN);
+    $historyExpr = in_array('is_historical', $columnNames, true) ? 't.is_historical' : '0';
+    $yearExpr = in_array('event_year', $columnNames, true) ? 't.event_year' : 'YEAR(t.start_date)';
+    $organizerExpr = in_array('organizer_name', $columnNames, true)
+        ? "COALESCE(NULLIF(t.organizer_name, ''), sc.club_name, 'Organizer not published')"
+        : "COALESCE(sc.club_name, 'Organizer not published')";
 
     /*
      * Administrators can manage all active clubs.
@@ -134,7 +123,8 @@ try {
             t.end_date,
             t.venue,
             t.status,
-            sc.club_name,
+            $organizerExpr AS club_name,
+            $historyExpr AS is_historical,
 
             (
                 SELECT COUNT(*)
@@ -156,14 +146,13 @@ try {
 
          FROM tournaments AS t
 
-         INNER JOIN sports_clubs AS sc
+         LEFT JOIN sports_clubs AS sc
             ON sc.club_id = t.club_id
 
-         WHERE sc.status = 'active'
-         $clubScope
+         WHERE (sc.status = 'active' $clubScope " . ($isAdmin ? "OR $historyExpr = 1" : "") . ")
 
          ORDER BY
-            t.start_date DESC,
+            COALESCE(t.start_date, t.end_date, MAKEDATE($yearExpr, 1)) DESC,
             t.t_id DESC
 
          LIMIT 100"
@@ -191,7 +180,7 @@ require __DIR__ . '/../includes/header.php';
 
 ?>
 
-<main class="tournaments-page">
+<main class="tournaments-page sports-hub-workflow">
 
     <section class="tournaments-container section-container">
 
@@ -349,13 +338,13 @@ require __DIR__ . '/../includes/header.php';
                             <div class="tournament-card-top">
 
                                 <span class="tournament-sport">
-                                    <?= tournamentManageEscape(
+                                    <?= sportsHubEscape(
                                         $tournament['sport']
                                     ) ?>
                                 </span>
 
                                 <span class="tournament-status">
-                                    <?= tournamentManageEscape(
+                                    <?= sportsHubEscape(
                                         $tournament['status']
                                     ) ?>
                                 </span>
@@ -364,14 +353,14 @@ require __DIR__ . '/../includes/header.php';
 
                             <!-- Tournament title -->
                             <h2>
-                                <?= tournamentManageEscape(
+                                <?= sportsHubEscape(
                                     $tournament['t_name']
                                 ) ?>
                             </h2>
 
                             <!-- Organizing sports club -->
                             <p class="tournament-club">
-                                <?= tournamentManageEscape(
+                                <?= sportsHubEscape(
                                     $tournament['club_name']
                                 ) ?>
                             </p>
@@ -379,35 +368,23 @@ require __DIR__ . '/../includes/header.php';
                             <!-- Tournament details -->
                             <div class="tournament-details">
 
-                                <p>
-                                    <strong>Start date</strong>
-
-                                    <span>
-                                        <?= tournamentManageEscape(
-                                            tournamentManageDate(
-                                                $tournament['start_date']
-                                            )
-                                        ) ?>
-                                    </span>
-                                </p>
-
-                                <p>
-                                    <strong>End date</strong>
-
-                                    <span>
-                                        <?= tournamentManageEscape(
-                                            tournamentManageDate(
-                                                $tournament['end_date']
-                                            )
-                                        ) ?>
-                                    </span>
-                                </p>
+                                <?php /* Show a single date when the tournament begins and ends on the same day. */
+                                    $startDate = trim((string)($tournament['start_date'] ?? ''));
+                                    $endDate = trim((string)($tournament['end_date'] ?? ''));
+                                    $oneDay = $startDate !== '' && ($startDate === $endDate || $endDate === '');
+                                ?>
+                                <?php if ($oneDay): ?>
+                                    <p><strong>Date</strong><span><?= sportsHubEscape(sportsHubTournamentDate($startDate)) ?></span></p>
+                                <?php else: ?>
+                                    <p><strong>Start date</strong><span><?= $startDate !== '' ? sportsHubEscape(sportsHubTournamentDate($startDate)) : 'Not specified' ?></span></p>
+                                    <p><strong>End date</strong><span><?= $endDate !== '' ? sportsHubEscape(sportsHubTournamentDate($endDate)) : 'Not specified' ?></span></p>
+                                <?php endif; ?>
 
                                 <p>
                                     <strong>Venue</strong>
 
                                     <span>
-                                        <?= tournamentManageEscape(
+                                        <?= sportsHubEscape(
                                             $tournament['venue']
                                         ) ?>
                                     </span>
@@ -456,6 +433,14 @@ require __DIR__ . '/../includes/header.php';
                                         Edit Tournament
                                     </a>
 
+                                <?php endif; ?>
+
+                                <?php if ($userRole === 'admin'): ?>
+                                    <a
+                                        href="/admin/delete.php?type=tournament&amp;id=<?= (int) $tournament['t_id'] ?>"
+                                        class="button button-danger-outline">
+                                        Delete tournament
+                                    </a>
                                 <?php endif; ?>
 
                             </div>

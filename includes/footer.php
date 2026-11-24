@@ -11,11 +11,6 @@
                 Find a club, join the community
                 and never miss a matchday.
             </p>
-
-            <p class="footer-demo">
-                Student-built academic prototype.
-                Not an official university service.
-            </p>
         </div>
 
         <!-- Column 2: Explore -->
@@ -33,8 +28,14 @@
             <h2>SportsHub</h2>
 
             <a href="/bookings/index.php">Facilities &amp; equipment</a>
-            <a href="/student/profile.php">Student profile</a>
-            <a href="/student/history.php">Participation history</a>
+            <?php if (current_user_role() === 'student'): ?>
+                <a href="/student/profile.php">Student profile</a>
+                <a href="/student/history.php">Participation history</a>
+            <?php elseif (current_user_role() !== null): ?>
+                <a href="<?= htmlspecialchars($headerAccountUrl, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($headerAccountLabel, ENT_QUOTES, 'UTF-8') ?></a>
+            <?php else: ?>
+                <a href="/login.php">Log in</a>
+            <?php endif; ?>
             <a
                 href="https://www.nsbm.ac.lk/sports-clubs/"
                 target="_blank"

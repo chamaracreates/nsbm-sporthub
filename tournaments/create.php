@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/helpers.php';
+
 require_once __DIR__ . '/../includes/db.php';
 
 /* Restrict tournament creation to authorized staff. */
@@ -24,39 +26,6 @@ if (!in_array($method, ['GET', 'POST'], true)) {
     exit('Method not allowed.');
 }
 
-function tournamentCreateEscape(mixed $value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
-
-function tournamentCreateInput(string $key): string
-{
-    $value = $_POST[$key] ?? '';
-
-    return is_string($value) ? trim($value) : '';
-}
-
-function tournamentCreateValidDate(string $value): bool
-{
-    $date = DateTimeImmutable::createFromFormat(
-        '!Y-m-d',
-        $value
-    );
-
-    return $date !== false
-        && $date->format('Y-m-d') === $value;
-}
-
-function tournamentCreateLength(string $value): int
-{
-    return function_exists('mb_strlen')
-        ? mb_strlen($value, 'UTF-8')
-        : strlen($value);
-}
 
 /* Session-based CSRF protection. */
 if (
@@ -143,7 +112,7 @@ try {
 if ($method === 'POST' && !$loadError) {
 
     foreach (array_keys($form) as $field) {
-        $form[$field] = tournamentCreateInput($field);
+        $form[$field] = sportsHubInput($field);
     }
 
     $submittedToken = $_POST['csrf_token'] ?? '';
@@ -175,7 +144,7 @@ if ($method === 'POST' && !$loadError) {
     ];
 
     foreach ($limits as $key => [$label, $maximum]) {
-        $length = tournamentCreateLength($form[$key]);
+        $length = sportsHubLength($form[$key]);
 
         if ($length === 0 || $length > $maximum) {
             $errors[] = "$label must contain 1–$maximum characters.";
@@ -192,7 +161,7 @@ if ($method === 'POST' && !$loadError) {
     $validDates = true;
 
     foreach ($dateFields as $key => $label) {
-        if (!tournamentCreateValidDate($form[$key])) {
+        if (!sportsHubValidDate($form[$key])) {
             $errors[] = "$label is invalid.";
             $validDates = false;
         }
@@ -323,11 +292,12 @@ if ($method === 'POST' && !$loadError) {
 }
 
 $pageStylesheets = ['/assets/css/tournaments.css'];
+
 require __DIR__ . '/../includes/header.php';
 
 ?>
 
-<main class="tournaments-page">
+<main class="tournaments-page sports-hub-workflow">
 
     <section class="tournaments-container section-container">
 
@@ -371,7 +341,7 @@ require __DIR__ . '/../includes/header.php';
                     <ul>
                         <?php foreach ($errors as $error): ?>
                             <li>
-                                <?= tournamentCreateEscape($error) ?>
+                                <?= sportsHubEscape($error) ?>
                             </li>
                         <?php endforeach; ?>
                     </ul>
@@ -386,7 +356,7 @@ require __DIR__ . '/../includes/header.php';
                 <input
                     type="hidden"
                     name="csrf_token"
-                    value="<?= tournamentCreateEscape($csrfToken) ?>">
+                    value="<?= sportsHubEscape($csrfToken) ?>">
 
                 <div class="tournament-form-grid">
 
@@ -408,7 +378,7 @@ require __DIR__ . '/../includes/header.php';
                                     <?= $form['club_id'] === (string) $club['club_id']
                                         ? 'selected'
                                         : '' ?>>
-                                    <?= tournamentCreateEscape(
+                                    <?= sportsHubEscape(
                                         $club['club_name']
                                     ) ?>
                                 </option>
@@ -432,7 +402,7 @@ require __DIR__ . '/../includes/header.php';
                             name="t_name"
                             maxlength="100"
                             required
-                            value="<?= tournamentCreateEscape(
+                            value="<?= sportsHubEscape(
                                         $form['t_name']
                                     ) ?>">
                     </div>
@@ -447,7 +417,7 @@ require __DIR__ . '/../includes/header.php';
                             name="des"
                             maxlength="255"
                             rows="4"
-                            required><?= tournamentCreateEscape(
+                            required><?= sportsHubEscape(
                                             $form['des']
                                         ) ?></textarea>
                     </div>
@@ -462,7 +432,7 @@ require __DIR__ . '/../includes/header.php';
                             id="reg_open_at"
                             name="reg_open_at"
                             required
-                            value="<?= tournamentCreateEscape(
+                            value="<?= sportsHubEscape(
                                         $form['reg_open_at']
                                     ) ?>">
                     </div>
@@ -477,7 +447,7 @@ require __DIR__ . '/../includes/header.php';
                             id="reg_end_at"
                             name="reg_end_at"
                             required
-                            value="<?= tournamentCreateEscape(
+                            value="<?= sportsHubEscape(
                                         $form['reg_end_at']
                                     ) ?>">
                     </div>
@@ -491,9 +461,9 @@ require __DIR__ . '/../includes/header.php';
                             type="date"
                             id="start_date"
                             name="start_date"
-                            min="<?= tournamentCreateEscape($today) ?>"
+                            min="<?= sportsHubEscape($today) ?>"
                             required
-                            value="<?= tournamentCreateEscape(
+                            value="<?= sportsHubEscape(
                                         $form['start_date']
                                     ) ?>">
                     </div>
@@ -508,7 +478,7 @@ require __DIR__ . '/../includes/header.php';
                             id="end_date"
                             name="end_date"
                             required
-                            value="<?= tournamentCreateEscape(
+                            value="<?= sportsHubEscape(
                                         $form['end_date']
                                     ) ?>">
                     </div>
@@ -524,7 +494,7 @@ require __DIR__ . '/../includes/header.php';
                             name="venue"
                             maxlength="100"
                             required
-                            value="<?= tournamentCreateEscape(
+                            value="<?= sportsHubEscape(
                                         $form['venue']
                                     ) ?>">
                     </div>

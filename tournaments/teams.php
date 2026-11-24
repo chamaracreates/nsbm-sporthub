@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/helpers.php';
+
 require_once __DIR__ . '/../includes/db.php';
 
 $userId = require_login();
@@ -20,28 +22,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') {
     exit('Method not allowed.');
 }
 
-/* Escape values before HTML output. */
-function teamManageEscape(mixed $value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
 
 /* Format creation dates. */
-function teamManageDate(string $value): string
-{
-    $date = DateTimeImmutable::createFromFormat(
-        '!Y-m-d',
-        $value
-    );
 
-    return $date !== false
-        ? $date->format('d M Y')
-        : $value;
-}
 
 $isAdmin = $userRole === 'admin';
 
@@ -138,7 +121,7 @@ require __DIR__ . '/../includes/header.php';
 
 ?>
 
-<main class="tournaments-page">
+<main class="tournaments-page sports-hub-workflow">
 
     <section class="tournaments-container section-container">
 
@@ -161,7 +144,7 @@ require __DIR__ . '/../includes/header.php';
         <?php if (is_string($teamCreatedMessage)): ?>
 
             <div class="tournament-form-success" role="status">
-                <?= teamManageEscape($teamCreatedMessage) ?>
+                <?= sportsHubEscape($teamCreatedMessage) ?>
             </div>
 
         <?php endif; ?>
@@ -232,13 +215,13 @@ require __DIR__ . '/../includes/header.php';
                             <div class="tournament-card-top">
 
                                 <span class="tournament-sport">
-                                    <?= teamManageEscape(
+                                    <?= sportsHubEscape(
                                         $team['sport']
                                     ) ?>
                                 </span>
 
                                 <span class="tournament-status">
-                                    <?= teamManageEscape(
+                                    <?= sportsHubEscape(
                                         $team['tournament_status']
                                     ) ?>
                                 </span>
@@ -246,13 +229,13 @@ require __DIR__ . '/../includes/header.php';
                             </div>
 
                             <h2>
-                                <?= teamManageEscape(
+                                <?= sportsHubEscape(
                                     $team['team_name']
                                 ) ?>
                             </h2>
 
                             <p class="tournament-club">
-                                <?= teamManageEscape(
+                                <?= sportsHubEscape(
                                     $team['club_name']
                                 ) ?>
                             </p>
@@ -263,7 +246,7 @@ require __DIR__ . '/../includes/header.php';
                                     <strong>Tournament</strong>
 
                                     <span>
-                                        <?= teamManageEscape(
+                                        <?= sportsHubEscape(
                                             $team['t_name']
                                         ) ?>
                                     </span>
@@ -281,8 +264,8 @@ require __DIR__ . '/../includes/header.php';
                                     <strong>Created</strong>
 
                                     <span>
-                                        <?= teamManageEscape(
-                                            teamManageDate(
+                                        <?= sportsHubEscape(
+                                            sportsHubDisplayDate(
                                                 $team['created_at']
                                             )
                                         ) ?>

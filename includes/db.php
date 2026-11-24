@@ -5,6 +5,8 @@
  * Shared PDO connection for all modules.
  */
 
+date_default_timezone_set('Asia/Colombo');
+
 function db(): PDO
 {
     static $connection = null;
@@ -32,6 +34,7 @@ function db(): PDO
                 PDO::ATTR_EMULATE_PREPARES => false
             ]
         );
+        $connection->exec("SET SESSION time_zone = '+05:30'");
     }
 
     return $connection;

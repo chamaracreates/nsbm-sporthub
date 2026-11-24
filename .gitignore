@@ -1,7 +1,13 @@
 .env
-.env.local
+.env.*
+!.env.example
 includes/db.local.php
 node_modules/
 *.log
 .DS_Store
 Thumbs.db
+__MACOSX/
+backups/
+*.zip
+*.sql.gz
+*.dump

@@ -1,3 +1,4 @@
+/* Facility booking and request management */
 /* Main facility bookings page */
 .booking-page {
     min-height: 65vh;
@@ -150,6 +151,30 @@
     line-height: 1.8;
 }
 
+/* Booking actions use the shared button tokens. */
+.booking-request-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 13px 20px;
+    border-radius: 10px;
+    background: var(--color-accent);
+    color: #000;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+}
+
+.booking-request-link:hover {
+    background: var(--color-accent-hover);
+}
+
+.booking-request-link:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 4px;
+}
+
 /* Empty and error messages */
 .booking-notice {
     padding: 56px 32px;
@@ -173,7 +198,6 @@
     line-height: 1.8;
 }
 
-/* Tablet layout */
 @media (max-width: 800px) {
     .booking-page {
         padding: 65px 0 85px;
@@ -192,7 +216,6 @@
     }
 }
 
-/* Mobile layout */
 @media (max-width: 600px) {
     .booking-page {
         padding: 48px 0 70px;
@@ -221,10 +244,6 @@
         gap: 10px;
     }
 
-    .booking-grid {
-        grid-template-columns: 1fr;
-    }
-
     .booking-card-title {
         font-size: 23px;
     }
@@ -238,20 +257,12 @@
 
 /* Admin action buttons */
 .facility-admin-actions {
-    display: flex;
     justify-content: flex-end;
     margin-bottom: 24px;
 }
 
 .facility-admin-button {
-    display: inline-block;
-    padding: 13px 22px;
-    border-radius: 10px;
-    background: var(--color-accent);
-    color: #ffffff;
     font-size: 14px;
-    font-weight: 700;
-    text-decoration: none;
     transition: opacity 0.2s ease;
 }
 
@@ -310,7 +321,6 @@
     text-decoration: underline;
 }
 
-/* Mobile layout */
 @media (max-width: 600px) {
     .facility-admin-actions {
         justify-content: flex-start;
@@ -370,8 +380,8 @@
 }
 
 .facility-admin-field input:focus {
-    outline: 2px solid #aaff00;
-    border-color: #aaff00;
+    outline: 2px solid var(--color-accent);
+    border-color: var(--color-accent);
 }
 
 .facility-admin-error {
@@ -386,8 +396,6 @@
 
 .facility-admin-actions {
     display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
 }
 
 .facility-admin-button {
@@ -395,7 +403,7 @@
     padding: 12px 24px;
     border: none;
     border-radius: 8px;
-    background: #aaff00;
+    background: var(--color-accent);
     color: #111;
     font-weight: 700;
     text-decoration: none;
@@ -403,13 +411,10 @@
 }
 
 .facility-admin-button:hover {
-    background: #c0ff40;
+    background: var(--color-accent-hover);
 }
 
 @media (max-width: 600px) {
-    .facility-admin-page {
-        padding: 20px;
-    }
 
     .facility-admin-actions {
         flex-direction: column;
@@ -507,7 +512,6 @@
 }
 
 .booking-requests-table td button {
-    width: 100%;
     padding: 9px 8px;
     font-size: 12px;
     cursor: pointer;
@@ -522,4 +526,956 @@
     .booking-requests-table td {
         padding: 10px 8px;
     }
+}
+
+/* Facility forms, cards and actions follow the existing register-button style. */
+.booking-page .booking-card, .booking-page .booking-notice, .facility-admin-table-wrapper { border: 1px solid var(--color-border); border-radius: var(--ui-radius-card); background: var(--color-surface); }
+.booking-request-link, .facility-admin-button, .facility-admin-form button[type="submit"], .booking-requests-table td button {
+    display: inline-flex; align-items: center; justify-content: center; min-height: var(--ui-button-height);
+    padding: 0 22px; border: 1px solid transparent; border-radius: var(--ui-radius-pill);
+    background: var(--color-accent); color: #000; font-family: inherit; font-size: 14px; font-weight: 700;
+    text-align: center; text-decoration: none; cursor: pointer;
+    transition: background-color var(--ui-transition), transform var(--ui-transition);
+}
+.booking-request-link { margin-top: 22px; align-self: flex-start; }
+.booking-request-link:hover, .facility-admin-button:not(.facility-secondary-button):not(.facility-danger-button):hover,
+.facility-admin-form button[type="submit"]:not(.facility-secondary-button):not(.facility-danger-button):hover,
+.booking-requests-table td button:not([value="reject"]):not(:disabled):hover {
+    background: var(--color-accent-hover); color: #000; transform: translateY(-1px);
+}
+.facility-admin-actions { gap: 12px; flex-wrap: wrap; }
+.facility-admin-field :is(input,select,textarea), .booking-page :is(input:not([type="hidden"]),select,textarea) {
+    min-height: var(--ui-field-height); border: 1px solid var(--color-border); border-radius: var(--ui-radius-control);
+    background: var(--color-surface-alt); color: var(--color-text); font-family: inherit; font-size: 14px; color-scheme: dark;
+}
+.facility-secondary-button { background: var(--color-surface-alt); border-color: var(--color-border); color: var(--color-text); }
+.facility-secondary-button:hover { background: #292d30; color: var(--color-text); }
+.facility-danger-button, .booking-requests-table td button[value="reject"] { background: #381b1e; border-color: #774040; color: #ffb5b7; }
+.facility-danger-button:hover, .booking-requests-table td button[value="reject"]:not(:disabled):hover { background: #542529; color: #ffb5b7; }
+.booking-requests-table td button { width: 100%; }
+@media (max-width: 600px) { .booking-grid { grid-template-columns: minmax(0,1fr); } .booking-request-link { width: 100%; } .facility-admin-page { margin: 24px 16px; padding: 22px 16px; } .facility-admin-actions .facility-admin-button { flex: 1 1 100%; } }
+
+/* Booking forms and request workflows. */
+/* Authenticated booking forms and request lists. */
+.booking-workflow-page {
+    color: var(--color-text, #f5f5f7);
+    background: var(--color-background, #000);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+}
+.booking-page.booking-workflow-page {
+    padding: clamp(48px, 6.5vw, 80px) 0 clamp(70px, 8vw, 105px);
+}
+.booking-workflow-page .booking-container {
+    width: 90%;
+    max-width: var(--content-width, 1200px);
+    margin-inline: auto;
+}
+.booking-workflow-page .booking-introduction {
+    margin: 0 0 clamp(36px, 5vw, 56px);
+    max-width: 810px;
+}
+.booking-workflow-page .booking-introduction h1,
+.facility-admin-page.booking-workflow-page > h1 {
+    margin: 0;
+    color: var(--color-text, #f5f5f7);
+    font-size: clamp(36px, 4.5vw, 58px);
+    font-weight: 750;
+    line-height: 1.12;
+    letter-spacing: -.045em;
+    text-wrap: balance;
+}
+.booking-workflow-page .booking-intro-text,
+.facility-admin-page.booking-workflow-page > p {
+    max-width: 680px;
+    margin: 18px 0 0;
+    color: var(--color-muted, #a3a7a6);
+    font-size: clamp(15px, 1.4vw, 17px);
+    line-height: 1.7;
+}
+.booking-workflow-page .booking-section-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 12px;
+    margin: 0 0 22px;
+}
+.booking-workflow-page .booking-section-heading h2 {
+    font-size: clamp(23px, 2.4vw, 29px);
+    font-weight: 700;
+    letter-spacing: -.025em;
+}
+.booking-workflow-page .booking-count {
+    color: var(--color-muted, #a3a7a6);
+    font-size: 13px;
+}
+/* A standalone form page aligns its heading with the site's main content column. */
+.facility-admin-page.booking-workflow-page {
+    width: 90%;
+    max-width: var(--content-width, 1200px);
+    min-height: 65vh;
+    padding: 0;
+    margin: clamp(48px, 6vw, 80px) auto clamp(70px, 8vw, 110px);
+}
+.booking-workflow-page .facility-admin-form {
+    width: 100%;
+    max-width: 760px;
+    margin: clamp(26px, 3vw, 38px) 0 0;
+    padding: clamp(22px, 4vw, 38px);
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    border: 1px solid var(--color-border, #2a2d2c);
+    border-radius: 22px;
+    background: var(--color-surface, #111214);
+    box-shadow: none;
+}
+.booking-workflow-page .facility-admin-field {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+.booking-workflow-page .facility-admin-field label {
+    color: var(--color-text, #f5f5f7);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+.booking-workflow-page .facility-admin-field :is(input:not([type="hidden"]), select, textarea) {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    padding: 12px 16px;
+    border: 1px solid var(--color-border, #2a2d2c);
+    border-radius: 12px;
+    background-color: var(--color-surface-alt, #17191b);
+    color: var(--color-text, #f5f5f7);
+    font: inherit;
+    font-size: 15px;
+    line-height: 1.35;
+    color-scheme: dark;
+    box-shadow: none;
+    transition: border-color .2s ease, background-color .2s ease;
+}
+.booking-workflow-page .facility-admin-field :is(input:not([type="hidden"]), select) {
+    height: 48px;
+}
+.booking-workflow-page .facility-admin-field textarea {
+    min-height: 126px;
+    resize: vertical;
+}
+.booking-workflow-page .facility-admin-field :is(input, select, textarea):focus-visible {
+    outline: 2px solid var(--color-accent, #a8ff00);
+    outline-offset: 2px;
+    border-color: var(--color-accent, #a8ff00);
+}
+/* Time selection can be side by side without changing any form field names. */
+.booking-request-page .facility-admin-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 21px 18px;
+}
+.booking-request-page .facility-admin-field:first-of-type,
+.booking-request-page .facility-admin-field:nth-of-type(2),
+.booking-request-page .facility-admin-field:nth-of-type(5),
+.booking-request-page .facility-admin-actions {
+    grid-column: 1 / -1;
+}
+/* Primary booking actions share the global button dimensions and palette. */
+.booking-workflow-page .facility-admin-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 22px 0 24px;
+}
+.booking-workflow-page .facility-admin-form > .facility-admin-actions {
+    margin: 4px 0 0;
+}
+.booking-workflow-page .facility-admin-actions form { margin: 0; }
+.booking-workflow-page .facility-admin-button,
+.booking-workflow-page .booking-requests-table td button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    width: auto;
+    min-height: 42px;
+    padding: 0 22px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: var(--color-accent, #a8ff00);
+    color: #000;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.25;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    opacity: 1;
+    transition: background-color .2s ease, transform .2s ease;
+}
+.booking-workflow-page .facility-admin-button:not(.facility-button-secondary):not(.facility-button-danger):not(.facility-secondary-button):not(.facility-danger-button):hover,
+.booking-workflow-page .booking-requests-table td button:not([value="reject"]):not(:disabled):hover {
+    background: var(--color-accent-hover, #d9f7a7);
+    color: #000;
+    opacity: 1;
+    transform: translateY(-1px);
+}
+.booking-workflow-page .facility-button-secondary,
+.booking-workflow-page .facility-secondary-button,
+.booking-workflow-page .booking-requests-table .facility-button-secondary {
+    border-color: var(--color-border, #2a2d2c);
+    background: var(--color-surface-alt, #17191b);
+    color: var(--color-text, #f5f5f7);
+}
+.booking-workflow-page .facility-button-secondary:hover,
+.booking-workflow-page .facility-secondary-button:hover {
+    background: #292d30;
+    color: var(--color-text, #f5f5f7);
+    opacity: 1;
+}
+.booking-workflow-page .facility-button-danger,
+.booking-workflow-page .facility-danger-button,
+.booking-history-page .facility-admin-table td button,
+.booking-workflow-page .booking-requests-table td button[value="reject"] {
+    border-color: #794043;
+    background: #371c21;
+    color: #ffb6b8;
+}
+.booking-workflow-page .facility-button-danger:hover,
+.booking-workflow-page .facility-danger-button:hover,
+.booking-history-page .facility-admin-table td button:hover,
+.booking-workflow-page .booking-requests-table td button[value="reject"]:not(:disabled):hover {
+    background: #54282c;
+    color: #ffb6b8;
+    opacity: 1;
+}
+.booking-workflow-page .facility-admin-button:disabled,
+.booking-workflow-page .booking-requests-table td button:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+.booking-workflow-page .facility-admin-button:focus-visible,
+.booking-workflow-page .booking-requests-table td button:focus-visible {
+    outline: 2px solid var(--color-accent, #a8ff00);
+    outline-offset: 3px;
+}
+/* Tables: horizontal scroll belongs to the table wrapper, never the whole page. */
+.booking-workflow-page .facility-admin-table-wrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid var(--color-border, #2a2d2c);
+    border-radius: 18px;
+    background: var(--color-surface, #111214);
+    box-shadow: none;
+}
+.booking-workflow-page .facility-admin-table {
+    width: 100%;
+    min-width: 700px;
+    border-collapse: collapse;
+}
+.booking-workflow-page .booking-requests-table {
+    min-width: 960px;
+}
+.booking-workflow-page .facility-admin-table th,
+.booking-workflow-page .facility-admin-table td {
+    padding: 16px 17px;
+    border-bottom: 1px solid var(--color-border, #2a2d2c);
+    color: var(--color-text, #f5f5f7);
+    font-size: 13px;
+    line-height: 1.5;
+    vertical-align: middle;
+}
+.booking-workflow-page .facility-admin-table th {
+    color: var(--color-muted, #a3a7a6);
+    background: var(--color-surface-alt, #17191b);
+    font-weight: 650;
+    white-space: nowrap;
+}
+.booking-workflow-page .facility-admin-table tbody tr:hover {
+    background: rgba(255,255,255,.025);
+}
+.booking-workflow-page .facility-admin-table td .facility-admin-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    flex-wrap: nowrap;
+    margin: 0;
+}
+.booking-workflow-page .facility-admin-table td form { margin: 0; }
+.booking-workflow-page .booking-requests-table td form {
+    display: flex;
+    gap: 8px;
+    flex-direction: column;
+    align-items: stretch;
+    margin: 0;
+}
+.booking-workflow-page .booking-requests-table td button {
+    width: 100%;
+    padding-inline: 14px;
+    font-size: 12px;
+}
+.booking-workflow-page .booking-notice,
+.booking-workflow-page .facility-admin-error,
+.booking-workflow-page .facility-admin-success,
+.booking-workflow-page .booking-review-error {
+    max-width: 760px;
+    padding: 22px 24px;
+    margin: 0 0 22px;
+    border-radius: 18px;
+    box-shadow: none;
+    line-height: 1.6;
+}
+.booking-workflow-page .booking-notice {
+    background: var(--color-surface, #111214);
+    border: 1px solid var(--color-border, #2a2d2c);
+    text-align: left;
+}
+.booking-workflow-page .booking-notice p { margin: 0; }
+.booking-workflow-page .facility-admin-error,
+.booking-workflow-page .booking-review-error {
+    color: #ffb6b8;
+    background: #29191c;
+    border: 1px solid #794043;
+}
+.booking-workflow-page .facility-admin-success {
+    color: #e3f3b5;
+    background: #182617;
+    border: 1px solid #3d5c32;
+}
+@media (min-width: 601px) and (max-width: 900px) {
+    .booking-workflow-page .facility-admin-form { max-width: 720px; }
+    .booking-workflow-page .facility-admin-table-wrapper { border-radius: 16px; }
+}
+@media (max-width: 600px) {
+    .booking-page.booking-workflow-page { padding-block: 48px 72px; }
+    .booking-workflow-page .booking-introduction { margin-bottom: 36px; }
+    .booking-workflow-page .booking-introduction h1,
+    .facility-admin-page.booking-workflow-page > h1 { font-size: clamp(34px, 9vw, 43px); }
+    .booking-workflow-page .booking-section-heading { align-items: flex-start; }
+    .facility-admin-page.booking-workflow-page { margin-block: 42px 80px; }
+    .booking-workflow-page .facility-admin-form {
+        padding: 24px 18px;
+        border-radius: 20px;
+        gap: 19px;
+    }
+    .booking-request-page .facility-admin-form { grid-template-columns: minmax(0, 1fr); }
+    .booking-request-page .facility-admin-form > .facility-admin-field,
+    .booking-request-page .facility-admin-form > .facility-admin-actions { grid-column: 1; }
+    .booking-workflow-page .facility-admin-actions { flex-direction: column; align-items: stretch; }
+    .booking-workflow-page .facility-admin-actions > a,
+    .booking-workflow-page .facility-admin-actions > button { width: 100%; }
+    .booking-workflow-page .facility-admin-table td .facility-admin-actions { flex-direction: row; }
+    .booking-workflow-page .facility-admin-table td .facility-admin-actions > * { width: auto; }
+    .booking-workflow-page .booking-notice { padding: 26px 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .booking-workflow-page .facility-admin-button:hover,
+    .booking-workflow-page .booking-requests-table td button:hover { transform: none; }
+}
+
+/* Public facilities catalogue */
+/* Public facility directory uses global surface and action styles. */
+.booking-page.booking-directory-page {
+    min-height: 65vh;
+    padding: var(--directory-top-inset) 0 clamp(72px, 9vw, 112px);
+    background: var(--color-background, #000);
+    color: var(--color-text, #f5f5f7);
+}
+.booking-directory-page .booking-container {
+    width: 90%;
+    max-width: var(--content-width, 1200px);
+    margin: 0 auto;
+}
+.booking-directory-page .booking-introduction {
+    max-width: 790px;
+    margin: 0 0 clamp(44px, 6vw, 68px);
+}
+.booking-directory-page .booking-introduction h1 {
+    margin: 0;
+    color: var(--color-text, #f5f5f7);
+    font-size: clamp(38px, 5vw, 64px);
+    font-weight: 750;
+    line-height: 1.1;
+    letter-spacing: -.045em;
+    text-wrap: balance;
+}
+.booking-directory-page .booking-intro-text {
+    max-width: 660px;
+    margin: 20px 0 0;
+    color: var(--color-muted, #a3a7a6);
+    font-size: clamp(15px, 1.5vw, 17px);
+    line-height: 1.72;
+}
+.booking-directory-page .booking-section-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+    margin: 0 0 24px;
+}
+.booking-directory-page .booking-section-heading h2 {
+    margin: 0;
+    color: var(--color-text, #f5f5f7);
+    font-size: clamp(23px, 2.7vw, 31px);
+    font-weight: 700;
+    letter-spacing: -.025em;
+    line-height: 1.25;
+}
+
+.booking-directory-page .booking-card-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+.booking-directory-page .booking-type {
+    color: var(--color-muted, #a3a7a6);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0;
+    line-height: 1.4;
+    text-transform: none;
+    overflow-wrap: anywhere;
+}
+.booking-directory-page .booking-status {
+    padding: 7px 12px;
+    border: 1px solid var(--color-border, #2a2d2c);
+    border-radius: 999px;
+    color: var(--color-text, #f5f5f7);
+    background: var(--color-surface-alt, #17191b);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.booking-directory-page .booking-card-title {
+    margin: 25px 0 18px;
+    color: var(--color-text, #f5f5f7);
+    font-size: clamp(21px, 2vw, 26px);
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -.03em;
+    overflow-wrap: anywhere;
+}
+.booking-directory-page .booking-card-details {
+    gap: 13px;
+    padding: 18px 0;
+    border-color: var(--color-border, #2a2d2c);
+}
+.booking-directory-page .booking-detail {
+    align-items: baseline;
+    gap: 16px;
+}
+.booking-directory-page .booking-detail span {
+    color: var(--color-muted, #a3a7a6);
+    font-size: 13px;
+}
+.booking-directory-page .booking-detail strong {
+    min-width: 0;
+    color: var(--color-text, #f5f5f7);
+    font-size: 14px;
+    font-weight: 650;
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+.booking-directory-page .booking-description {
+    margin: 18px 0 0;
+    color: var(--color-muted, #a3a7a6);
+    font-size: 14px;
+    line-height: 1.65;
+}
+.booking-directory-page .booking-request-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: flex-start;
+    min-height: var(--ui-button-height, 42px);
+    margin: 26px 0 0;
+    padding: 0 23px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: var(--color-accent, #a8ff00);
+    color: #000;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.25;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color .2s ease, transform .2s ease;
+}
+.booking-directory-page .booking-request-link:hover {
+    background: var(--color-accent-hover, #d9f7a7);
+    color: #000;
+    transform: translateY(-1px);
+}
+.booking-directory-page .booking-request-link:focus-visible {
+    outline: 2px solid var(--color-accent, #a8ff00);
+    outline-offset: 4px;
+}
+.booking-directory-page .booking-notice {
+    max-width: 720px;
+    padding: clamp(30px, 5vw, 46px);
+    border: 1px solid var(--color-border, #2a2d2c);
+    border-radius: var(--ui-radius-card, 22px);
+    background: var(--color-surface, #111214);
+    box-shadow: none;
+    text-align: left;
+}
+.booking-directory-page .booking-notice h3 {
+    margin: 0 0 12px;
+    color: var(--color-text, #f5f5f7);
+    font-size: clamp(20px, 2.3vw, 24px);
+    font-weight: 700;
+    line-height: 1.25;
+}
+.booking-directory-page .booking-notice p {
+    max-width: 580px;
+    margin: 0;
+    color: var(--color-muted, #a3a7a6);
+    font-size: 15px;
+    line-height: 1.7;
+}
+@media (min-width: 561px) and (max-width: 1120px) {
+    .booking-directory-page .booking-container { width: 90%; }
+}
+@media (max-width: 850px) {
+    .booking-directory-page .booking-grid { grid-template-columns: minmax(0, 1fr); }
+    .booking-directory-page .booking-introduction { margin-bottom: 48px; }
+}
+@media (max-width: 600px) {
+    .booking-page.booking-directory-page { padding: var(--directory-top-inset) 0 76px; }
+    .booking-directory-page .booking-container { width: calc(100% - 36px); }
+    .booking-directory-page .booking-introduction h1 { font-size: clamp(35px, 8.5vw, 44px); }
+    .booking-directory-page .booking-section-heading h2 { font-size: 24px; }
+    .booking-directory-page .booking-card { padding: 24px 20px; }
+    .booking-directory-page .booking-card-title { font-size: 22px; }
+    .booking-directory-page .booking-request-link { align-self: stretch; width: 100%; }
+    .booking-directory-page .booking-detail { align-items: flex-start; }
+    .booking-directory-page .booking-notice { padding: 28px 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .booking-directory-page .booking-card,
+    .booking-directory-page .booking-request-link { transition: none; }
+    .booking-directory-page .booking-card:hover,
+    .booking-directory-page .booking-request-link:hover { transform: none; }
+}
+
+/* Inactive facilities remain visible without appearing bookable. */
+.booking-directory-page .booking-card-unavailable .booking-status {
+    color: var(--color-muted, #a3a7a6);
+}
+.booking-directory-page .booking-request-unavailable {
+    display: inline-flex;
+    align-items: center;
+    margin: 26px 0 0;
+    min-height: 42px;
+    color: var(--color-muted, #a3a7a6);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* Simple actions using the existing project theme. */
+.booking-directory-page .booking-directory-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    margin-top: 26px;
+}
+.booking-directory-page .booking-directory-actions .booking-request-link { margin: 0; }
+.booking-directory-page .booking-directory-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0 21px;
+    border: 1px solid var(--color-border, #2a2d2c);
+    border-radius: 999px;
+    color: var(--color-text, #f5f5f7);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 650;
+}
+.booking-directory-page .booking-directory-secondary:hover { border-color: var(--color-accent, #a8ff00); }
+.booking-directory-page .booking-card .booking-request-link { margin-top: auto; }
+.booking-directory-page .booking-card .booking-description { margin-bottom: 24px; }
+@media (max-width: 600px) {
+    .booking-directory-page .booking-directory-actions { align-items: stretch; flex-direction: column; }
+    .booking-directory-page .booking-directory-actions .booking-request-link,
+    .booking-directory-page .booking-directory-secondary { width: 100%; }
+}
+
+/* Facility card media and status */
+/* Image-led public facility cards. */
+.booking-directory-page .booking-introduction {margin-bottom:42px;}
+.booking-directory-page .booking-section-heading {margin-bottom:23px;}
+
+.booking-directory-page .facility-card-cover {
+    position:relative;
+    flex:none;
+}
+
+.booking-directory-page .booking-card:hover .facility-card-cover img {transform:scale(1.035);}
+.booking-directory-page .facility-card-cover::after {
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+}
+.booking-directory-page .facility-cover-status {
+    position:absolute;
+    z-index:1;
+    display:inline-flex;
+    border:1px solid rgba(255,255,255,.27);
+    color:#f2f5f1;
+    border-radius:999px;
+    backdrop-filter:blur(9px);
+    font-weight:650;
+}
+.booking-directory-page .facility-card-body {
+    min-width:0;
+}
+.booking-directory-page .facility-eyebrow {margin:0 0 11px;color:#a8ff00;font-size:11px;font-weight:750;letter-spacing:.1em;text-transform:uppercase;}
+
+.booking-directory-page .facility-card-footer {
+    flex-direction:column;
+}
+.booking-directory-page .facility-location {display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0;}
+.booking-directory-page .facility-location span {font-size:11px;letter-spacing:.02em;color:#909994;}
+.booking-directory-page .facility-location strong {font-size:12.5px;font-weight:600;line-height:1.5;color:#e8eae8;text-align:left;overflow-wrap:anywhere;}
+.booking-directory-page .facility-card-actions {
+    min-width:0;
+}
+.booking-directory-page .facility-card-actions .booking-request-link,
+.booking-directory-page .facility-card-actions .booking-request-unavailable {
+    text-align:center;
+}
+
+.booking-directory-page .facility-image-note {display:block; margin:0; color:#919a95; font-size:11px; line-height:1.4;}
+@media(max-width:1160px){.booking-directory-page .booking-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:760px){
+ .booking-directory-page .booking-grid{grid-template-columns:1fr;}
+ .booking-directory-page .facility-card-cover{height:205px;}
+ .booking-directory-page .booking-card {max-width:580px;}
+ .booking-directory-page .facility-card-actions .booking-request-link {width:auto;align-self:auto;}
+}
+@media(prefers-reduced-motion:reduce){
+ .booking-directory-page .booking-card,.booking-directory-page .facility-card-cover img{transition:none;}
+ .booking-directory-page .booking-card:hover,.booking-directory-page .booking-card:hover .facility-card-cover img{transform:none;}
+}
+
+/* Facility card presentation */
+/* Facility cards with images above their content. */
+.booking-directory-page .booking-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.booking-directory-page .booking-card {
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+    background: transparent;
+    box-shadow: none;
+    transition: none;
+}
+.booking-directory-page .booking-card:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: transparent;
+}
+.booking-directory-page .facility-card-cover {
+    border: 1px solid rgba(255,255,255,.09);
+}
+.booking-directory-page .facility-card-cover img {
+    display: block;
+    transition: transform 220ms ease;
+}
+.booking-directory-page .facility-card-cover::after {
+    background: linear-gradient(to bottom, rgba(0,0,0,.07), transparent 56%, rgba(0,0,0,.22));
+}
+.booking-directory-page .facility-cover-status {
+    top: 16px;
+    right: 16px;
+    padding: 8px 16px;
+    font-size: 12px;
+    line-height: 1.25;
+    border-color: rgba(255,255,255,.33);
+    background: rgba(10,14,14,.76);
+}
+.booking-directory-page .booking-card-unavailable .facility-cover-status {
+    color: #dce0de;
+    border-color: rgba(255,255,255,.2);
+}
+
+.booking-directory-page .facility-card-body .booking-card-title {
+    color: #f5f6f5;
+    font-weight: 720;
+}
+
+.booking-directory-page .facility-card-footer {
+    width: 100%;
+}
+
+.booking-directory-page .facility-card-actions .booking-request-link,
+.booking-directory-page .facility-card-actions .booking-request-unavailable {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    min-height: 43px;
+    margin: 0;
+    padding: 9px 24px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 750;
+    line-height: 1.3;
+    text-decoration: none;
+}
+.booking-directory-page .facility-card-actions .facility-edit-link {
+    border: 1px solid #464c49;
+}
+.booking-directory-page .facility-card-actions .facility-edit-link:hover {
+    background: #262a28;
+    color: #fff;
+    transform: none;
+}
+.booking-directory-page .facility-card-actions .booking-request-unavailable {
+    min-height: 42px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #939a95;
+    font-weight: 550;
+}
+@media (max-width: 1100px) {
+    .booking-directory-page .booking-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 700px) {
+    .booking-directory-page .booking-grid {
+    grid-template-columns: minmax(0,1fr);
+}
+    .booking-directory-page .booking-card { max-width: 580px; }
+    .booking-directory-page .facility-card-cover { aspect-ratio: 16 / 9; }
+
+    .booking-directory-page .facility-card-actions .booking-request-link { align-self: auto; width: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .booking-directory-page .facility-card-cover img { transition: none; }
+    .booking-directory-page .booking-card:hover .facility-card-cover img { transform: none; }
+}
+
+/* Facility media, text and actions share a common left edge. */
+.booking-directory-page .booking-grid {
+    row-gap: 30px;
+    column-gap: 24px;
+}
+.booking-directory-page .booking-card {
+    align-items: stretch;
+}
+
+.booking-directory-page .facility-card-body .booking-card-title {
+    letter-spacing: -0.027em;
+}
+.booking-directory-page .facility-card-body .booking-description {
+    color: #aeb5af;
+}
+.booking-directory-page .facility-card-footer {
+    border-top: 0;
+    gap: 0;
+}
+
+/* Compact, understated action that matches SportsHub's outlined View pills. */
+.booking-directory-page .facility-card-actions .booking-request-link {
+    text-decoration: none;
+    transform: none;
+}
+.booking-directory-page .facility-card-actions .booking-request-link:hover,
+.booking-directory-page .facility-card-actions .booking-request-link:focus-visible {
+    transform: none;
+}
+/* Separate administrator actions from primary booking controls. */
+
+.booking-directory-page .facility-card-actions .facility-edit-link:hover,
+.booking-directory-page .facility-card-actions .facility-edit-link:focus-visible {
+    background: #2b302d;
+    color: white;
+    border-color: rgba(255,255,255,0.35);
+}
+@media (max-width: 700px) {
+    .booking-directory-page .booking-grid { row-gap: 26px; }
+    .booking-directory-page .facility-card-body { padding-top: 16px; }
+
+}
+
+/* Facility photo presentation and action alignment. */
+.booking-directory-page .booking-grid {
+  align-items: stretch;
+  gap: 32px 24px;
+}
+.booking-directory-page .booking-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0;
+}
+.booking-directory-page .facility-card-cover {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  height: auto;
+  overflow: hidden;
+  border-radius: 22px;
+  background: #192321;
+}
+.booking-directory-page .facility-card-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  filter: saturate(.91) contrast(1.03);
+}
+.booking-directory-page .facility-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 0;
+  padding: 18px 3px 0;
+  text-align: left;
+}
+.booking-directory-page .facility-card-body .booking-card-title {
+  margin: 0 0 9px;
+  font-size: clamp(20px, 1.9vw, 25px);
+  line-height: 1.23;
+}
+.booking-directory-page .facility-card-body .booking-description {
+  margin: 0;
+  max-width: 52ch;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.booking-directory-page .facility-card-footer {
+  margin-top: auto;
+  padding-top: 19px;
+  border: 0;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-end;
+}
+.booking-directory-page .facility-card-actions {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+.booking-directory-page .facility-card-actions .booking-request-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  margin: 0;
+  min-width: 116px;
+  width: auto;
+  min-height: 42px;
+  padding: 10px 21px;
+  border-radius: 999px;
+  border: 1px solid rgba(168,255,0,.48);
+  color: #a8ff00;
+  background: #192019;
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.35;
+  box-shadow: none;
+}
+.booking-directory-page .facility-card-actions .booking-request-link:hover,
+.booking-directory-page .facility-card-actions .booking-request-link:focus-visible {
+  background: #a8ff00;
+  color: #081008;
+  border-color: #a8ff00;
+}
+.booking-directory-page .facility-card-actions .facility-edit-link {
+  min-width: 0;
+  color: #e1e7e2;
+  background: #181d1c;
+  border-color: rgba(255,255,255,.25);
+}
+@media (max-width: 700px) {
+  .booking-directory-page .booking-grid { gap: 28px; }
+  .booking-directory-page .facility-card-body { padding: 16px 2px 0; }
+  .booking-directory-page .facility-card-footer { padding-top: 16px; }
+}
+
+/* Facility request form: keep the date, time and purpose in reading order. */
+.facility-admin-page.booking-workflow-page.booking-request-page {
+    width: min(90%, 860px);
+    margin: clamp(32px, 5vw, 64px) auto 80px;
+}
+.booking-request-page .booking-request-heading { margin-bottom: 28px; }
+.booking-request-page .booking-request-links {
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px 20px;
+    margin-bottom: 24px;
+}
+.booking-request-page .booking-request-links a {
+    color: var(--color-accent); font-size: 14px; font-weight: 600; text-decoration: none;
+}
+.booking-request-page .booking-request-links a:hover { text-decoration: underline; }
+.booking-request-page .booking-request-heading h1 {
+    margin: 0 0 12px; font-size: clamp(30px, 4.2vw, 48px); line-height: 1.12; letter-spacing: -.04em;
+}
+.booking-request-page .booking-request-heading p,
+.booking-request-page .booking-request-section-heading p {
+    margin: 0; color: var(--color-muted); line-height: 1.6; font-size: 15px;
+}
+.booking-request-page .facility-admin-form.booking-request-form {
+    max-width: none; margin: 0; padding: clamp(20px, 4vw, 36px);
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 20px;
+}
+.booking-request-page .booking-request-form > .booking-request-section-heading,
+.booking-request-page .booking-request-form > .booking-slot-group,
+.booking-request-page .booking-request-form > .booking-request-purpose,
+.booking-request-page .booking-request-form > .booking-request-review,
+.booking-request-page .booking-request-form > .facility-admin-actions { grid-column: 1 / -1; }
+.booking-request-page .booking-request-form > .booking-request-facility { grid-column: 1; }
+.booking-request-page .booking-request-form > .booking-request-date { grid-column: 2; }
+.booking-request-page .booking-request-section-heading h2 {
+    margin: 0 0 7px; font-size: 23px; line-height: 1.25; letter-spacing: -.025em;
+}
+.booking-request-page .booking-slot-group {
+    margin: 0; padding: 0; min-width: 0; border: 0; background: transparent; border-radius: 0;
+}
+.booking-request-page .booking-slot-group legend {
+    padding: 0; margin: 0 0 12px; color: var(--color-text); font-size: 15px; font-weight: 650;
+}
+.booking-request-page .booking-slot-grid {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px;
+}
+.booking-request-page .booking-request-form .booking-slot-grid .facility-admin-field { min-width: 0; margin: 0; grid-column: auto; }
+.booking-request-page .booking-slot-grid input[type=time] { width: 100%; min-width: 0; color-scheme: dark; }
+.booking-request-page .booking-slot-group .booking-slot-note {
+    margin: 10px 0 0; color: var(--color-muted); font-size: 13px; line-height: 1.55;
+}
+.booking-request-page .booking-request-purpose textarea { min-height: 100px; }
+.booking-request-page .booking-optional { color: var(--color-muted); font-weight: 400; }
+.booking-request-page .booking-request-review {
+    display: flex; align-items: flex-start; gap: 12px; border-top: 1px solid var(--color-border); padding-top: 20px;
+}
+.booking-request-page .booking-request-review svg { width: 20px; height: 20px; flex: 0 0 20px; color: var(--color-accent); }
+.booking-request-page .booking-request-review p { margin: 0; font-size: 13px; color: var(--color-muted); line-height: 1.6; }
+.booking-request-page .booking-request-form > .facility-admin-actions { justify-content: flex-end; margin: 0; }
+.booking-request-page :is(.facility-admin-error,.facility-admin-success,.booking-notice) { max-width: none; }
+@media (max-width: 600px) {
+    .booking-request-page .facility-admin-form.booking-request-form { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+    .booking-request-page .booking-request-form > :is(.booking-request-facility,.booking-request-date) { grid-column: 1; }
+    .booking-request-page .booking-slot-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .booking-request-page .booking-request-form > .facility-admin-actions { flex-direction: column; align-items: stretch; }
+    .booking-request-page .booking-request-form > .facility-admin-actions > :is(a,button) { flex: 0 0 auto; width: 100%; }
 }

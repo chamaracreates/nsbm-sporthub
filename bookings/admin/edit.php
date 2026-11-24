@@ -3,21 +3,14 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/helpers.php';
+
 require_once __DIR__ . '/../../includes/db.php';
 
 require_admin();
 
 date_default_timezone_set('Asia/Colombo');
 
-// Escape output safely.
-function facilityEditEscape(string $value): string
-{
-    return htmlspecialchars(
-        $value,
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
 
 // Allow only GET and POST requests.
 $requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -28,7 +21,7 @@ if (!in_array($requestMethod, ['GET', 'POST'], true)) {
     exit('Method not allowed.');
 }
 
-// Retrieve and validate facility ID.
+
 $rawFacilityId = $requestMethod === 'POST'
     ? ($_POST['res_id'] ?? null)
     : ($_GET['res_id'] ?? null);
@@ -44,7 +37,7 @@ if (!is_int($facilityId)) {
     exit('Invalid facility ID.');
 }
 
-// Generate CSRF token.
+
 if (
     !isset($_SESSION['facility_edit_csrf']) ||
     !is_string($_SESSION['facility_edit_csrf'])
@@ -60,21 +53,21 @@ $errors = [];
 $loadError = false;
 $facility = null;
 
-// Initialize form values.
+
 $form = [
     'res_name' => '',
     'res_type' => '',
     'location' => ''
 ];
 
-// Retrieve any feedback message.
+
 $feedback = $_SESSION['facility_edit_feedback'] ?? null;
 unset($_SESSION['facility_edit_feedback']);
 
 try {
     $pdo = db();
 
-    // Load existing facility.
+
     $statement = $pdo->prepare(
         "SELECT res_id, res_name, res_type, location, res_status
          FROM resources
@@ -93,7 +86,7 @@ try {
         exit('Facility not found.');
     }
 
-    // Populate the form.
+
     $form = [
         'res_name' => (string) $facility['res_name'],
         'res_type' => (string) $facility['res_type'],
@@ -110,7 +103,7 @@ try {
     $loadError = true;
 }
 
-// Process submitted changes.
+
 if ($requestMethod === 'POST' && !$loadError) {
 
     $submittedToken = $_POST['csrf_token'] ?? null;
@@ -123,7 +116,7 @@ if ($requestMethod === 'POST' && !$loadError) {
         exit('Invalid form submission.');
     }
 
-    // Read submitted values.
+
     foreach (array_keys($form) as $field) {
         $value = $_POST[$field] ?? '';
 
@@ -132,26 +125,26 @@ if ($requestMethod === 'POST' && !$loadError) {
             : '';
     }
 
-    // Validate facility name.
+
     if ($form['res_name'] === '') {
         $errors[] = 'Facility name is required.';
     } elseif (strlen($form['res_name']) > 150) {
         $errors[] = 'Facility name cannot exceed 150 characters.';
     }
 
-    // Validate facility type.
+
     if ($form['res_type'] === '') {
         $errors[] = 'Facility type is required.';
     } elseif (strlen($form['res_type']) > 100) {
         $errors[] = 'Facility type cannot exceed 100 characters.';
     }
 
-    // Validate location.
+
     if (strlen($form['location']) > 150) {
         $errors[] = 'Location cannot exceed 150 characters.';
     }
 
-    // Update facility.
+
     if (empty($errors)) {
         try {
             $statement = $pdo->prepare(
@@ -172,11 +165,11 @@ if ($requestMethod === 'POST' && !$loadError) {
                 'res_id' => $facilityId
             ]);
 
-            // Store a success message for the admin page.
+
             $_SESSION['facility_admin_feedback'] =
                 'Facility updated successfully.';
 
-            // Redirect to Facility Administration.
+
             header(
                 'Location: /bookings/admin/',
                 true,
@@ -199,14 +192,14 @@ if ($requestMethod === 'POST' && !$loadError) {
     }
 }
 
-// Load shared page layout.
+
+$pageStylesheets = ['/assets/css/bookings.css'];
 require_once __DIR__ . '/../../includes/header.php';
 
 ?>
 
-<link rel="stylesheet" href="/assets/css/bookings.css">
 
-<main class="facility-admin-page">
+<main class="facility-admin-page booking-workflow-page booking-resource-form-page sports-hub-workflow">
 
     <h1>Edit Facility</h1>
 
@@ -223,7 +216,7 @@ require_once __DIR__ . '/../../includes/header.php';
         <?php if (is_string($feedback)): ?>
 
             <div class="facility-admin-success" role="status">
-                <?= facilityEditEscape($feedback) ?>
+                <?= sportsHubEscape($feedback) ?>
             </div>
 
         <?php endif; ?>
@@ -233,7 +226,7 @@ require_once __DIR__ . '/../../includes/header.php';
             <div class="facility-admin-error" role="alert">
                 <ul>
                     <?php foreach ($errors as $error): ?>
-                        <li><?= facilityEditEscape($error) ?></li>
+                        <li><?= sportsHubEscape($error) ?></li>
                     <?php endforeach; ?>
                 </ul>
             </div>
@@ -249,7 +242,7 @@ require_once __DIR__ . '/../../includes/header.php';
             <input
                 type="hidden"
                 name="csrf_token"
-                value="<?= facilityEditEscape($csrfToken) ?>"
+                value="<?= sportsHubEscape($csrfToken) ?>"
             >
 
             <input
@@ -267,7 +260,7 @@ require_once __DIR__ . '/../../includes/header.php';
                     id="res_name"
                     name="res_name"
                     maxlength="150"
-                    value="<?= facilityEditEscape($form['res_name']) ?>"
+                    value="<?= sportsHubEscape($form['res_name']) ?>"
                     required
                 >
 
@@ -282,7 +275,7 @@ require_once __DIR__ . '/../../includes/header.php';
                     id="res_type"
                     name="res_type"
                     maxlength="100"
-                    value="<?= facilityEditEscape($form['res_type']) ?>"
+                    value="<?= sportsHubEscape($form['res_type']) ?>"
                     required
                 >
 
@@ -297,7 +290,7 @@ require_once __DIR__ . '/../../includes/header.php';
                     id="location"
                     name="location"
                     maxlength="150"
-                    value="<?= facilityEditEscape($form['location']) ?>"
+                    value="<?= sportsHubEscape($form['location']) ?>"
                 >
 
             </div>
@@ -307,7 +300,7 @@ require_once __DIR__ . '/../../includes/header.php';
                 <label>Current Status</label>
 
                 <p>
-                    <?= facilityEditEscape(
+                    <?= sportsHubEscape(
                         (string) $facility['res_status']
                     ) ?>
                 </p>
@@ -329,7 +322,7 @@ require_once __DIR__ . '/../../includes/header.php';
 
                 <a
                     href="/bookings/admin/"
-                    class="facility-admin-button"
+                    class="facility-admin-button facility-secondary-button"
                 >
                     Cancel
                 </a>

@@ -3,9 +3,10 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/helpers.php';
+
 require_once __DIR__ . '/../includes/db.php';
 
-/* NSBM SportsHub - Team Roster Management */
 
 $userId = require_login();
 $userRole = current_user_role();
@@ -23,14 +24,6 @@ if (!in_array($method, ['GET', 'POST'], true)) {
     exit('Method not allowed.');
 }
 
-function rosterEscape(mixed $value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
 
 function rosterFindTeam(
     PDO $pdo,
@@ -198,7 +191,7 @@ if (!is_int($teamId)) {
     }
 }
 
-/* Handle add and remove actions. */
+
 if (
     $method === 'POST' &&
     $team !== null &&
@@ -501,7 +494,7 @@ require __DIR__ . '/../includes/header.php';
 
 ?>
 
-<main class="tournaments-page">
+<main class="tournaments-page sports-hub-workflow">
     <section class="tournaments-container section-container">
 
         <div class="tournament-view-navigation">
@@ -516,7 +509,7 @@ require __DIR__ . '/../includes/header.php';
 
             <div class="tournaments-notice" role="alert">
                 <h2>Roster unavailable</h2>
-                <p><?= rosterEscape($pageError) ?></p>
+                <p><?= sportsHubEscape($pageError) ?></p>
             </div>
 
         <?php elseif ($team !== null): ?>
@@ -526,18 +519,18 @@ require __DIR__ . '/../includes/header.php';
                     NSBM SPORTSHUB / TEAM ROSTER
                 </p>
 
-                <h1><?= rosterEscape($team['team_name']) ?></h1>
+                <h1><?= sportsHubEscape($team['team_name']) ?></h1>
 
                 <p class="section-description">
-                    <?= rosterEscape($team['club_name']) ?>
+                    <?= sportsHubEscape($team['club_name']) ?>
                     /
-                    <?= rosterEscape($team['t_name']) ?>
+                    <?= sportsHubEscape($team['t_name']) ?>
                 </p>
             </header>
 
             <?php if (is_string($flash)): ?>
                 <div class="tournament-form-success" role="status">
-                    <?= rosterEscape($flash) ?>
+                    <?= sportsHubEscape($flash) ?>
                 </div>
             <?php endif; ?>
 
@@ -546,7 +539,7 @@ require __DIR__ . '/../includes/header.php';
                     <strong>Unable to complete the action:</strong>
                     <ul>
                         <?php foreach ($errors as $error): ?>
-                            <li><?= rosterEscape($error) ?></li>
+                            <li><?= sportsHubEscape($error) ?></li>
                         <?php endforeach; ?>
                     </ul>
                 </div>
@@ -585,12 +578,12 @@ require __DIR__ . '/../includes/header.php';
                                 <div class="tournament-roster-member">
                                     <div>
                                         <strong>
-                                            <?= rosterEscape(
+                                            <?= sportsHubEscape(
                                                 $member['name']
                                             ) ?>
                                         </strong>
                                         <span>
-                                            <?= rosterEscape(
+                                            <?= sportsHubEscape(
                                                 ucfirst(
                                                     (string) $member['role']
                                                 )
@@ -606,7 +599,7 @@ require __DIR__ . '/../includes/header.php';
                                             <input
                                                 type="hidden"
                                                 name="csrf_token"
-                                                value="<?= rosterEscape($csrfToken) ?>">
+                                                value="<?= sportsHubEscape($csrfToken) ?>">
 
                                             <input
                                                 type="hidden"
@@ -654,7 +647,7 @@ require __DIR__ . '/../includes/header.php';
                                 <input
                                     type="hidden"
                                     name="csrf_token"
-                                    value="<?= rosterEscape($csrfToken) ?>">
+                                    value="<?= sportsHubEscape($csrfToken) ?>">
 
                                 <input
                                     type="hidden"
@@ -678,7 +671,7 @@ require __DIR__ . '/../includes/header.php';
                                         <?php foreach ($students as $student): ?>
                                             <option
                                                 value="<?= (int) $student['user_id'] ?>">
-                                                <?= rosterEscape(
+                                                <?= sportsHubEscape(
                                                     $student['name']
                                                 ) ?>
                                                 (#<?= (int) $student['user_id'] ?>)

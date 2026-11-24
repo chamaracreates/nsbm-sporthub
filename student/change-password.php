@@ -1,5 +1,5 @@
 <?php
-// NSBM SportsHub - Change Student Password
+
 
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/db.php';
@@ -12,7 +12,7 @@ if (current_user_role() !== 'student') {
     exit('Access denied.');
 }
 
-// Generate a security token
+
 if (empty($_SESSION['password_csrf'])) {
     $_SESSION['password_csrf'] = bin2hex(random_bytes(32));
 }
@@ -51,11 +51,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ) {
         $errors[] = 'Please complete all password fields.';
 
-    } elseif (strlen($newPassword) < 10) {
-        $errors[] = 'New password must contain at least 10 characters.';
-
-    } elseif (strlen($newPassword) > 1024) {
-        $errors[] = 'New password is too long.';
+    } elseif (($passwordError = student_password_error($newPassword)) !== null) {
+        $errors[] = $passwordError;
 
     } elseif ($newPassword !== $confirmPassword) {
         $errors[] = 'New passwords do not match.';
@@ -230,7 +227,11 @@ require __DIR__ . '/../includes/header.php'; ?>
         id="new_password"
         name="new_password"
         autocomplete="new-password"
-        minlength="10"
+        minlength="8"
+        maxlength="72"
+        pattern="(?=.*\p{Lu})(?=.*\p{Ll})(?=.*\p{Nd})(?=.*[\p{P}\p{S}]).{8,}"
+        title="Use at least 8 characters, including uppercase and lowercase letters, a number and a special character."
+        aria-describedby="change-password-requirements"
         required
     >
 
@@ -245,6 +246,7 @@ require __DIR__ . '/../includes/header.php'; ?>
         Show
     </button>
 </div>
+<small id="change-password-requirements">Use at least 8 characters, including uppercase and lowercase letters, a number and a special character. Maximum 72 bytes.</small>
 
     </p>
 
@@ -259,7 +261,8 @@ require __DIR__ . '/../includes/header.php'; ?>
         id="confirm_password"
         name="confirm_password"
         autocomplete="new-password"
-        minlength="10"
+        minlength="8"
+        maxlength="72"
         required
     >
 
@@ -285,7 +288,7 @@ require __DIR__ . '/../includes/header.php'; ?>
 
 <p class="change-password-back">
     <a href="profile.php" class="change-password-back-link">
-        &larr; Back to My Profile
+        Back to My Profile
     </a>
 </p>
 

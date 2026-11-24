@@ -1,6 +1,8 @@
 <?php
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/helpers.php';
+
 require_once __DIR__ . '/../includes/db.php';
 
 // Show management navigation only to authorized staff.
@@ -10,21 +12,13 @@ $canManageMatches = in_array(
     true
 );
 
-function matchEscape($value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES,
-        'UTF-8'
-    );
-}
 
 // Determine which match category to display.
 $allowedTabs = ['upcoming', 'results', 'all'];
-$activeTab = $_GET['tab'] ?? 'upcoming';
+$activeTab = $_GET['tab'] ?? 'all';
 
 if (!is_string($activeTab) || !in_array($activeTab, $allowedTabs, true)) {
-    $activeTab = 'upcoming';
+    $activeTab = 'all';
 }
 
 $matches = [];
@@ -84,19 +78,17 @@ try {
 
 $pageStylesheets = ['/assets/css/matches.css'];
 
+$pageTitle = 'Fixtures';
+
 include __DIR__ . '/../includes/header.php';
 
 ?>
 
-<main class="matches-page">
+<main class="matches-page matches-directory-page">
 
     <section class="section-container matches-section">
 
         <div class="matches-header">
-
-            <p class="section-label">
-                NSBM SPORTSHUB / MATCHES
-            </p>
 
             <h1>Match fixtures &amp; results.</h1>
 
@@ -152,6 +144,18 @@ include __DIR__ . '/../includes/header.php';
         </nav>
 
         <!-- Match records -->
+    <?php
+    // Event photographs, never the club cover photos. For new fixtures the photo
+    // is illustrative of the sport, not a claim about the particular match.
+    $matchSportPhotos = [
+        'Volleyball' => 'https://d3c539pel8wzjz.cloudfront.net/wp-content/uploads/2025/06/NSBM-University-of-Colombo-Friendly-Volleyball-Clash-2025.jpg',
+        'Basketball' => 'https://d3c539pel8wzjz.cloudfront.net/wp-content/uploads/2025/06/Thrilling-Basketball-Showdown-of-NSBM-vs-University-of-Peradeniya-1200x600.jpg',
+        'Rugby' => 'https://d3c539pel8wzjz.cloudfront.net/wp-content/uploads/2025/03/NSBM-Rugby-Team-Emerges-as-Champions-of-Sabra-Super-7s-Rugby-Tournament-2025-6-1037x600.jpg',
+        'Cricket' => 'https://d3c539pel8wzjz.cloudfront.net/wp-content/uploads/2026/09/nsbm-cricket-kdu-t20-champions-2026-1200x600.jpg',
+        'Football' => 'https://d3c539pel8wzjz.cloudfront.net/wp-content/uploads/2024/05/Vice-Chancellor-Challenge-Trophy-Football2-1037x600.jpg',
+        'Athletics' => 'https://d3c539pel8wzjz.cloudfront.net/wp-content/uploads/2025/09/NSBM-Athletic-Club-Wins-Big-at-SLIIT-Momentum-2025-1-1037x600.jpg',
+    ];
+    ?>
         <div class="matches-list">
 
             <?php if ($loadError): ?>
@@ -179,85 +183,47 @@ include __DIR__ . '/../includes/header.php';
             <?php else: ?>
 
                 <?php foreach ($matches as $match): ?>
-
                     <?php
-                    $status = strtolower($match['match_status']);
-                    $isCompleted = in_array(
-                        $status,
-                        ['completed', 'finished'],
-                        true
-                    );
+                    $status = strtolower(trim((string) ($match['match_status'] ?? '')));
+                    $isCompleted = in_array($status, ['completed', 'finished'], true);
+                    $matchSport = (string) ($match['sport'] ?? 'Sports');
+                    $matchPhoto = $matchSportPhotos[$matchSport] ?? '';
+                    $matchHref = '/matches/view.php?id=' . (int) $match['m_id'];
                     ?>
-
                     <article class="match-card">
-
-                        <div class="match-card-meta">
-
-                            <span>
-                                <?php echo matchEscape($match['sport']); ?>
-                            </span>
-
-                            <span>
-                                <?php echo matchEscape($match['match_status']); ?>
-                            </span>
-
-                        </div>
-
-                        <h2>
-                            <?php echo matchEscape($match['title']); ?>
-                        </h2>
-
-                        <div class="match-card-teams">
-
-                            <span>
-                                <?php echo matchEscape($match['home_name']); ?>
-                            </span>
-
-                            <?php if ($isCompleted): ?>
-
-                                <strong>
-                                    <?php echo (int) $match['home_score']; ?>
-                                    -
-                                    <?php echo (int) $match['away_score']; ?>
-                                </strong>
-
+                        <div class="match-card-media">
+                            <?php if ($matchPhoto !== ''): ?>
+                                <img src="<?= sportsHubEscape($matchPhoto) ?>" alt="NSBM sports event photo" loading="lazy" decoding="async">
                             <?php else: ?>
-
-                                <strong>VS</strong>
-
+                                <span class="match-photo-placeholder" aria-hidden="true"><?= sportsHubEscape($matchSport) ?></span>
                             <?php endif; ?>
-
-                            <span>
-                                <?php echo matchEscape($match['away_name']); ?>
-                            </span>
-
                         </div>
+                        <div class="match-card-inner">
+                            <span class="match-card-sport"><?= sportsHubEscape($matchSport) ?></span>
+                            <h2><a href="<?= sportsHubEscape($matchHref) ?>"><?= sportsHubEscape($match['title']) ?></a></h2>
+                            <div class="match-card-teams">
+                                <span><?= sportsHubEscape($match['home_name']) ?></span>
+                                <?php if ($isCompleted): ?>
+                                    <strong><?= (int) $match['home_score'] ?>–<?= (int) $match['away_score'] ?>
+                                        <?php if (strcasecmp($matchSport, 'Volleyball') === 0): ?><small class="match-score-unit">sets</small><?php endif; ?>
+                                    </strong>
+                                <?php else: ?>
+                                    <strong>VS</strong>
+                                <?php endif; ?>
+                                <span><?= sportsHubEscape($match['away_name']) ?></span>
+                            </div>
+                            <div class="match-card-footer">
 
-                        <div class="match-card-details">
+                                <div class="match-card-details">
+                                <span><?= date('d M Y', strtotime((string) $match['date'])) ?></span>
+                                <span><?= sportsHubEscape($match['venue']) ?></span>
+                            </div>
 
-                            <span>
-                                <?php echo date(
-                                    'd M Y',
-                                    strtotime($match['date'])
-                                ); ?>
-                            </span>
+                                <a class="match-card-footer-link" href="<?= sportsHubEscape($matchHref) ?>" aria-label="View match details">View match</a>
 
-                            <span>
-                                <?php echo matchEscape($match['venue']); ?>
-                            </span>
-
+                            </div>
                         </div>
-
-                        <a
-                            href="/matches/view.php?id=<?php echo (int) $match['m_id']; ?>"
-                            class="text-link"
-                            style="display: inline-block; margin-top: 24px;">
-                            View match details ↗
-                        </a>
-
-
                     </article>
-
                 <?php endforeach; ?>
 
             <?php endif; ?>

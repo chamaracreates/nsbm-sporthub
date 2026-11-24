@@ -1,3 +1,8 @@
+-- NSBM SportsHub database schema for new installations.
+-- Defines the database structure only; existing application records are not included.
+-- Do not import this file over an existing populated NSBM SportsHub database.
+-- MySQL DDL statements commit implicitly and are not undone by ROLLBACK.
+
 -- phpMyAdmin SQL Dump
 -- version 5.2.3
 -- https://www.phpmyadmin.net/
@@ -79,6 +84,7 @@ CREATE TABLE `club_news` (
   `club_id` int NOT NULL,
   `title` varchar(160) NOT NULL,
   `summary` text NOT NULL,
+  `image_path` varchar(255) DEFAULT NULL,
   `status` enum('draft','published') NOT NULL DEFAULT 'draft',
   `published_at` datetime DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
@@ -94,12 +100,12 @@ CREATE TABLE `matches` (
   `m_id` int NOT NULL,
   `t_id` int DEFAULT NULL,
   `title` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
-  `home_team_id` int NOT NULL,
-  `away_team_id` int NOT NULL,
+  `home_team_id` int DEFAULT NULL,
+  `away_team_id` int DEFAULT NULL,
   `home_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `away_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `home_u_id` int NOT NULL,
-  `away_u_id` int NOT NULL,
+  `home_u_id` int DEFAULT NULL,
+  `away_u_id` int DEFAULT NULL,
   `sport` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `date` date NOT NULL,
   `venue` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
@@ -182,6 +188,7 @@ CREATE TABLE `student_profiles` (
   `study_program` varchar(120) DEFAULT NULL,
   `academic_year` enum('Year 1','Year 2','Year 3','Year 4','Other') DEFAULT NULL,
   `about` varchar(300) DEFAULT NULL,
+  `profile_photo` mediumblob,
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -222,17 +229,21 @@ CREATE TABLE `team_members` (
 
 CREATE TABLE `tournaments` (
   `t_id` int NOT NULL,
-  `club_id` int NOT NULL,
+  `club_id` int DEFAULT NULL,
   `t_name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
   `sport` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
   `des` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `reg_open_at` date NOT NULL,
-  `reg_end_at` date NOT NULL,
-  `start_date` date NOT NULL,
-  `end_date` date NOT NULL,
-  `venue` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `reg_open_at` date DEFAULT NULL,
+  `reg_end_at` date DEFAULT NULL,
+  `start_date` date DEFAULT NULL,
+  `end_date` date DEFAULT NULL,
+  `venue` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `status` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
-  `created_by` int NOT NULL
+  `created_by` int NOT NULL,
+  `organizer_name` varchar(180) DEFAULT NULL,
+  `source_url` varchar(600) DEFAULT NULL,
+  `event_year` smallint unsigned DEFAULT NULL,
+  `is_historical` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -338,7 +349,8 @@ ALTER TABLE `booking_request`
   ADD PRIMARY KEY (`b_id`),
   ADD KEY `user_id` (`user_id`),
   ADD KEY `res_id` (`res_id`),
-  ADD KEY `fk_booking_reviewer` (`reviewed_by`);
+  ADD KEY `fk_booking_reviewer` (`reviewed_by`),
+  ADD KEY `idx_booking_schedule` (`res_id`,`date`,`booking_status`,`starts_at`,`ends_at`);
 
 --
 -- Indexes for table `club_leaders`
@@ -427,6 +439,7 @@ ALTER TABLE `teams`
 --
 ALTER TABLE `team_members`
   ADD PRIMARY KEY (`team_mem_id`),
+  ADD UNIQUE KEY `uq_team_member` (`team_id`,`user_id`),
   ADD KEY `team_id` (`team_id`),
   ADD KEY `user_id` (`user_id`);
 
@@ -467,7 +480,8 @@ ALTER TABLE `training_attendance`
 --
 ALTER TABLE `training_sessions`
   ADD PRIMARY KEY (`session_id`),
-  ADD KEY `club_id` (`club_id`);
+  ADD KEY `club_id` (`club_id`),
+  ADD KEY `idx_training_schedule` (`location`,`date`,`start_time`,`end_time`);
 
 --
 -- Indexes for table `users`
@@ -583,7 +597,7 @@ ALTER TABLE `users`
 --
 DROP TABLE IF EXISTS `v_student_participation_summary`;
 
-CREATE ALGORITHM=UNDEFINED SQL SECURITY INVOKER VIEW `v_student_participation_summary`  AS SELECT `u`.`user_id` AS `user_id`, `u`.`name` AS `student_name`, `u`.`email` AS `email`, count(distinct `cm`.`club_id`) AS `total_clubs_joined`, count(distinct `ta`.`session_id`) AS `training_sessions_attended`, count(distinct `tr`.`t_id`) AS `tournaments_registered`, count(distinct `br`.`b_id`) AS `facility_bookings_made` FROM ((((`users` `u` left join `club_membership` `cm` on(((`u`.`user_id` = `cm`.`user_id`) and (`cm`.`status` = 'approved')))) left join `training_attendance` `ta` on((`u`.`user_id` = `ta`.`user_id`))) left join `tournament_registration` `tr` on((`u`.`user_id` = `tr`.`user_id`))) left join `booking_request` `br` on((`u`.`user_id` = `br`.`user_id`))) WHERE (`u`.`role` = 'student') GROUP BY `u`.`user_id`, `u`.`name`, `u`.`email` ;
+CREATE ALGORITHM=UNDEFINED SQL SECURITY INVOKER VIEW `v_student_participation_summary`  AS SELECT `u`.`user_id` AS `user_id`, `u`.`name` AS `student_name`, `u`.`email` AS `email`, count(distinct `cm`.`club_id`) AS `total_clubs_joined`, count(distinct CASE WHEN `ta`.`att_status` = 'present' THEN `ta`.`session_id` END) AS `training_sessions_attended`, count(distinct `tr`.`t_id`) AS `tournaments_registered`, count(distinct `br`.`b_id`) AS `facility_bookings_made` FROM ((((`users` `u` left join `club_membership` `cm` on(((`u`.`user_id` = `cm`.`user_id`) and (`cm`.`status` = 'approved')))) left join `training_attendance` `ta` on((`u`.`user_id` = `ta`.`user_id`))) left join `tournament_registration` `tr` on((`u`.`user_id` = `tr`.`user_id`))) left join `booking_request` `br` on((`u`.`user_id` = `br`.`user_id`))) WHERE (`u`.`role` = 'student') GROUP BY `u`.`user_id`, `u`.`name`, `u`.`email` ;
 
 --
 -- Constraints for dumped tables
@@ -621,11 +635,11 @@ ALTER TABLE `club_news`
 -- Constraints for table `matches`
 --
 ALTER TABLE `matches`
-  ADD CONSTRAINT `matches_ibfk_1` FOREIGN KEY (`away_team_id`) REFERENCES `teams` (`team_id`),
-  ADD CONSTRAINT `matches_ibfk_2` FOREIGN KEY (`home_team_id`) REFERENCES `teams` (`team_id`),
+  ADD CONSTRAINT `fk_matches_away_team_ref` FOREIGN KEY (`away_team_id`) REFERENCES `teams` (`team_id`),
+  ADD CONSTRAINT `fk_matches_home_team_ref` FOREIGN KEY (`home_team_id`) REFERENCES `teams` (`team_id`),
   ADD CONSTRAINT `matches_ibfk_3` FOREIGN KEY (`t_id`) REFERENCES `tournaments` (`t_id`),
-  ADD CONSTRAINT `matches_ibfk_4` FOREIGN KEY (`away_u_id`) REFERENCES `users` (`user_id`),
-  ADD CONSTRAINT `matches_ibfk_5` FOREIGN KEY (`home_u_id`) REFERENCES `users` (`user_id`);
+  ADD CONSTRAINT `fk_matches_away_user_ref` FOREIGN KEY (`away_u_id`) REFERENCES `users` (`user_id`),
+  ADD CONSTRAINT `fk_matches_home_user_ref` FOREIGN KEY (`home_u_id`) REFERENCES `users` (`user_id`);
 
 --
 -- Constraints for table `match_registration`
@@ -667,7 +681,7 @@ ALTER TABLE `team_members`
 -- Constraints for table `tournaments`
 --
 ALTER TABLE `tournaments`
-  ADD CONSTRAINT `tournaments_ibfk_1` FOREIGN KEY (`club_id`) REFERENCES `sports_clubs` (`club_id`),
+  ADD CONSTRAINT `fk_tournaments_club_history` FOREIGN KEY (`club_id`) REFERENCES `sports_clubs` (`club_id`),
   ADD CONSTRAINT `tournaments_ibfk_2` FOREIGN KEY (`created_by`) REFERENCES `users` (`user_id`);
 
 --
@@ -696,7 +710,8 @@ ALTER TABLE `training_attendance`
 -- Constraints for table `training_sessions`
 --
 ALTER TABLE `training_sessions`
-  ADD CONSTRAINT `training_sessions_ibfk_1` FOREIGN KEY (`club_id`) REFERENCES `sports_clubs` (`club_id`);
+  ADD CONSTRAINT `training_sessions_ibfk_1` FOREIGN KEY (`club_id`) REFERENCES `sports_clubs` (`club_id`),
+  ADD CONSTRAINT `fk_training_resource` FOREIGN KEY (`location`) REFERENCES `resources` (`res_id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

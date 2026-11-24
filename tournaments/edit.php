@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/helpers.php';
+
 require_once __DIR__ . '/../includes/db.php';
 
 $userId = require_login();
@@ -21,38 +23,6 @@ if (!in_array($method, ['GET', 'POST'], true)) {
     exit('Method not allowed.');
 }
 
-function tournamentEditEscape(mixed $value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
-
-function tournamentEditInput(string $key): string
-{
-    $value = $_POST[$key] ?? '';
-    return is_string($value) ? trim($value) : '';
-}
-
-function tournamentEditValidDate(string $value): bool
-{
-    $date = DateTimeImmutable::createFromFormat(
-        '!Y-m-d',
-        $value
-    );
-
-    return $date !== false
-        && $date->format('Y-m-d') === $value;
-}
-
-function tournamentEditLength(string $value): int
-{
-    return function_exists('mb_strlen')
-        ? mb_strlen($value, 'UTF-8')
-        : strlen($value);
-}
 
 /* Load a tournament only within the user's club scope. */
 function tournamentEditFind(
@@ -272,7 +242,7 @@ if (
         $errors[] = 'This tournament can no longer be edited.';
     } else {
         foreach (array_keys($form) as $field) {
-            $form[$field] = tournamentEditInput($field);
+            $form[$field] = sportsHubInput($field);
         }
 
         $submittedToken = $_POST['csrf_token'] ?? '';
@@ -291,7 +261,7 @@ if (
         ];
 
         foreach ($limits as $key => [$label, $maximum]) {
-            $length = tournamentEditLength($form[$key]);
+            $length = sportsHubLength($form[$key]);
 
             if ($length === 0 || $length > $maximum) {
                 $errors[] =
@@ -309,7 +279,7 @@ if (
         $datesValid = true;
 
         foreach ($dateFields as $field) {
-            if (!tournamentEditValidDate($form[$field])) {
+            if (!sportsHubValidDate($form[$field])) {
                 $errors[] = 'Invalid date: ' .
                     str_replace('_', ' ', $field);
                 $datesValid = false;
@@ -430,7 +400,7 @@ require __DIR__ . '/../includes/header.php';
 
 ?>
 
-<main class="tournaments-page">
+<main class="tournaments-page sports-hub-workflow">
     <section class="tournaments-container section-container">
 
         <header class="tournaments-heading">
@@ -450,20 +420,20 @@ require __DIR__ . '/../includes/header.php';
 
             <div class="tournaments-notice" role="alert">
                 <h2>Unable to open tournament</h2>
-                <p><?= tournamentEditEscape($pageError) ?></p>
+                <p><?= sportsHubEscape($pageError) ?></p>
             </div>
 
         <?php elseif ($tournament !== null): ?>
 
             <div class="tournament-edit-context">
                 <strong>
-                    <?= tournamentEditEscape(
+                    <?= sportsHubEscape(
                         $tournament['club_name']
                     ) ?>
                 </strong>
 
                 <span>
-                    <?= tournamentEditEscape(
+                    <?= sportsHubEscape(
                         $tournament['sport']
                     ) ?>
                 </span>
@@ -503,7 +473,7 @@ require __DIR__ . '/../includes/header.php';
                         <ul>
                             <?php foreach ($errors as $error): ?>
                                 <li>
-                                    <?= tournamentEditEscape($error) ?>
+                                    <?= sportsHubEscape($error) ?>
                                 </li>
                             <?php endforeach; ?>
                         </ul>
@@ -518,7 +488,7 @@ require __DIR__ . '/../includes/header.php';
                     <input
                         type="hidden"
                         name="csrf_token"
-                        value="<?= tournamentEditEscape(
+                        value="<?= sportsHubEscape(
                                     $csrfToken
                                 ) ?>">
 
@@ -535,7 +505,7 @@ require __DIR__ . '/../includes/header.php';
                                 type="text"
                                 maxlength="100"
                                 required
-                                value="<?= tournamentEditEscape(
+                                value="<?= sportsHubEscape(
                                             $form['t_name']
                                         ) ?>">
                         </div>
@@ -551,7 +521,7 @@ require __DIR__ . '/../includes/header.php';
                                 type="text"
                                 maxlength="100"
                                 required
-                                value="<?= tournamentEditEscape(
+                                value="<?= sportsHubEscape(
                                             $form['venue']
                                         ) ?>">
                         </div>
@@ -566,7 +536,7 @@ require __DIR__ . '/../includes/header.php';
                                 name="des"
                                 maxlength="255"
                                 rows="4"
-                                required><?= tournamentEditEscape(
+                                required><?= sportsHubEscape(
                                                 $form['des']
                                             ) ?></textarea>
                         </div>
@@ -584,7 +554,7 @@ require __DIR__ . '/../includes/header.php';
 
                             <div class="tournament-field">
                                 <label for="<?= $key ?>">
-                                    <?= tournamentEditEscape($label) ?>
+                                    <?= sportsHubEscape($label) ?>
                                 </label>
 
                                 <input
@@ -592,7 +562,7 @@ require __DIR__ . '/../includes/header.php';
                                     id="<?= $key ?>"
                                     name="<?= $key ?>"
                                     required
-                                    value="<?= tournamentEditEscape(
+                                    value="<?= sportsHubEscape(
                                                 $form[$key]
                                             ) ?>">
                             </div>

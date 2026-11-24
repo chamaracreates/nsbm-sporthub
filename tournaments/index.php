@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/helpers.php';
+
 require_once __DIR__ . '/../includes/auth.php';
 
 $canManageTournaments = in_array(
@@ -11,26 +13,6 @@ $canManageTournaments = in_array(
     true
 );
 
-function tournamentEscape(mixed $value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
-
-function tournamentDate(string $value): string
-{
-    $date = DateTimeImmutable::createFromFormat(
-        '!Y-m-d',
-        $value
-    );
-
-    return $date !== false
-        ? $date->format('d M Y')
-        : $value;
-}
 
 /* Validate the tournament directory filter. */
 $tabs = [
@@ -40,13 +22,13 @@ $tabs = [
     'all' => 'All tournaments'
 ];
 
-$activeTab = $_GET['tab'] ?? 'upcoming';
+$activeTab = $_GET['tab'] ?? 'all';
 
 if (
     !is_string($activeTab) ||
     !array_key_exists($activeTab, $tabs)
 ) {
-    $activeTab = 'upcoming';
+    $activeTab = 'all';
 }
 
 $tournaments = [];
@@ -61,12 +43,22 @@ $today = (new DateTimeImmutable(
 try {
     $pdo = db();
 
-    $conditions = ["sc.status = 'active'"];
+    // The page must also work before the optional historical columns are installed.
+    $columnNames = $pdo->query('SHOW COLUMNS FROM `tournaments`')->fetchAll(PDO::FETCH_COLUMN);
+    $hasHistory = in_array('is_historical', $columnNames, true);
+    $historyExpr = $hasHistory ? 't.is_historical' : '0';
+    $yearExpr = in_array('event_year', $columnNames, true) ? 't.event_year' : 'YEAR(t.start_date)';
+    $sourceExpr = in_array('source_url', $columnNames, true) ? 't.source_url' : 'NULL';
+    $organizerExpr = in_array('organizer_name', $columnNames, true)
+        ? "COALESCE(NULLIF(t.organizer_name, ''), sc.club_name, 'Organizer not published')"
+        : "COALESCE(sc.club_name, 'Organizer not published')";
+
+    $conditions = ["(sc.status = 'active' OR $historyExpr = 1)", "LOWER(TRIM(t.status)) NOT IN ('draft')"];
     $parameters = [];
 
     switch ($activeTab) {
         case 'upcoming':
-            $conditions[] = 't.start_date > :today';
+            $conditions[] = "t.start_date > :today AND LOWER(TRIM(t.status)) = 'upcoming' AND $historyExpr = 0";
             $parameters['today'] = $today;
             break;
 
@@ -75,21 +67,23 @@ try {
                 t.start_date <= :start_day
                 AND t.end_date >= :end_day
             ';
+            $conditions[] = "LOWER(TRIM(t.status)) IN ('upcoming','ongoing') AND $historyExpr = 0";
             $parameters['start_day'] = $today;
             $parameters['end_day'] = $today;
             break;
 
         case 'past':
-            $conditions[] = 't.end_date < :today';
+            $conditions[] = "($historyExpr = 1 OR LOWER(TRIM(t.status)) = 'completed' OR t.end_date < :today)";
             $parameters['today'] = $today;
             break;
+
     }
 
     $where = implode(' AND ', $conditions);
 
     $order = $activeTab === 'upcoming'
         ? 't.start_date ASC, t.t_id ASC'
-        : 't.start_date DESC, t.t_id DESC';
+        : "COALESCE(t.start_date, t.end_date, MAKEDATE($yearExpr, 1)) DESC, t.t_id DESC";
 
     $sql = "
         SELECT
@@ -103,9 +97,12 @@ try {
             t.end_date,
             t.venue,
             t.status,
-            sc.club_name
+            $yearExpr AS event_year,
+            $historyExpr AS is_historical,
+            $sourceExpr AS source_url,
+            $organizerExpr AS organizer
         FROM tournaments AS t
-        INNER JOIN sports_clubs AS sc
+        LEFT JOIN sports_clubs AS sc
             ON sc.club_id = t.club_id
         WHERE $where
         ORDER BY $order
@@ -128,20 +125,17 @@ try {
 }
 
 $pageStylesheets = ['/assets/css/tournaments.css'];
+$pageTitle = 'Tournaments';
 require __DIR__ . '/../includes/header.php';
 
 ?>
 
-<main class="tournaments-page">
+<main class="tournaments-page tournaments-directory-page">
 
     <section class="tournaments-container section-container">
 
         <header class="tournaments-heading">
-            <p class="tournaments-eyebrow section-label">
-                NSBM SPORTSHUB / TOURNAMENTS
-            </p>
-
-            <h1>Tournaments &amp; competitions</h1>
+            <h1>Tournaments &amp; Competitions</h1>
 
             <p class="tournaments-description section-description">
                 Explore official NSBM sports tournaments,
@@ -175,12 +169,12 @@ require __DIR__ . '/../includes/header.php';
 
             <?php foreach ($tabs as $tab => $label): ?>
                 <a
-                    href="/tournaments/index.php?tab=<?= tournamentEscape($tab) ?>"
+                    href="/tournaments/index.php?tab=<?= sportsHubEscape($tab) ?>"
                     class="<?= $activeTab === $tab ? 'active' : '' ?>"
                     <?= $activeTab === $tab
                         ? 'aria-current="page"'
                         : '' ?>>
-                    <?= tournamentEscape($label) ?>
+                    <?= sportsHubEscape($label) ?>
                 </a>
             <?php endforeach; ?>
 
@@ -208,107 +202,58 @@ require __DIR__ . '/../includes/header.php';
 
         <?php else: ?>
 
-            <div class="tournaments-count">
-                <?= count($tournaments) ?>
-                <?= count($tournaments) === 1
-                    ? 'tournament'
-                    : 'tournaments' ?>
-            </div>
 
             <div class="tournaments-grid">
 
                 <?php foreach ($tournaments as $tournament): ?>
-
+                    <?php
+                    $sourceUrl = trim((string) ($tournament['source_url'] ?? ''));
+                    $photoUrl = sportsHubTournamentCover($tournament, $officialPhoto);
+                    $sport = trim((string) ($tournament['sport'] ?? 'Sports'));
+                    $photoAlt = $officialPhoto
+                        ? 'NSBM photograph for this tournament'
+                        : 'Representative NSBM sports competition photograph';
+                    $eventStart = (string) ($tournament['start_date'] ?? '');
+                    $eventEnd = (string) ($tournament['end_date'] ?? '');
+                    if ($eventStart !== '' && $eventEnd !== '' && $eventStart !== $eventEnd) {
+                        $eventLabel = sportsHubTournamentDate($eventStart) . ' – ' . sportsHubTournamentDate($eventEnd);
+                    } elseif ($eventStart !== '' || $eventEnd !== '') {
+                        $eventLabel = sportsHubTournamentDate($eventStart ?: $eventEnd);
+                    } else {
+                        $eventLabel = !empty($tournament['event_year'])
+                            ? (string) (int) $tournament['event_year']
+                            : 'Date to be announced';
+                    }
+                    $organizer = trim((string) ($tournament['organizer'] ?? ''));
+                    $venue = trim((string) ($tournament['venue'] ?? ''));
+                    $venueIsDefault = $venue === '';
+                    // An explicitly requested display fallback. Does not update the DB or claim verification.
+                    if ($venueIsDefault) {
+                        $venue = 'NSBM Phase 2 Grounds';
+                    }
+                    $detailsUrl = '/tournaments/view.php?id=' . (int) $tournament['t_id'];
+                    ?>
                     <article class="tournament-card">
-
-                        <div class="tournament-card-top">
-                            <span class="tournament-sport">
-                                <?= tournamentEscape(
-                                    $tournament['sport']
-                                ) ?>
-                            </span>
-
-                            <span class="tournament-status">
-                                <?= tournamentEscape(
-                                    $tournament['status']
-                                ) ?>
-                            </span>
+                        <div class="tournament-card-media">
+                            <img src="<?= sportsHubEscape($photoUrl) ?>"
+                                 alt="<?= sportsHubEscape($photoAlt) ?>"
+                                 loading="lazy" decoding="async">
                         </div>
-
-                        <h2>
-                            <?= tournamentEscape(
-                                $tournament['t_name']
-                            ) ?>
-                        </h2>
-
-                        <p class="tournament-club">
-                            Organized by
-                            <?= tournamentEscape(
-                                $tournament['club_name']
-                            ) ?>
-                        </p>
-
-                        <p class="tournament-summary">
-                            <?= tournamentEscape(
-                                $tournament['des']
-                            ) ?>
-                        </p>
-
-                        <div class="tournament-details">
-
-                            <p>
-                                <strong>Event dates</strong>
-                                <span>
-                                    <?= tournamentEscape(
-                                        tournamentDate(
-                                            $tournament['start_date']
-                                        )
-                                    ) ?>
-                                    –
-                                    <?= tournamentEscape(
-                                        tournamentDate(
-                                            $tournament['end_date']
-                                        )
-                                    ) ?>
-                                </span>
-                            </p>
-
-                            <p>
-                                <strong>Registration</strong>
-                                <span>
-                                    <?= tournamentEscape(
-                                        tournamentDate(
-                                            $tournament['reg_open_at']
-                                        )
-                                    ) ?>
-                                    –
-                                    <?= tournamentEscape(
-                                        tournamentDate(
-                                            $tournament['reg_end_at']
-                                        )
-                                    ) ?>
-                                </span>
-                            </p>
-
-                            <p>
-                                <strong>Venue</strong>
-                                <span>
-                                    <?= tournamentEscape(
-                                        $tournament['venue']
-                                    ) ?>
-                                </span>
-                            </p>
-
+                        <div class="tournament-card-body">
+                            <span class="tournament-card-sport"><?= sportsHubEscape($sport) ?></span>
+                            <h2><a href="<?= sportsHubEscape($detailsUrl) ?>"><?= sportsHubEscape($tournament['t_name']) ?></a></h2>
+                            <p class="tournament-card-organizer"><?= sportsHubEscape($organizer !== '' ? $organizer : 'Organizer not specified') ?></p>
+                            <p class="tournament-card-description"><?= sportsHubEscape($tournament['des']) ?></p>
+                            <div class="tournament-card-footer">
+                                <div class="tournament-card-details">
+                                    <span><?= sportsHubEscape($eventLabel) ?></span>
+                                    <span<?= $venueIsDefault ? ' title="Venue not confirmed; display fallback"' : '' ?>><?= sportsHubEscape($venue) ?></span>
+                                </div>
+                                <a class="tournament-card-footer-link" href="<?= sportsHubEscape($detailsUrl) ?>"
+                                   aria-label="View <?= sportsHubEscape($tournament['t_name']) ?>">View tournament</a>
+                            </div>
                         </div>
-
-                        <a
-                            href="/tournaments/view.php?id=<?= (int) $tournament['t_id'] ?>"
-                            class="button button-outline tournament-view-link">
-                            View Tournament
-                        </a>
-
                     </article>
-
                 <?php endforeach; ?>
 
             </div>

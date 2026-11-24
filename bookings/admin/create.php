@@ -3,19 +3,15 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/helpers.php';
+
 require_once __DIR__ . '/../../includes/db.php';
 
 require_admin();
 
 date_default_timezone_set('Asia/Colombo');
 
-// Escape output before displaying it in HTML.
-function escapeHtml(string $value): string
-{
-    return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-}
 
-// Initialize form values.
 $facilityName = '';
 $facilityType = '';
 $facilityLocation = '';
@@ -23,14 +19,14 @@ $facilityLocation = '';
 $errors = [];
 $success = false;
 
-// Generate CSRF token.
+
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
 $csrfToken = $_SESSION['csrf_token'];
 
-// Process form submission.
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (
@@ -44,26 +40,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $facilityType = trim((string) ($_POST['res_type'] ?? ''));
         $facilityLocation = trim((string) ($_POST['location'] ?? ''));
 
-        // Validate facility name.
+
         if ($facilityName === '') {
             $errors[] = 'Facility name is required.';
         } elseif (strlen($facilityName) > 150) {
             $errors[] = 'Facility name cannot exceed 150 characters.';
         }
 
-        // Validate facility type.
+
         if ($facilityType === '') {
             $errors[] = 'Facility type is required.';
         } elseif (strlen($facilityType) > 100) {
             $errors[] = 'Facility type cannot exceed 100 characters.';
         }
 
-        // Validate location.
+
         if (strlen($facilityLocation) > 150) {
             $errors[] = 'Location cannot exceed 150 characters.';
         }
 
-        // Insert facility.
+
         if (empty($errors)) {
             try {
                 $pdo = db();
@@ -97,11 +93,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }?>
 
-<?php require_once __DIR__ . '/../../includes/header.php'; ?>
+<?php
+$pageStylesheets = ['/assets/css/bookings.css'];
+require_once __DIR__ . '/../../includes/header.php';
+?>
 
-<link rel="stylesheet" href="/assets/css/bookings.css">
 
-<main class="facility-admin-page">
+<main class="facility-admin-page booking-workflow-page booking-resource-form-page sports-hub-workflow">
 
     <h1>Add New Facility</h1>
 
@@ -111,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="facility-admin-error">
             <ul>
                 <?php foreach ($errors as $error): ?>
-                    <li><?= escapeHtml($error) ?></li>
+                    <li><?= sportsHubEscape($error) ?></li>
                 <?php endforeach; ?>
             </ul>
         </div>
@@ -122,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <input
             type="hidden"
             name="csrf_token"
-            value="<?= escapeHtml($csrfToken) ?>"
+            value="<?= sportsHubEscape($csrfToken) ?>"
         >
 
         <div class="facility-admin-field">
@@ -133,7 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 id="res_name"
                 name="res_name"
                 maxlength="150"
-                value="<?= escapeHtml($facilityName) ?>"
+                value="<?= sportsHubEscape($facilityName) ?>"
                 placeholder="Example: Indoor Basketball Court"
                 required
             >
@@ -147,7 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 id="res_type"
                 name="res_type"
                 maxlength="100"
-                value="<?= escapeHtml($facilityType) ?>"
+                value="<?= sportsHubEscape($facilityType) ?>"
                 placeholder="Example: Basketball Court"
                 required
             >
@@ -161,7 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 id="location"
                 name="location"
                 maxlength="150"
-                value="<?= escapeHtml($facilityLocation) ?>"
+                value="<?= sportsHubEscape($facilityLocation) ?>"
                 placeholder="Example: Main Sports Complex"
             >
         </div>
@@ -172,7 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 Add Facility
             </button>
 
-            <a href="/bookings/admin/" class="facility-admin-button">
+            <a href="/bookings/admin/" class="facility-admin-button facility-button-secondary">
                 Cancel
             </a>
 

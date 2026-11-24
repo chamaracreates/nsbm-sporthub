@@ -1,3 +1,4 @@
+/* Training and attendance */
 .training-page {
     min-height: 65vh;
     padding: 80px 0 110px;
@@ -550,57 +551,12 @@
 }
 
 /* Arrange training session management actions. */
-.training-session-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 18px;
-}
 
 /* Style session management links. */
-.training-session-action {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 11px 16px;
-    border: 1px solid var(--color-accent);
-    border-radius: 9px;
-    background: var(--color-accent);
-    color: #000;
-    font-size: 13px;
-    font-weight: 700;
-    text-decoration: none;
-}
-
-.training-session-action:hover {
-    background: var(--color-accent-hover);
-}
 
 /* Distinguish the session editing action. */
-.training-session-edit {
-    background: transparent;
-    color: var(--color-accent);
-}
-
-.training-session-edit:hover {
-    background: var(--color-surface-alt);
-}
 
 /* Maintain accessible keyboard navigation. */
-.training-session-action:focus-visible {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 3px;
-}
-
-@media (max-width: 600px) {
-    .training-session-actions {
-        flex-direction: column;
-    }
-
-    .training-session-action {
-        width: 100%;
-    }
-}
 
 /* Arrange training session management actions. */
 .training-session-actions {
@@ -650,9 +606,6 @@
         flex-direction: column;
     }
 
-    .training-session-action {
-        width: 100%;
-    }
 }
 
 /* Indicate sessions that cannot be edited. */
@@ -667,4 +620,460 @@
     color: var(--color-muted);
     font-size: 13px;
     font-weight: 600;
+}
+
+/* Training uses standard SportsHub surfaces and pill actions. */
+.training-page :is(.training-card,.training-session-card,.training-form) { border: 1px solid var(--color-border); border-radius: var(--ui-radius-card); background: var(--color-surface); }
+.training-page :is(input:not([type="hidden"]),select,textarea), .training-field :is(input,select,textarea) {
+    min-height: var(--ui-field-height); border-color: var(--color-border); border-radius: var(--ui-radius-control);
+    background: var(--color-surface-alt); color: var(--color-text); font-family: inherit; font-size: 14px; color-scheme: dark;
+}
+.training-primary-button, .training-create-link, .training-session-action:not(.training-session-edit), .training-attendance-row button:not(:disabled) {
+    display: inline-flex; align-items: center; justify-content: center; min-height: var(--ui-button-height);
+    padding: 0 22px; border: 1px solid transparent; border-radius: var(--ui-radius-pill);
+    background: var(--color-accent); color: #000; font-family: inherit; font-size: 14px; font-weight: 700; text-decoration: none; cursor: pointer;
+    transition: background-color var(--ui-transition), transform var(--ui-transition);
+}
+.training-primary-button:hover, .training-create-link:hover, .training-session-action:not(.training-session-edit):hover, .training-attendance-row button:not(:disabled):hover {
+    background: var(--color-accent-hover); color: #000; transform: translateY(-1px);
+}
+.training-session-edit, .training-secondary-link {
+    min-height: var(--ui-button-height); border: 1px solid var(--color-border); border-radius: var(--ui-radius-pill);
+    background: var(--color-surface-alt); color: var(--color-text);
+}
+.training-session-edit:hover, .training-secondary-link:hover { background: #292d30; color: var(--color-text); }
+@media (max-width: 600px) { .training-session-actions { align-items: stretch; } .training-session-action { width: 100%; } }
+
+/* Public training directory */
+/* NSBM SportsHub | Public Training Sessions catalogue only.
+   Loaded AFTER training.css. Management, forms and attendance are not restyled.
+   Shared reference: style.css; black backgrounds, subdued cards and lime accents. */
+.training-page.training-directory-page {
+    min-height: 65vh;
+    padding: var(--directory-top-inset) 0 clamp(72px, 9vw, 110px);
+    background: var(--color-background, #000);
+    color: var(--color-text, #f5f5f7);
+}
+.training-directory-page .training-container {
+    width: 90%;
+    max-width: var(--content-width, 1200px);
+    margin: 0 auto;
+}
+.training-directory-page .training-introduction {
+    max-width: 790px;
+    margin: 0 0 clamp(44px, 6vw, 72px);
+}
+.training-directory-page .training-introduction h1 {
+    margin: 0;
+    color: var(--color-text, #f5f5f7);
+    font-size: clamp(38px, 5vw, 64px);
+    font-weight: 750;
+    line-height: 1.11;
+    letter-spacing: -.045em;
+    text-wrap: balance;
+}
+.training-directory-page .training-intro-text {
+    max-width: 680px;
+    margin: 20px 0 0;
+    color: var(--color-muted, #a3a7a6);
+    font-size: clamp(15px, 1.5vw, 17px);
+    line-height: 1.72;
+}
+.training-directory-page .training-section-heading {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px 20px;
+    margin: 0 0 25px;
+}
+.training-directory-page .training-section-heading h2 {
+    margin: 0;
+    color: var(--color-text, #f5f5f7);
+    font-size: clamp(23px, 2.7vw, 31px);
+    font-weight: 700;
+    line-height: 1.22;
+    letter-spacing: -.028em;
+}
+.training-directory-page .training-session-count {
+    color: var(--color-muted, #a3a7a6);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0;
+    white-space: nowrap;
+}
+.training-directory-page .training-grid {
+    display: grid;
+}
+.training-directory-page .training-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    height: 100%;
+    border: 1px solid var(--color-border, #2a2d2c);
+    border-radius: var(--ui-radius-card, 22px);
+    background: var(--color-surface, #111214);
+    box-shadow: none;
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+.training-directory-page .training-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, .18);
+    /* Use the neutral border token for training cards. */
+    border-color: var(--color-border, #2a2d2c);
+}
+.training-directory-page .training-card-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px 14px;
+}
+
+.training-directory-page .training-status {
+    padding: 6px 12px;
+    border: 1px solid rgba(168, 255, 0, .24);
+    border-radius: 999px;
+    background: rgba(168, 255, 0, .065);
+    color: var(--color-accent, #a8ff00);
+    font-size: 12px;
+    font-weight: 650;
+    white-space: nowrap;
+}
+.training-directory-page .training-card-title {
+    margin: 24px 0 9px;
+    color: var(--color-text, #f5f5f7);
+    font-weight: 700;
+    letter-spacing: -.025em;
+    overflow-wrap: anywhere;
+}
+.training-directory-page .training-club {
+    margin: 0 0 23px;
+    color: var(--color-muted, #a3a7a6);
+    font-size: 14px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+.training-directory-page .training-card-details {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 0;
+    border-top: 1px solid var(--color-border, #2a2d2c);
+    border-bottom: 1px solid var(--color-border, #2a2d2c);
+}
+.training-directory-page .training-detail {
+    display: flex;
+    justify-content: space-between;
+    min-width: 0;
+}
+.training-directory-page .training-detail span {
+    color: var(--color-muted, #a3a7a6);
+    font-size: 13px;
+}
+.training-directory-page .training-detail strong {
+    min-width: 0;
+    color: var(--color-text, #f5f5f7);
+    font-size: 14px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+.training-directory-page .training-description {
+    margin: 20px 0 0;
+    color: var(--color-muted, #a3a7a6);
+    font-size: 14px;
+    line-height: 1.72;
+    overflow-wrap: anywhere;
+}
+.training-directory-page .training-notice {
+    border: 1px solid var(--color-border, #2a2d2c);
+    border-radius: var(--ui-radius-card, 22px);
+    background: var(--color-surface, #111214);
+    box-shadow: none;
+}
+.training-directory-page .training-notice h3 {
+    color: var(--color-text, #f5f5f7);
+    font-size: clamp(21px, 2.3vw, 27px);
+    font-weight: 700;
+    letter-spacing: -.025em;
+}
+.training-directory-page .training-notice p {
+    color: var(--color-muted, #a3a7a6);
+    font-size: 14px;
+    line-height: 1.7;
+}
+@media (max-width: 900px) {
+    .training-directory-page .training-grid { grid-template-columns: minmax(0, 1fr); }
+    .training-directory-page .training-card { padding: 26px; }
+}
+@media (max-width: 560px) {
+    .training-page.training-directory-page { padding: var(--directory-top-inset) 0 70px; }
+    .training-directory-page .training-container { width: calc(100% - 36px); }
+    .training-directory-page .training-introduction { margin-bottom: 45px; }
+    .training-directory-page .training-introduction h1 { font-size: clamp(35px, 10vw, 45px); }
+    .training-directory-page .training-intro-text { margin-top: 17px; font-size: 15px; }
+    .training-directory-page .training-section-heading { align-items: flex-start; }
+    .training-directory-page .training-card { padding: 22px 20px; }
+    .training-directory-page .training-detail { gap: 10px; }
+    .training-directory-page .training-detail strong { font-size: 13px; }
+    .training-directory-page .training-notice { padding: 38px 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .training-directory-page .training-card { transition: none; }
+    .training-directory-page .training-card:hover { transform: none; }
+}
+
+/* Training session cards */
+/* Public training directory layout. */
+.training-directory-page .training-introduction { margin-bottom: 34px; }
+.training-directory-page .training-view-links {
+    display: flex; flex-wrap: wrap; align-items:center; gap: 10px;
+    margin: 0 0 34px; padding: 0 0 14px;
+    border-bottom: 1px solid rgba(255,255,255,.14);
+}
+.training-directory-page .training-view-links a {
+    display: inline-flex; min-height: 42px; align-items: center; justify-content:center;
+    padding: 8px 18px; border-radius: 999px; text-decoration: none;
+    background: #121416; border: 1px solid #313638;
+    color: #aeb3b1; font-size: 14px; font-weight: 650; line-height:1.25;
+}
+.training-directory-page .training-view-links a[aria-current="page"] { background:#a8ff00; border-color:#a8ff00; color:#0b0c0b; }
+.training-directory-page .training-view-links a:hover:not([aria-current="page"]) { color:#fff; background:#1c2021; }
+.training-directory-page .training-section-heading { align-items:center; margin-bottom:20px; }
+.training-directory-page .training-notice { text-align:left; padding:36px 32px; min-height:150px; }
+.training-directory-page .training-notice h3 { margin:0 0 8px; }
+.training-directory-page .training-notice p { max-width: none; margin:0; }
+.training-directory-page .training-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
+.training-directory-page .training-card { padding:0; overflow:hidden; }
+.training-directory-page .training-card-media { height:170px; background:#14231e; flex:none; overflow:hidden; }
+.training-directory-page .training-card-media img { display:block; width:100%; height:100%; object-fit:cover; }
+.training-directory-page .training-card-header,
+.training-directory-page .training-card-title,
+.training-directory-page .training-club,
+.training-directory-page .training-card-details,
+.training-directory-page .training-description,
+.training-directory-page .phase14-training-card-actions { margin-left:22px; margin-right:22px; }
+.training-directory-page .training-card-header { margin-top:22px; }
+.training-directory-page .training-sport { color:#a8ff00; text-transform:uppercase; letter-spacing:.11em; font-weight:750; font-size:11px; }
+.training-directory-page .training-card-title { margin-top:15px; margin-bottom:9px; font-size:clamp(19px,1.6vw,22px); line-height:1.27; }
+.training-directory-page .training-club { margin-bottom:20px; }
+.training-directory-page .training-card-details { margin-top:auto; padding:16px 0; }
+.training-directory-page .training-detail { flex-direction:column; align-items:flex-start; gap:3px; }
+.training-directory-page .training-detail strong { text-align:left; font-weight:650; }
+.training-directory-page .training-description { margin-top:16px; margin-bottom:22px; }
+.training-directory-page .phase14-training-card-actions { margin-top:auto; margin-bottom:22px; }
+.training-directory-page .training-programmes { margin-top:56px; }
+.training-directory-page .training-programmes h2 { margin:0 0 10px; font-size:clamp(25px,2.8vw,33px); letter-spacing:-.035em; }
+.training-directory-page .training-programmes-intro { margin:0 0 22px; color:#a8adab; line-height:1.68; max-width:790px; font-size:14px; }
+.training-directory-page .training-programme-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+.training-directory-page .training-programme { min-width:0; background:#111315; border:1px solid #303436; border-radius:21px; overflow:hidden; }
+.training-directory-page .training-programme img { width:100%; height:170px; object-fit:cover; display:block; }
+.training-directory-page .training-programme-body { padding:22px; }
+.training-directory-page .training-programme-tag { font-size:11px; font-weight:750; letter-spacing:.1em; text-transform:uppercase; color:#a8ff00; margin:0 0 11px; }
+.training-directory-page .training-programme h3 { color:#f4f5f4; font-size:clamp(19px,1.5vw,22px); line-height:1.3; letter-spacing:-.02em; margin:0 0 11px; }
+.training-directory-page .training-programme p:not(.training-programme-tag) { color:#b1b6b2; font-size:13.5px; line-height:1.66; margin:0 0 18px; }
+.training-directory-page .training-programme a { color:#a8ff00; font-size:13px; font-weight:650; text-decoration:none; }
+.training-directory-page .training-programme a:hover { text-decoration:underline; }
+@media(max-width:1100px){
+  .training-directory-page .training-grid,.training-directory-page .training-programme-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media(max-width:760px){
+  .training-directory-page .training-grid,.training-directory-page .training-programme-grid{grid-template-columns:1fr;}
+  .training-directory-page .training-programme img,.training-directory-page .training-card-media{height:185px;}
+  .training-directory-page .training-notice {padding:28px 24px;}
+  .training-directory-page .training-programmes {margin-top:42px;}
+}
+
+/* Schedule cards group the session identity and calendar date above the time details. */
+.training-directory-page .training-schedule-card {
+    display: flex; flex-direction: column; gap: 20px; min-width: 0;
+    background: var(--color-surface); border: 1px solid var(--color-border);
+    border-radius: 22px; padding: clamp(20px, 2.5vw, 28px);
+}
+.training-directory-page .training-schedule-top {
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+}
+.training-directory-page .training-schedule-sport {
+    color: var(--color-accent); font-size: 12px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+}
+.training-directory-page .training-status-completed {
+    color: var(--color-muted); border-color: var(--color-border); background: var(--color-surface-alt);
+}
+.training-directory-page .training-schedule-body {
+    display: grid; grid-template-columns: 78px minmax(0, 1fr); align-items: start; gap: 18px;
+}
+.training-directory-page .training-schedule-calendar {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    padding: 12px 6px; background: var(--color-surface-alt); border: 1px solid var(--color-border);
+    border-radius: 14px; color: var(--color-muted); font-size: 11px; font-weight: 650; text-transform: uppercase;
+}
+.training-directory-page .training-schedule-calendar strong {
+    color: var(--color-text); font-size: 32px; line-height: 1.12; font-variant-numeric: tabular-nums; letter-spacing: -.04em;
+}
+.training-directory-page .training-schedule-calendar span:first-child { color: var(--color-accent); letter-spacing: .09em; }
+.training-directory-page .training-schedule-copy { min-width: 0; }
+.training-directory-page .training-schedule-copy h3 {
+    margin: 0 0 6px; font-size: clamp(21px, 2.2vw, 28px); line-height: 1.2; letter-spacing: -.03em; overflow-wrap: anywhere;
+}
+.training-directory-page .training-schedule-club {
+    margin: 0 0 10px; color: var(--color-muted); font-size: 13px; line-height: 1.4; overflow-wrap: anywhere;
+}
+.training-directory-page .training-schedule-description {
+    margin: 0; color: var(--color-text); font-size: 14px; line-height: 1.6; overflow-wrap: anywhere;
+}
+.training-directory-page .training-schedule-meta {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;
+    margin: auto 0 0; padding: 18px 0 0; border-top: 1px solid var(--color-border);
+}
+.training-directory-page .training-schedule-meta > div { min-width: 0; }
+.training-directory-page .training-schedule-meta dt {
+    display: flex; align-items: center; gap: 7px; color: var(--color-muted); font-size: 12px; margin: 0 0 7px;
+}
+.training-directory-page .training-schedule-meta svg { flex: 0 0 17px; width: 17px; height: 17px; }
+.training-directory-page .training-schedule-meta dd {
+    margin: 0; color: var(--color-text); font-size: 14px; font-weight: 650; line-height: 1.45; overflow-wrap: anywhere;
+}
+.training-directory-page .training-schedule-card .phase14-training-card-actions {
+    margin: 0 !important; padding-top: 16px; border-top: 1px solid var(--color-border);
+    display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+    justify-content: flex-start;
+}
+.training-directory-page .training-schedule-card .phase14-training-card-actions form { margin: 0; }
+@media (max-width: 760px) {
+    .training-directory-page .training-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 380px) {
+    .training-directory-page .training-schedule-body { grid-template-columns: 58px minmax(0, 1fr); gap: 12px; }
+    .training-directory-page .training-schedule-calendar strong { font-size: 26px; }
+    .training-directory-page .training-schedule-meta { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+}
+
+/* Public training schedule card. */
+.training-directory-page .training-session-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    height: 100%;
+    padding: clamp(20px, 2.4vw, 30px);
+    border: 1px solid var(--color-border, #303536);
+    border-radius: var(--ui-radius-card, 22px);
+    background: var(--color-surface, #121416);
+    color: var(--color-text, #f5f5f7);
+    box-sizing: border-box;
+}
+.training-directory-page .training-session-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-bottom: 16px;
+}
+.training-directory-page .training-session-club {
+    color: var(--color-accent, #a8ff00);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+}
+.training-directory-page .training-session-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 11px;
+    border: 1px solid var(--color-border, #303536);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .035);
+    color: var(--color-text, #f5f5f7);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+.training-directory-page .training-session-title {
+    margin: 0 0 8px;
+    color: var(--color-text, #f5f5f7);
+    font-size: clamp(25px, 2.5vw, 34px);
+    font-weight: 700;
+    line-height: 1.18;
+    letter-spacing: -.035em;
+    overflow-wrap: anywhere;
+}
+.training-directory-page .training-session-description {
+    margin: 0 0 22px;
+    color: var(--color-muted, #a3a7a6);
+    font-size: 15px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+.training-directory-page .training-session-schedule {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: auto;
+    padding-top: 18px;
+    border-top: 1px solid var(--color-border, #303536);
+}
+.training-directory-page .training-session-schedule-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    min-width: 0;
+}
+.training-directory-page .training-session-schedule-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--color-muted, #a3a7a6);
+    font-size: 13px;
+    line-height: 1.3;
+}
+.training-directory-page .training-session-schedule-label svg {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+}
+.training-directory-page .training-session-schedule-item :is(time, .training-session-time) {
+    color: var(--color-text, #f5f5f7);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+.training-directory-page .training-session-card .phase14-training-card-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 20px 0 0 !important;
+    padding: 0;
+    border: 0;
+}
+.training-directory-page .training-session-card .phase14-training-card-actions form {
+    display: inline-flex;
+    margin: 0;
+}
+.training-directory-page .training-session-card .phase14-training-card-actions .button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    min-height: 40px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+.training-directory-page .training-session-card .phase14-training-card-actions .phase14-danger {
+    background: transparent;
+    border-color: #684447;
+    color: #efb5b8;
+}
+.training-directory-page .training-session-card .phase14-training-card-actions .phase14-danger:hover {
+    background: #302022;
+}
+@media (max-width: 360px) {
+    .training-directory-page .training-session-schedule { grid-template-columns: 1fr; gap: 12px; }
 }

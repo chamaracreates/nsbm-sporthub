@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/helpers.php';
+
 require_once __DIR__ . '/timezone.php';
 
 /* Restrict session editing to authorized staff. */
@@ -24,22 +26,10 @@ if (!in_array($requestMethod, ['GET', 'POST'], true)) {
 }
 
 /* Escape dynamic output. */
-function trainingEditEscape(mixed $value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
+
 
 /* Retrieve a submitted text value. */
-function trainingEditInput(string $key): string
-{
-    $value = $_POST[$key] ?? '';
 
-    return is_string($value) ? trim($value) : '';
-}
 
 /* Validate the selected session identifier. */
 $rawSessionId = $requestMethod === 'POST'
@@ -187,7 +177,7 @@ if ($requestMethod === 'POST' && !$loadError) {
     }
 
     foreach (array_keys($form) as $field) {
-        $form[$field] = trainingEditInput($field);
+        $form[$field] = sportsHubInput($field);
     }
 
     /* Validate session title and description. */
@@ -515,7 +505,7 @@ require __DIR__ . '/../includes/header.php';
 
 ?>
 
-<main class="training-page">
+<main class="training-page sports-hub-workflow">
     <div class="training-container">
 
         <section class="training-introduction">
@@ -543,7 +533,7 @@ require __DIR__ . '/../includes/header.php';
             <?php if (is_string($feedback)): ?>
 
                 <div class="training-form-success" role="status">
-                    <?= trainingEditEscape($feedback) ?>
+                    <?= sportsHubEscape($feedback) ?>
                 </div>
 
             <?php endif; ?>
@@ -556,7 +546,7 @@ require __DIR__ . '/../includes/header.php';
                     <ul>
                         <?php foreach ($errors as $error): ?>
                             <li>
-                                <?= trainingEditEscape($error) ?>
+                                <?= sportsHubEscape($error) ?>
                             </li>
                         <?php endforeach; ?>
                     </ul>
@@ -600,7 +590,7 @@ require __DIR__ . '/../includes/header.php';
                         <input
                             type="hidden"
                             name="csrf_token"
-                            value="<?= trainingEditEscape($csrfToken) ?>">
+                            value="<?= sportsHubEscape($csrfToken) ?>">
 
                         <input
                             type="hidden"
@@ -613,7 +603,7 @@ require __DIR__ . '/../includes/header.php';
                                 <label>Sports Club</label>
 
                                 <p class="training-attendance-context">
-                                    <?= trainingEditEscape(
+                                    <?= sportsHubEscape(
                                         $session['club_name']
                                     ) ?>
                                 </p>
@@ -623,7 +613,7 @@ require __DIR__ . '/../includes/header.php';
                                 <label>Training Facility</label>
 
                                 <p class="training-attendance-context">
-                                    <?= trainingEditEscape(
+                                    <?= sportsHubEscape(
                                         $session['res_name'] ??
                                             'Facility information unavailable'
                                     ) ?>
@@ -641,7 +631,7 @@ require __DIR__ . '/../includes/header.php';
                                     name="title"
                                     maxlength="50"
                                     required
-                                    value="<?= trainingEditEscape(
+                                    value="<?= sportsHubEscape(
                                                 $form['title']
                                             ) ?>">
                             </div>
@@ -656,7 +646,7 @@ require __DIR__ . '/../includes/header.php';
                                     type="date"
                                     name="date"
                                     required
-                                    value="<?= trainingEditEscape(
+                                    value="<?= sportsHubEscape(
                                                 $form['date']
                                             ) ?>">
                             </div>
@@ -671,7 +661,7 @@ require __DIR__ . '/../includes/header.php';
                                     type="time"
                                     name="start_time"
                                     required
-                                    value="<?= trainingEditEscape(
+                                    value="<?= sportsHubEscape(
                                                 $form['start_time']
                                             ) ?>">
                             </div>
@@ -686,7 +676,7 @@ require __DIR__ . '/../includes/header.php';
                                     type="time"
                                     name="end_time"
                                     required
-                                    value="<?= trainingEditEscape(
+                                    value="<?= sportsHubEscape(
                                                 $form['end_time']
                                             ) ?>">
                             </div>
@@ -701,7 +691,7 @@ require __DIR__ . '/../includes/header.php';
                                     name="description"
                                     rows="5"
                                     maxlength="255"
-                                    required><?= trainingEditEscape(
+                                    required><?= sportsHubEscape(
                                                     $form['description']
                                                 ) ?></textarea>
                             </div>

@@ -1,25 +1,18 @@
 <?php
 
-// NSBM SportsHub - Admin Membership Management
-// Member 03 - Club Management
+
+// Club membership administration.
 
 require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/helpers.php';
+
 require_once __DIR__ . '/../../includes/db.php';
 
 // Only administrators can access this page.
 // This also starts the session before HTML output.
 require_admin();
 
-function membershipEscape($value): string
-{
-    return htmlspecialchars(
-        (string) ($value ?? ''),
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
 
-// Generate a CSRF token for administrator actions.
 if (
     !isset($_SESSION['club_admin_csrf']) ||
     !is_string($_SESSION['club_admin_csrf'])
@@ -151,14 +144,15 @@ try {
     http_response_code(500);
 }
 
+$pageStylesheets = ['/assets/css/clubs.css'];
+
 require __DIR__ . '/../../includes/header.php';
 ?>
 
-<link rel="stylesheet" href="/assets/css/clubs.css">
 
-<main class="clubs-page">
+<main class="clubs-page sports-hub-workflow">
 
-    <section class="shell club-admin-page">
+    <section class="shell club-admin-page membership-admin-v15">
 
         <p class="clubs-eyebrow">
             NSBM SportsHub / Administration
@@ -189,7 +183,10 @@ require __DIR__ . '/../../includes/header.php';
 
         <?php elseif (empty($applications)): ?>
 
-            <p>No membership applications found.</p>
+            <div class="v15-empty-state" role="status">
+    <h2>No membership requests</h2>
+    <p>New club applications will appear here for review and approval.</p>
+</div>
 
         <?php else: ?>
 
@@ -220,23 +217,23 @@ require __DIR__ . '/../../includes/header.php';
                             </td>
 
                             <td>
-                                <?= membershipEscape($application['student_name']) ?>
+                                <?= sportsHubEscape($application['student_name']) ?>
                             </td>
 
                             <td>
-                                <?= membershipEscape($application['student_email']) ?>
+                                <?= sportsHubEscape($application['student_email']) ?>
                             </td>
 
                             <td>
-                                <?= membershipEscape($application['club_name']) ?>
+                                <?= sportsHubEscape($application['club_name']) ?>
                             </td>
 
                             <td>
-                                <?= membershipEscape(ucfirst($application['status'])) ?>
+                                <?= sportsHubEscape(ucfirst($application['status'])) ?>
                             </td>
 
                             <td>
-                                <?= membershipEscape($application['joined_date'] ?? '—') ?>
+                                <?= sportsHubEscape($application['joined_date'] ?? '—') ?>
                             </td>
 
                             <td>
@@ -258,7 +255,7 @@ require __DIR__ . '/../../includes/header.php';
                                         <input
                                             type="hidden"
                                             name="csrf_token"
-                                            value="<?= membershipEscape($csrfToken) ?>"
+                                            value="<?= sportsHubEscape($csrfToken) ?>"
                                         >
 
                                         <button

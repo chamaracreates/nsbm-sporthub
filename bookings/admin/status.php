@@ -27,7 +27,7 @@ if (
     exit('Invalid form submission.');
 }
 
-// Validate facility ID.
+
 $facilityId = filter_var(
     $_POST['res_id'] ?? null,
     FILTER_VALIDATE_INT,
@@ -39,7 +39,7 @@ if (!is_int($facilityId)) {
     exit('Invalid facility ID.');
 }
 
-// Validate requested status.
+
 $newStatus = $_POST['res_status'] ?? null;
 
 if (!in_array($newStatus, ['active', 'inactive'], true)) {

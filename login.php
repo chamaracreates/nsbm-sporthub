@@ -1,5 +1,4 @@
 <?php
-// NSBM SportsHub - User Login
 
 
 require_once __DIR__ . '/includes/auth.php';
@@ -7,17 +6,29 @@ require_once __DIR__ . '/includes/db.php';
 
 auth_start();
 
+// Logged-in users should not see an intermediate "Your Account" page.
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
+    $existingRole = current_user_role();
+    if ($existingRole !== null) {
+        header('Location: /index.php', true, 302);
+        exit;
+    }
+}
 
-// Generate a security token for the login form
+
 if (empty($_SESSION['login_csrf'])) {
     $_SESSION['login_csrf'] = bin2hex(random_bytes(32));
 }
 
 $errors = [];
+$now = time();
+$failures = array_values(array_filter((array) ($_SESSION['login_failures'] ?? []),
+    static fn($time) => is_int($time) && $time > $now - 300));
+$_SESSION['login_failures'] = $failures;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    // Collect the submitted values
+
     $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
     $submittedToken = $_POST['csrf_token'] ?? '';
@@ -38,6 +49,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ) {
         $errors[] = 'Invalid email or password.';
 
+    } elseif (count($failures) >= 5) {
+        http_response_code(429);
+        $errors[] = 'Too many login attempts. Please try again in five minutes.';
     } else {
 
         $email = strtolower(trim($email));
@@ -59,20 +73,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 !$user ||
                 !password_verify($password, $user['password'])
             ) {
+                $_SESSION['login_failures'][] = $now;
                 $errors[] = 'Invalid email or password.';
 
             } else {
 
-                // Prevent session fixation
-                session_regenerate_id(true);
+                if (!session_regenerate_id(true)) {
+                    $errors[] = 'Unable to start a secure session. Please try again.';
+                } else {
+                    unset($_SESSION['login_failures']);
+                    $_SESSION['user_id'] = (int) $user['user_id'];
+                    $_SESSION['role'] = $user['role'];
+                    $_SESSION['name'] = $user['name'];
+                    $_SESSION['logout_csrf'] = bin2hex(random_bytes(32));
+                    $_SESSION['login_csrf'] = bin2hex(random_bytes(32));
 
-                // Store authenticated user details
-                $_SESSION['user_id'] = (int) $user['user_id'];
-                $_SESSION['role'] = $user['role'];
-                $_SESSION['name'] = $user['name'];
-
-                // Rotate the CSRF token
-                $_SESSION['login_csrf'] = bin2hex(random_bytes(32));
+                    // Post/Redirect/Get: render the destination with the new header.
+                    header('Location: /index.php', true, 303);
+                    exit;
+                }
             }
 
         } catch (PDOException $e) {
@@ -83,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
- // Generate a logout CSRF token for logged-in users
+
 if (
     !empty($_SESSION['user_id']) &&
     empty($_SESSION['logout_csrf'])
@@ -96,131 +115,55 @@ if (
 
 <?php
 $pageStylesheets = ['/assets/css/student-accounts.css'];
+$pageTitle = 'Log in';
 require __DIR__ . '/includes/header.php';
 ?>
 
 
-<main class="accounts-page login-layout-page">
+<main class="accounts-page login-layout-page auth-page">
+    <div class="shell login-layout auth-layout">
+        <div class="auth-heading">
+            <h1 id="login-title">Log in</h1>
+            <p>Access your SportsHub account and sporting activities.</p>
+        </div>
 
-    <div class="shell login-layout">
-
-        <?php if (empty($_SESSION['user_id'])): ?>
-            <div class="login-welcome">
-                <h1>Welcome <br>back.</h1>
-                <p>
-                    Sign in to follow your sports activities
-                    and club memberships.
-                </p>
-            </div>
-        <?php endif; ?>
-
-        <section class="accounts-container login-card"
-                 aria-labelledby="login-title">
-
-            <?php if (!empty($_SESSION['user_id'])): ?>
-                <h1 id="login-title">Your Account</h1>
-            <?php else: ?>
-                <h2 id="login-title">Log in</h2>
+        <section class="accounts-container login-card auth-card" aria-labelledby="login-title">
+            <?php if (!empty($errors)): ?>
+                <div class="form-errors" role="alert">
+                    <?php foreach ($errors as $error): ?>
+                        <p><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></p>
+                    <?php endforeach; ?>
+                </div>
             <?php endif; ?>
 
+            <form action="login.php" method="POST" class="accounts-form auth-form">
+                <input type="hidden" name="csrf_token"
+                       value="<?= htmlspecialchars($_SESSION['login_csrf'], ENT_QUOTES, 'UTF-8') ?>">
 
+                <div class="auth-field">
+                    <label for="email">Email address</label>
+                    <input type="email" id="email" name="email" maxlength="255"
+                           autocomplete="username" placeholder="Enter your email address"
+                           value="<?= htmlspecialchars(is_string($email ?? null) ? $email : '', ENT_QUOTES, 'UTF-8') ?>" required>
+                </div>
 
-<?php if (!empty($_SESSION['user_id'])): ?>
-    <div role="status">
-        <p>
-            Login successful! Welcome,
-            <?= htmlspecialchars($_SESSION['name'], ENT_QUOTES, 'UTF-8') ?>.
-        </p>
-        <p>
-            Account role:
-            <?= htmlspecialchars($_SESSION['role'], ENT_QUOTES, 'UTF-8') ?>
-        </p>
+                <div class="auth-field">
+                    <label for="password">Password</label>
+                    <div class="password-field">
+                        <input type="password" id="password" name="password"
+                               autocomplete="current-password" placeholder="Enter your password" required>
+                        <button type="button" class="toggle-password" data-password-toggle
+                                aria-controls="password" aria-label="Show password" aria-pressed="false">Show</button>
+                    </div>
+                </div>
 
-<?php if (current_user_role() === 'student'): ?>
-    <a href="/student/profile.php" class="accounts-profile-button">
-        Go to My Profile
-    </a>
-<?php endif; ?>
-
-<form action="/logout.php" method="POST">
-    <input
-        type="hidden"
-        name="csrf_token"
-        value="<?= htmlspecialchars($_SESSION['logout_csrf'], ENT_QUOTES, 'UTF-8') ?>"
-    >
-
-<button type="submit" class="accounts-logout-button">
-    Log Out
-</button>
-</form>
-
- </div>
-<?php else: ?>
-
-
-    <?php if (!empty($errors)): ?>
-        <div role="alert">
-            <?php foreach ($errors as $error): ?>
-                <p>
-                    <?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?>
-                </p>
-            <?php endforeach; ?>
-        </div>
-    <?php endif; ?>
-
-    <form action="login.php" method="POST">
-
-        <input
-            type="hidden"
-            name="csrf_token"
-            value="<?= htmlspecialchars($_SESSION['login_csrf'], ENT_QUOTES, 'UTF-8') ?>"
-        >
-
-        <label for="email">Email Address</label>
-        <input
-            type="email"
-            id="email"
-            name="email"
-            maxlength="255"
-            required
-        >
-
-        <label for="password">Password</label>
-
-<div class="password-field">
-    <input
-        type="password"
-        id="password"
-        name="password"
-        required
-    >
-
-    <button
-        type="button"
-        class="toggle-password"
-        data-password-toggle
-        aria-controls="password"
-        aria-label="Show password"
-        aria-pressed="false"
-    >
-        Show
-    </button>
-</div>
-
-
-        <button type="submit">Log in</button>
-    </form>
-
-    <p>
-        Don't have an account?
-        <a href="register.php">Create Student Account</a>
-    </p>
-    <?php endif; ?>
-
-
+                <div class="auth-actions">
+                    <p><span>Don't have an account?</span><a href="/register.php">Create account</a></p>
+                    <button type="submit" class="accounts-submit">Log in</button>
+                </div>
+            </form>
         </section>
     </div>
 </main>
-
 <script src="/assets/js/student-accounts.js" defer></script>
 <?php require __DIR__ . '/includes/footer.php'; ?>

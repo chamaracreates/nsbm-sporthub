@@ -2,33 +2,45 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_admin();
 
-// NSBM SportsHub - Admin Dashboard
+// Standalone admin pages share the site's POST/CSRF logout contract.
+if (empty($_SESSION['logout_csrf']) || !is_string($_SESSION['logout_csrf'])) {
+    $_SESSION['logout_csrf'] = bin2hex(random_bytes(32));
+}
+
 
 require_once __DIR__ . '/../includes/db.php';
 
 $pdo = db();
 
-//Total registered students
+
 $totalStudents = (int) $pdo->query(
     "SELECT COUNT(*) FROM users WHERE role = 'student'"
 )->fetchColumn();
 
-//Active sports clubs
+
 $activeClubs = (int) $pdo->query(
     "SELECT COUNT(*) FROM sports_clubs WHERE status = 'active'"
 )->fetchColumn();
 
-//Upcoming matches
+
 $upcomingMatches = (int) $pdo->query(
     "SELECT COUNT(*) FROM matches WHERE `date` >= CURDATE() AND match_status = 'scheduled'"
 )->fetchColumn();
 
-//Currently running tournaments
+
 $activeTournaments = (int) $pdo->query(
     "SELECT COUNT(*) FROM tournaments WHERE start_date <= CURDATE() AND end_date >= CURDATE() "
 )->fetchColumn();
 
-//Total pending approvals
+// Dashboard counters are calculated from the current application records.
+$completedMatches = (int) $pdo->query("SELECT COUNT(*) FROM matches WHERE LOWER(TRIM(match_status)) IN ('completed','finished')")->fetchColumn();
+$historicalTournaments = (int) $pdo->query("SELECT COUNT(*) FROM tournaments WHERE is_historical = 1")->fetchColumn();
+$pendingBookings = (int) $pdo->query("SELECT COUNT(*) FROM booking_request WHERE booking_status = 'pending'")->fetchColumn();
+$upcomingTraining = (int) $pdo->query("SELECT COUNT(*) FROM training_sessions WHERE TIMESTAMP(date,start_time) > NOW()")->fetchColumn();
+$activeStaffAssignments = (int) $pdo->query("SELECT COUNT(*) FROM sport_staff WHERE status = 'active'")->fetchColumn();
+$appointedLeaders = (int) $pdo->query("SELECT COUNT(*) FROM club_leaders")->fetchColumn();
+
+
 $pendingApprovals = (int) $pdo->query(
     "SELECT
           (SELECT COUNT(*) FROM club_membership WHERE status = 'pending')
@@ -41,15 +53,17 @@ $pendingApprovals = (int) $pdo->query(
     "
 )->fetchColumn();
 
-//Recent sports activities
+
+// All UNION text columns must use one collation because legacy tables
+// use both utf8mb4_general_ci and utf8mb4_0900_ai_ci.
 $recentActivities = $pdo->query(
     "SELECT activity_date, activity_type, activity_title, activity_detail
      FROM (
         SELECT
             cn.created_at AS activity_date,
-            'Club News' AS activity_type,
-            cn.title AS activity_title,
-            sc.club_name AS activity_detail
+            'Club News' COLLATE utf8mb4_0900_ai_ci AS activity_type,
+            cn.title COLLATE utf8mb4_0900_ai_ci AS activity_title,
+            sc.club_name COLLATE utf8mb4_0900_ai_ci AS activity_detail
         FROM club_news cn
         LEFT JOIN sports_clubs sc ON cn.club_id = sc.club_id
         WHERE cn.status = 'published'
@@ -57,45 +71,47 @@ $recentActivities = $pdo->query(
         UNION ALL
 
         SELECT
-            ts.date,
-            'Training Session',
-            ts.title,
-            sc.club_name
+            ts.date AS activity_date,
+            'Training Session' COLLATE utf8mb4_0900_ai_ci AS activity_type,
+            ts.title COLLATE utf8mb4_0900_ai_ci AS activity_title,
+            sc.club_name COLLATE utf8mb4_0900_ai_ci AS activity_detail
         FROM training_sessions ts
         LEFT JOIN sports_clubs sc ON ts.club_id = sc.club_id
 
         UNION ALL
 
         SELECT
-            m.date,
-            'Match',
-            m.title,
+            m.date AS activity_date,
+            'Match' COLLATE utf8mb4_0900_ai_ci AS activity_type,
+            m.title COLLATE utf8mb4_0900_ai_ci AS activity_title,
             CONCAT(m.sport, ' - ', m.match_status)
+                COLLATE utf8mb4_0900_ai_ci AS activity_detail
         FROM matches m
 
         UNION ALL
 
         SELECT
-            br.date,
-            'Facility Booking',
-            br.purpose,
+            br.date AS activity_date,
+            'Facility Booking' COLLATE utf8mb4_0900_ai_ci AS activity_type,
+            br.purpose COLLATE utf8mb4_0900_ai_ci AS activity_title,
             CONCAT('Status: ', br.booking_status)
+                COLLATE utf8mb4_0900_ai_ci AS activity_detail
         FROM booking_request br
 
         UNION ALL
 
         SELECT
-            tr.reg_date,
-            'Tournament Registration',
-            t.t_name,
+            tr.reg_date AS activity_date,
+            'Tournament Registration' COLLATE utf8mb4_0900_ai_ci AS activity_type,
+            t.t_name COLLATE utf8mb4_0900_ai_ci AS activity_title,
             CONCAT('Status: ', tr.registration_status)
+                COLLATE utf8mb4_0900_ai_ci AS activity_detail
         FROM tournament_registration tr
         LEFT JOIN tournaments t ON tr.t_id = t.t_id
      ) AS recent_activity
      ORDER BY activity_date DESC
-     LIMIT 8
-
- ")->fetchALL();
+     LIMIT 8"
+)->fetchAll();
 
 ?>
 
@@ -121,7 +137,7 @@ $recentActivities = $pdo->query(
 
             <div class="sidebar-brand">
 
-                NSBM SportsHub
+                <a class="admin-site-brand-link" href="/index.php" title="View website">NSBM SportsHub</a>
                 <span>ADMINISTRATION</span>
             </div>
 
@@ -130,8 +146,12 @@ $recentActivities = $pdo->query(
                     Dashboard
                 </a>
 
-                <a href="../student/" class="nav-link">
-                    Students
+                <a href="/admin/manage.php" class="nav-link">
+                    Manage Content
+                </a>
+
+                <a href="../clubs/admin/members.php" class="nav-link">
+                    Club Memberships
                 </a>
 
                 <a href="../clubs/" class="nav-link">
@@ -159,6 +179,14 @@ $recentActivities = $pdo->query(
                 </a>
 
             </nav>
+            <div class="sidebar-account-section">
+                <form action="/logout.php" method="post">
+                    <input type="hidden" name="csrf_token"
+                           value="<?= htmlspecialchars($_SESSION['logout_csrf'], ENT_QUOTES, 'UTF-8') ?>">
+                    <button type="submit">Log out</button>
+                </form>
+            </div>
+
 
         </aside>
 
@@ -169,10 +197,6 @@ $recentActivities = $pdo->query(
                 <div>
                     <h2>Admin Dashboard</h2>
                     <p>NSBM Sports Club Management System</p>
-                </div>
-
-                <div class="admin-profile">
-                    Administrator
                 </div>
             </header>
 
@@ -216,11 +240,31 @@ $recentActivities = $pdo->query(
                         <p class="stat-number"><?= number_format($pendingApprovals)?></p>
                     </div>
 
+                    <!-- Operational metrics and management shortcuts. -->
+                    <div class="stat-card"><h3>Completed Matches</h3><p class="stat-number"><?= number_format($completedMatches) ?></p></div>
+                    <div class="stat-card"><h3>Pending Facility Bookings</h3><p class="stat-number"><?= number_format($pendingBookings) ?></p></div>
+                    <div class="stat-card"><h3>Upcoming Training</h3><p class="stat-number"><?= number_format($upcomingTraining) ?></p></div>
+                    <div class="stat-card"><h3>Active MIC / Coach Assignments</h3><p class="stat-number"><?= number_format($activeStaffAssignments) ?></p></div>
+                    <div class="stat-card"><h3>Club Leader Assignments</h3><p class="stat-number"><?= number_format($appointedLeaders) ?></p></div>
+
                 </div>
 
             </section>
 
             <!--Recent Activities-->
+
+            <!-- Quick actions are separate from the dashboard metrics. -->
+            <nav class="v15-shortcuts" aria-label="Administrative shortcuts">
+                <h2>Quick actions</h2>
+                <div class="v15-shortcut-links">
+                    <a href="/bookings/admin/requests.php">Review bookings</a>
+                    <a href="/matches/index.php?tab=results">Match results</a>
+                    <a href="/training/manage.php">Training</a>
+                    <a href="/clubs/admin/staff.php">Staff</a>
+                    <a href="/clubs/admin/leaders.php">Club leadership</a>
+                </div>
+            </nav>
+
             <section class="recent-activities">
 
                 <h2>Recent Activities</h2>
