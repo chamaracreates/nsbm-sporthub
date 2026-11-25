@@ -19,15 +19,18 @@ $errorMessage = null;
 try {
     $stmt = db()->prepare(
         "SELECT
-            student_name,
-            email,
-            total_clubs_joined,
+            u.name AS student_name,
+            u.email,
+            (SELECT COUNT(DISTINCT cm.club_id) FROM club_membership cm
+             WHERE cm.user_id = u.user_id AND cm.status = 'approved') AS total_clubs_joined,
             (SELECT COUNT(DISTINCT ta.session_id) FROM training_attendance ta
-             WHERE ta.user_id = v.user_id AND ta.att_status = 'present') AS training_sessions_attended,
-            tournaments_registered,
-            facility_bookings_made
-         FROM v_student_participation_summary v
-         WHERE user_id = :user_id
+             WHERE ta.user_id = u.user_id AND ta.att_status = 'present') AS training_sessions_attended,
+            (SELECT COUNT(DISTINCT tr.t_id) FROM tournament_registration tr
+             WHERE tr.user_id = u.user_id) AS tournaments_registered,
+            (SELECT COUNT(DISTINCT br.b_id) FROM booking_request br
+             WHERE br.user_id = u.user_id) AS facility_bookings_made
+         FROM users u
+         WHERE u.user_id = :user_id AND u.role = 'student'
          LIMIT 1"
     );
 

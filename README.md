@@ -1,153 +1,229 @@
 # NSBM SportsHub
 
-**Sports Club Management System - NSBM Green University**
+**Sports Club Management System | NSBM Green University**
 
-NSBM SportsHub is a web-based sports management system designed to centralize the administration of sports clubs, competitions, training sessions and facility reservations at NSBM Green University. The platform provides a unified interface for students, sports staff and administrators to coordinate sports activities, manage participation and access institutional sports information.
+## Project Overview
 
-## Features
+NSBM SportsHub is a web-based sports management system that centralizes university sports administration and student participation. It provides a unified platform for managing sports clubs, tournaments, match fixtures, training sessions, facility reservations and sports news.
+
+The system combines a responsive public portal with authenticated student services, club-specific staff functions and administrative management tools.
+
+## Live Application
+
+| Resource | URL |
+| --- | --- |
+| Live website | [nsbmsportshub.rf.gd](https://nsbmsportshub.rf.gd/) |
+| Source repository | [GitHub](https://github.com/chamaracreates/nsbm-sporthub) |
+
+Public sports information is available without authentication. Student services and administrative operations require an authorized account.
+
+## Key Features
 
 | Module | Functionality |
 | --- | --- |
-| Sports Clubs | Club profiles, membership applications, staff assignments and club leadership management. |
-| Tournaments | Competition management, registration, team formation and roster management. |
-| Fixtures and Standings | Match scheduling, score recording, results and tournament standings. |
-| Training | Session scheduling, venue allocation and attendance management. |
-| Facility Bookings | Facility information, reservation requests, availability validation and administrative approval. |
-| News | Club news publishing, image management and chronological news display. |
-| Student Accounts | Registration, profile management, password changes and participation history. |
-| Administration and Reporting | Centralized management, operational statistics, filtered reports and CSV exports. |
+| Sports Clubs | Club profiles, membership applications, staff assignments, captain and vice-captain management |
+| Tournaments | Competition administration, student registration, team formation and roster management |
+| Fixtures and Results | Standalone and tournament match scheduling, score recording, results and standings |
+| Training | Session scheduling, venue allocation and attendance management |
+| Facility Bookings | Facility information, reservation requests, availability validation and administrative review |
+| Sports News | Club news publishing, image management and news feeds |
+| Student Accounts | Registration, profile management, password changes and participation history |
+| Administration and Reporting | Centralized management, operational statistics, filtered reports and CSV exports |
 
-The public portal also provides global search and a responsive interface across desktop, tablet and mobile devices.
+The public interface also includes global search, responsive navigation and light and dark themes.
+
+## Technology Stack
+
+| Layer | Technology |
+| --- | --- |
+| Frontend | HTML5, CSS3, JavaScript |
+| Backend | PHP 8.3 (local development) |
+| Database | MySQL 8.4 (development), MariaDB 11.4.14 (deployed environment) |
+| Database Access | PHP Data Objects (PDO), prepared statements |
+| Web Server | Apache HTTP Server |
+| Development Infrastructure | Docker, Docker Compose |
+| Source Control | Git, GitHub |
+| Production Hosting | InfinityFree shared PHP/MySQL hosting |
+
+## System Architecture
+
+The application follows a modular, server-rendered architecture. PHP modules process HTTP requests, enforce access controls, execute business logic and render interfaces. Shared components centralize database connectivity, authentication, authorization and validation. A relational database stores operational records and relationships between modules.
+
+```mermaid
+flowchart TD
+    A[Web Browser] <-->|HTTP / HTTPS| B[Apache and PHP Application]
+    B --> C[Public and Protected Modules]
+    C --> D[Shared Authentication, Validation and Database Components]
+    D <-->|PDO| E[(MySQL / MariaDB)]
+    C <-->|Image assets| F[Media and Upload Storage]
+```
+
+The same application code supports containerized development and shared hosting through environment-specific database configuration.
 
 ## User Roles
 
 | Role | Responsibilities |
 | --- | --- |
-| Administrator | System-wide administration, club and staff management, content publishing, request approvals and reporting. |
-| Member in Charge (MIC) | Management of authorized sports activities within assigned clubs. |
-| Coach | Club-specific training, attendance and competition management within assigned permissions. |
-| Student | Club membership applications, tournament registration, facility reservation requests and personal participation records. |
+| Administrator | System-wide management, staff and club administration, content publishing, request approvals and reporting |
+| Member in Charge (MIC) | Authorized sports management functions within assigned clubs |
+| Coach | Authorized club-specific training, attendance and competition functions |
+| Student | Membership applications, tournament registration, facility reservations and personal participation records |
+| Public Visitor | Browse publicly available sports information without authentication |
 
-Public sports information is accessible without authentication. Protected operations are subject to role-based authorization, club assignments and record ownership.
+Protected operations are restricted by authenticated roles, club assignments and record ownership as applicable. Public visitor access does not represent a stored account role.
 
-## Technology Stack
-
-| Component | Technology |
-| --- | --- |
-| Frontend | HTML5, CSS3, JavaScript |
-| Backend | PHP 8.3 |
-| Database | MySQL 8.4 (InnoDB) |
-| Database Access | PHP Data Objects (PDO) |
-| Web Server | Apache HTTP Server |
-| Development Environment | Docker, Docker Compose |
-| Version Control | Git, GitHub |
-
-## System Architecture
-
-The system follows a modular, server-rendered architecture. Application modules handle business logic and request processing, while shared components provide authentication, authorization, validation and database connectivity. A centralized relational database maintains operational records and relationships between modules.
-
-## Repository Structure
+## Project Structure
 
 ```text
 nsbm-sporthub/
-├── admin/          Administrative and content management
-├── assets/         Stylesheets, JavaScript and media assets
-├── bookings/       Facility reservation management
-├── clubs/          Sports club and membership management
-├── database/       SQL schema and public sports seed
-├── includes/       Shared application components
-├── matches/        Fixtures, results and standings
-├── reports/        Administrative reporting and exports
-├── student/        Student accounts and participation history
-├── tournaments/    Competitions and team management
-└── training/       Training schedules and attendance
+├── admin/             Administrative and content management
+├── assets/            Stylesheets, scripts, images and upload directory
+├── bookings/          Sports facility reservation workflows
+├── clubs/             Club, staff, leadership and membership management
+├── database/          Relational schema and public sports seed
+├── includes/          Shared application components and access controls
+├── matches/           Fixtures, results and standings
+├── reports/           Reports and CSV exports
+├── student/           Profiles, credentials and participation history
+├── tournaments/       Competitions, registrations and teams
+├── training/          Training schedules and attendance
+├── .env.example       Example database configuration
+├── .gitignore         Version control exclusions
+├── compose.yaml       Local service orchestration
+├── Dockerfile         PHP and Apache development image
+├── index.php          Public homepage
+├── login.php          User authentication
+├── logout.php         Session termination
+├── register.php       Student registration
+├── search.php         Global search
+└── README.md          Project and deployment documentation
 ```
-
-## Database and Security
-
-The database uses relational constraints, unique indexes and transactional operations to maintain data integrity and support scheduling and participation workflows.
-
-Security controls include password hashing, session-based authentication, role-based authorization, parameterized database queries, CSRF protection, server-side validation and restricted file uploads. Environment-specific credentials are maintained outside version-controlled source code.
 
 ## Local Installation
 
-### New installation with Docker Compose
+### Prerequisites
 
-Install Git and Docker Desktop (or Docker Engine with a current Docker Compose plugin). Start Docker, then clone the repository:
+- Git
+- Docker Desktop, or Docker Engine with a current Docker Compose plugin
+- An existing MySQL server only if using the external-database installation option
+
+### 1. Clone the repository
 
 ```sh
 git clone https://github.com/chamaracreates/nsbm-sporthub.git
 cd nsbm-sporthub
 ```
 
-Create a file named `.env` in the repository root with the following settings. Replace the password placeholder with a unique, strong local password (for example, 48 random hexadecimal characters). Do not commit this file.
+### 2. Configure the environment
+
+For a new Docker-managed database, create `.env` in the repository root with the following settings. Replace the password placeholder with a unique, strong password.
 
 ```dotenv
 DB_HOST=db
 DB_PORT=3306
 DB_NAME=nsbm_sports_db
 DB_USER=sportshub_app
-DB_PASSWORD=REPLACE_WITH_YOUR_OWN_RANDOM_PASSWORD
+DB_PASSWORD=REPLACE_WITH_YOUR_OWN_PASSWORD
 ```
 
-Compose resolves `DB_NAME`, `DB_USER` and `DB_PASSWORD` identically for the web and MySQL services. Exported shell variables with those names take precedence over `.env`. If you have previously exported database settings, clear them in the current terminal before starting either installation so `.env` supplies the intended values.
+Do not commit `.env`. The tracked `.env.example` illustrates the external-database configuration; use the settings above for the bundled database service.
 
-On macOS/Linux or Git Bash:
+Compose uses the same database name, username and password for the web and database services. Exported shell variables take precedence over `.env`. If database settings have already been exported, clear them before starting either installation.
+
+macOS, Linux or Git Bash:
 
 ```sh
 unset DB_HOST DB_PORT DB_NAME DB_USER DB_PASSWORD
 ```
 
-On PowerShell:
+PowerShell:
 
 ```powershell
 Remove-Item Env:DB_HOST, Env:DB_PORT, Env:DB_NAME, Env:DB_USER, Env:DB_PASSWORD -ErrorAction SilentlyContinue
 ```
 
-Start the application and its optional local MySQL service:
+### 3. Start the application
 
 ```sh
 docker compose --profile local-db up -d --build --wait
 ```
 
-Open [http://localhost:8086](http://localhost:8086). On the first start with an empty database volume, MySQL imports `database/nsbm_sports_db.sql` followed by `database/seed.sql`. The seed includes clubs, facilities, historical tournaments, match results and published news. It does not include existing user accounts or private student activity. The local database uses a separate named volume, is not exposed on a host port and generates its own root password. The local application account has database-scoped privileges provided by the MySQL image; this setup is for development and demonstration, not production hosting.
+Open [http://localhost:8086](http://localhost:8086/). On first startup with an empty database volume, MySQL imports the schema and seed automatically. The database service uses a persistent named volume and is not published on a host port.
 
-To stop the project while preserving the database, use `docker compose --profile local-db stop`. Subsequent starts retain your data. Initialization scripts do not run again on an existing volume; do not delete volumes to update an existing installation. Changing `.env` does not change the credentials of an already initialized MySQL account; coordinate password changes separately.
+Stop the services without removing the database:
 
-### Using an existing MySQL server
+```sh
+docker compose --profile local-db stop
+```
 
-The original external-database workflow remains available. Do not enable the `local-db` profile for an existing external-database installation. For a new external database, create an empty MySQL 8.4 database named `nsbm_sports_db`, import the schema followed by the seed, and create a dedicated application account with SELECT, INSERT, UPDATE and DELETE privileges on that database. Set `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` and `DB_PASSWORD` in `.env` to match the server. Clear previously exported database settings as described above before creating or recreating the web container. The hostname must be reachable from the web container (for example, `host.docker.internal` for a database on the host using Docker Desktop).
+Initialization runs only on an empty database volume. Do not delete existing volumes to apply schema updates. Changing `.env` does not change the password of an existing MySQL account.
+
+### Alternative: Existing MySQL server
+
+For an external database installation, do not enable the `local-db` profile.
+
+1. For a new installation, create an empty MySQL 8.4 database and import `database/nsbm_sports_db.sql` followed by `database/seed.sql` using a privileged database account.
+2. Provision a dedicated application account with `SELECT`, `INSERT`, `UPDATE` and `DELETE` privileges on that database.
+3. Update `.env` with the actual database host, port, name and application credentials. The host must be reachable from the web container; on Docker Desktop, a host-based database can use `host.docker.internal`.
+4. Clear previously exported database environment variables as described above and start the web service:
 
 ```sh
 docker compose up -d --build
 ```
 
-Never import the schema or seed over an existing populated database. Existing team members should preserve their databases and apply only the required schema upgrades separately.
+Do not reimport the schema or seed over an existing populated database. Apply required schema changes separately after backing up existing data.
 
 ### News image uploads
 
-The tracked `assets/uploads/club-news` directory must be writable by the Apache user. Check permissions after starting the web service:
+The `assets/uploads/club-news/` directory must be writable by the web server. For local Docker, check access with:
 
 ```sh
 docker compose exec -T --user www-data web php -r 'exit(is_writable("/var/www/html/assets/uploads/club-news") ? 0 : 1);'
 ```
 
-If the check fails on a Linux Docker host, grant the Apache user ownership of that directory only, then repeat the check:
+If the check fails on a Linux Docker host, grant the Apache user ownership of that directory only:
 
 ```sh
 docker compose exec -T --user root web chown www-data:www-data /var/www/html/assets/uploads/club-news
 ```
 
-This changes the bind-mounted directory ownership on the host. Do not grant world-write permissions or recursively change ownership of the repository. On Docker Desktop, review host folder permissions if ownership changes are not supported. Uploaded news images remain excluded from Git.
+Repeat the check. On Docker Desktop, review host folder permissions if ownership changes are unsupported. Do not use world-writable permissions or recursively change repository ownership. Uploaded news images are excluded from version control.
 
-### Local accounts
+## Database Initialization
 
-Students can register through the website. To create an administrator on a new installation, run the command below from the repository root after the web service and database are running. Replace the example email with your own local administrator email. The command generates and prints a unique password; keep it private. An existing account with that email will not be overwritten.
+### Schema and seed data
+
+| File | Purpose |
+| --- | --- |
+| `database/nsbm_sports_db.sql` | Canonical relational schema for new MySQL installations |
+| `database/seed.sql` | Initial public sports content and a non-authenticating content-author record |
+
+The schema contains 18 base tables and 35 foreign-key constraints. InnoDB, primary keys, unique indexes and relational constraints support data integrity across modules.
+
+The initial public dataset contains:
+
+| Record category | Count |
+| --- | ---: |
+| Sports clubs | 11 |
+| Historical tournaments | 14 |
+| Match records | 4 |
+| Sports facilities | 7 |
+| Published club news | 5 |
+| **Total public content records** | **41** |
+
+These are seed counts, not current live database totals. The seed excludes existing personal user accounts and private student activity. It includes a non-login content-author record to preserve foreign-key relationships. Training schedules, team rosters, reservations and registrations may initially be empty. Some externally sourced news images require internet access.
+
+### Local administrator provisioning
+
+Students can register through the application. For a new local installation, create a dedicated administrator after the database and web services are running. Replace the example email before executing the command.
 
 ```sh
 docker compose exec -T web php -r '
 require "/var/www/html/includes/db.php";
 $email = "admin@example.invalid";
+if (!filter_var($email, FILTER_VALIDATE_EMAIL) || $email === "admin@example.invalid") {
+    exit("Enter a valid administrator email.\n");
+}
 $password = bin2hex(random_bytes(16));
 $stmt = db()->prepare("INSERT INTO users (name,email,password,role) VALUES (?,?,?,?)");
 $stmt->execute(["Local Administrator",$email,password_hash($password,PASSWORD_DEFAULT),"admin"]);
@@ -155,6 +231,204 @@ echo "Email: $email\nPassword: $password\n";
 '
 ```
 
-The seed-author account is not a login account; its invalid password hash preserves the foreign-key relationships without providing shared credentials. Do not use it as an administrator login.
+Store the generated password securely. An existing account with the same email is not overwritten. The seed-author record is not an administrator login and must remain non-authenticating. To provision an account with a custom password, use the password-hashing procedure in the production administrator section with the appropriate database.
 
-The seed is a snapshot of public-facing sports content. Training schedules, team rosters, bookings and registrations may be empty until local users create them. External news imagery, where used by the application, requires internet access.
+## Production Deployment
+
+### Production environment
+
+The deployed application uses InfinityFree shared hosting, an Apache-compatible web server, PHP with the `pdo_mysql` extension, MariaDB 11.4.14 and HTTPS. Application files are transferred using FTPS. Docker is used for development and is not required on the hosting server.
+
+The following procedure reproduces the shared-hosting deployment from the repository. It requires an empty hosted database, a PHP/MySQL-compatible hosting account, FTPS access and Python 3 on the local workstation for schema preparation.
+
+### 1. Prepare the production database
+
+Provision an empty hosted database. The local schema includes a MySQL-specific collation and a participation-summary view that may be unsupported on restricted shared hosting. The application retrieves participation summaries directly from the base tables, so the view is not required in production.
+
+Run the following from the repository root to generate a compatible copy without modifying the canonical schema:
+
+```sh
+python3 - <<'PY'
+from pathlib import Path
+import re
+
+source = Path("database/nsbm_sports_db.sql")
+sql = source.read_text(encoding="utf-8")
+view = "v_student_participation_summary"
+patterns = [
+    rf"--\n-- Stand-in structure for view `{view}`\n.*?\n(?=--\n-- Indexes for dumped tables)",
+    rf"--\n-- Structure for view `{view}`\n.*?\n(?=--\n-- Constraints for dumped tables)",
+]
+for pattern in patterns:
+    sql, count = re.subn(pattern, "", sql, flags=re.S)
+    if count != 1:
+        raise SystemExit("Schema structure changed; review before exporting.")
+sql = sql.replace("utf8mb4_0900_ai_ci", "utf8mb4_general_ci")
+if view in sql or len(re.findall(r"^CREATE TABLE `", sql, re.M)) != 18:
+    raise SystemExit("Unexpected schema structure; review before exporting.")
+if len(re.findall(r"\bFOREIGN KEY\b", sql)) != 35:
+    raise SystemExit("Unexpected foreign-key count; review before exporting.")
+target = Path.home() / "production_schema.sql"
+with target.open("x", encoding="utf-8") as file:
+    file.write(sql)
+print(f"Production schema: {target}")
+PY
+```
+
+If the output file already exists, review or move it before running the command again. Import the generated `production_schema.sql`, then `database/seed.sql`, into the empty hosted database using phpMyAdmin or an equivalent database administration interface. Verify that all 18 base tables use InnoDB and that all 35 foreign-key constraints are present.
+
+### 2. Deploy application files
+
+Using FTPS, upload the following application directories to the hosting document root (`htdocs` on the deployed host):
+
+```text
+admin/  assets/  bookings/  clubs/  includes/
+matches/  reports/  student/  tournaments/  training/
+```
+
+Include the root PHP entry points: `index.php`, `login.php`, `logout.php`, `register.php` and `search.php`.
+
+Preserve `includes/.htaccess` and `assets/uploads/club-news/.htaccess`. Upload tracked public assets only; do not publish local user uploads, SQL files, Git metadata, Docker infrastructure, environment files, backups or diagnostic scripts. Do not overwrite the hosting provider's configuration outside the application document root.
+
+### 3. Configure server access and HTTPS
+
+Enable HTTPS for the target domain. On the deployed Apache-compatible host, the following document-root `.htaccess` configuration provides the default entry point, disables directory listings, redirects HTTP requests and applies baseline browser security headers:
+
+```apache
+DirectoryIndex index.php
+Options -Indexes
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^ https://nsbmsportshub.rf.gd%{REQUEST_URI} [R=302,L]
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+```
+
+Replace the hostname if deploying to another domain. This configuration is for the hosted document root, not the local Docker environment. Preserve any required host-managed directives and check that the host supports these rules.
+
+Verify that direct HTTP requests to `includes/`, `includes/db.php` and `includes/helpers.php` are denied before provisioning production credentials. Ensure the news upload directory is writable by the web server and that the upload access-control rules are enforced.
+
+### 4. Provision database connectivity
+
+Set `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` and `DB_PASSWORD` through the hosting environment when supported. Alternatively, when none of these five environment variables is defined, the application reads the protected `includes/db.local.php` file.
+
+Create this private configuration on the hosting server or prepare it securely outside the repository before transferring it via FTPS:
+
+```php
+<?php
+
+return [
+    'DB_HOST' => 'YOUR_DATABASE_HOST',
+    'DB_PORT' => '3306',
+    'DB_NAME' => 'YOUR_DATABASE_NAME',
+    'DB_USER' => 'YOUR_DATABASE_USERNAME',
+    'DB_PASSWORD' => 'YOUR_DATABASE_PASSWORD',
+];
+```
+
+Replace the placeholders with the provider's database connection details. If any database environment variable is defined, the file fallback is not used; configure all five variables consistently. The file is excluded from Git and must never be exposed through HTTP. Verify its URL returns access denied after deployment.
+
+Keep production credentials independent of local development credentials. Confirm that the public sports modules retrieve database records successfully.
+
+### 5. Provision a production administrator
+
+Create a dedicated administrator using a unique password and PHP's native password-hashing mechanism. A custom password can be hashed locally using the development PHP container without sending the password to the hosting server or including it in shell history.
+
+Run the following from the repository root with the local web container running:
+
+```sh
+python3 - <<'PY'
+from getpass import getpass
+import subprocess
+
+password = getpass("Administrator password: ")
+if password != getpass("Confirm password: "):
+    raise SystemExit("Passwords do not match.")
+if len(password) < 15 or len(password.encode("utf-8")) > 72 or "\x00" in password:
+    raise SystemExit("Use a unique password of at least 15 characters and at most 72 UTF-8 bytes.")
+subprocess.run(
+    ["docker", "compose", "exec", "-T", "web", "php", "-r",
+     'echo password_hash(stream_get_contents(STDIN), PASSWORD_DEFAULT), PHP_EOL;'],
+    input=password, text=True, check=True
+)
+PY
+```
+
+In the hosted database administration interface, select the correct production database and execute the following SQL after replacing the example email and hash placeholders with the intended values. Use an appropriately SQL-escaped email address. Do not use a plaintext password in the SQL statement.
+
+```sql
+INSERT INTO users (name, email, password, role)
+VALUES ('SportsHub Administrator', 'admin@example.invalid', 'GENERATED_PASSWORD_HASH', 'admin');
+```
+
+Keep the password and generated hash private. Do not enable the seed-author account for login or overwrite existing users. Verify administrator authentication and dashboard access.
+
+## Security and Configuration
+
+The application implements session-based authentication, password hashing, role-based authorization, prepared database queries, CSRF protection, server-side input validation and restricted news image uploads.
+
+| Control | Implementation |
+| --- | --- |
+| Credential storage | Ignored environment or private server-side configuration files |
+| Password storage | PHP `password_hash()` and `password_verify()` for authentication |
+| Authorization | Server-side role, club-assignment and record-ownership checks where applicable |
+| Session protection | Strict session mode, HTTP-only cookies, SameSite=Lax and Secure cookies when PHP detects HTTPS |
+| Database access | PDO prepared statements and relational constraints |
+| Request validation | Server-side validation and CSRF token checks for protected state-changing operations |
+| Internal resources | Web server restrictions on shared PHP components and non-public files |
+| Upload security | File validation and server restrictions on executable uploads |
+| Transport security | HTTPS for the deployed application; FTPS for file transfers |
+
+Keep real credentials, private database exports and temporary diagnostics outside the repository and public document root. Verify HTTPS enforcement, secure cookie attributes, authorization rules and access restrictions after deploying changes. Maintain database backups and apply schema upgrades separately from fresh-install initialization.
+
+## Testing and Validation
+
+### Production acceptance results
+
+Manual production verification was reported on 25 November 2026.
+
+| Verification category | Passed | Total |
+| --- | ---: | ---: |
+| Public module acceptance | 11 | 11 |
+| Administrator acceptance | 12 | 12 |
+| Student functional acceptance | 13 | 13 |
+| Security verification | 8 | 8 |
+| **Total** | **44** | **44** |
+
+The checks covered public module loading, global search, both colour themes, administrator authentication and management interfaces, reporting and CSV export, student registration, profile and password changes, membership and booking approvals, tournament registration, participation history, authorization and logout. Security verification included internal file and configuration access restrictions, unauthenticated dashboard and report restrictions, HTTPS redirection and removal of temporary diagnostics.
+
+The results represent the reported manual acceptance checks, not an automated test suite, exhaustive security audit or penetration test. Repeat relevant checks after deployment changes, including separate MIC and coach workflows, upload restrictions and session cookie attributes.
+
+### Local verification
+
+Check the PHP syntax of the deployment-sensitive components:
+
+```sh
+docker compose exec -T web php -l /var/www/html/includes/db.php
+docker compose exec -T web php -l /var/www/html/student/history.php
+docker compose exec -T web php -l /var/www/html/admin/dashboard.php
+```
+
+Verify that the local application responds and review source formatting before committing:
+
+```sh
+curl -fsS -o /dev/null -w 'Homepage: HTTP %{http_code}\n' http://localhost:8086/
+git diff --check
+git diff --cached --check
+```
+
+## Academic Context
+
+| Item | Details |
+| --- | --- |
+| Project | NSBM SportsHub – Sports Club Management System |
+| Institution | NSBM Green University |
+| Module | Web Application Development |
+| Project Type | Academic group web development project |
+
+The project applies web development, relational database design, authentication, access control, responsive interface development, collaborative version control and application deployment within a university sports management context.
+
+The hosted application is provided for academic demonstration and evaluation. It is not represented as an officially commissioned university service.

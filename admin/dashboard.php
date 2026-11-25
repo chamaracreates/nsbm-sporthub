@@ -55,16 +55,15 @@ $pendingApprovals = (int) $pdo->query(
 )->fetchColumn();
 
 
-// All UNION text columns must use one collation because legacy tables
-// use both utf8mb4_general_ci and utf8mb4_0900_ai_ci.
+// Use a common collation for UNION text columns.
 $recentActivities = $pdo->query(
     "SELECT activity_date, activity_type, activity_title, activity_detail
      FROM (
         SELECT
             cn.created_at AS activity_date,
-            'Club News' COLLATE utf8mb4_0900_ai_ci AS activity_type,
-            cn.title COLLATE utf8mb4_0900_ai_ci AS activity_title,
-            sc.club_name COLLATE utf8mb4_0900_ai_ci AS activity_detail
+            'Club News' COLLATE utf8mb4_general_ci AS activity_type,
+            cn.title COLLATE utf8mb4_general_ci AS activity_title,
+            sc.club_name COLLATE utf8mb4_general_ci AS activity_detail
         FROM club_news cn
         LEFT JOIN sports_clubs sc ON cn.club_id = sc.club_id
         WHERE cn.status = 'published'
@@ -73,9 +72,9 @@ $recentActivities = $pdo->query(
 
         SELECT
             ts.date AS activity_date,
-            'Training Session' COLLATE utf8mb4_0900_ai_ci AS activity_type,
-            ts.title COLLATE utf8mb4_0900_ai_ci AS activity_title,
-            sc.club_name COLLATE utf8mb4_0900_ai_ci AS activity_detail
+            'Training Session' COLLATE utf8mb4_general_ci AS activity_type,
+            ts.title COLLATE utf8mb4_general_ci AS activity_title,
+            sc.club_name COLLATE utf8mb4_general_ci AS activity_detail
         FROM training_sessions ts
         LEFT JOIN sports_clubs sc ON ts.club_id = sc.club_id
 
@@ -83,30 +82,30 @@ $recentActivities = $pdo->query(
 
         SELECT
             m.date AS activity_date,
-            'Match' COLLATE utf8mb4_0900_ai_ci AS activity_type,
-            m.title COLLATE utf8mb4_0900_ai_ci AS activity_title,
+            'Match' COLLATE utf8mb4_general_ci AS activity_type,
+            m.title COLLATE utf8mb4_general_ci AS activity_title,
             CONCAT(m.sport, ' - ', m.match_status)
-                COLLATE utf8mb4_0900_ai_ci AS activity_detail
+                COLLATE utf8mb4_general_ci AS activity_detail
         FROM matches m
 
         UNION ALL
 
         SELECT
             br.date AS activity_date,
-            'Facility Booking' COLLATE utf8mb4_0900_ai_ci AS activity_type,
-            br.purpose COLLATE utf8mb4_0900_ai_ci AS activity_title,
+            'Facility Booking' COLLATE utf8mb4_general_ci AS activity_type,
+            br.purpose COLLATE utf8mb4_general_ci AS activity_title,
             CONCAT('Status: ', br.booking_status)
-                COLLATE utf8mb4_0900_ai_ci AS activity_detail
+                COLLATE utf8mb4_general_ci AS activity_detail
         FROM booking_request br
 
         UNION ALL
 
         SELECT
             tr.reg_date AS activity_date,
-            'Tournament Registration' COLLATE utf8mb4_0900_ai_ci AS activity_type,
-            t.t_name COLLATE utf8mb4_0900_ai_ci AS activity_title,
+            'Tournament Registration' COLLATE utf8mb4_general_ci AS activity_type,
+            t.t_name COLLATE utf8mb4_general_ci AS activity_title,
             CONCAT('Status: ', tr.registration_status)
-                COLLATE utf8mb4_0900_ai_ci AS activity_detail
+                COLLATE utf8mb4_general_ci AS activity_detail
         FROM tournament_registration tr
         LEFT JOIN tournaments t ON tr.t_id = t.t_id
      ) AS recent_activity
