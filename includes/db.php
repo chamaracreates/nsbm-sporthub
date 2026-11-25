@@ -18,6 +18,21 @@ function db(): PDO
         $username = getenv('DB_USER');
         $password = getenv('DB_PASSWORD');
 
+        $localConfig = __DIR__ . '/db.local.php';
+        if ($host === false && $port === false && $database === false &&
+            $username === false && $password === false && is_file($localConfig)) {
+            ini_set('display_errors', '0');
+            $config = require $localConfig;
+            if (!is_array($config)) {
+                throw new RuntimeException('Invalid database configuration.');
+            }
+            $host = $config['DB_HOST'] ?? false;
+            $port = $config['DB_PORT'] ?? false;
+            $database = $config['DB_NAME'] ?? false;
+            $username = $config['DB_USER'] ?? false;
+            $password = $config['DB_PASSWORD'] ?? false;
+        }
+
         if (!$host || !$port || !$database || !$username || $password === false) {
             throw new RuntimeException('Database configuration is missing.');
         }
