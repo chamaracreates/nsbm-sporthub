@@ -250,9 +250,7 @@ if ($method === 'POST' && $standaloneMode && !$loadError) {
         'venue' => [2, 255, 'Venue'],
     ];
     foreach ($limits as $field => [$minimum, $maximum, $label]) {
-        $length = function_exists('mb_strlen')
-            ? mb_strlen($standalone[$field], 'UTF-8')
-            : strlen($standalone[$field]);
+        $length = sportsHubLength($standalone[$field]);
         if ($length < $minimum || $length > $maximum) {
             $errors[] = sprintf('%s must contain %d–%d characters.', $label, $minimum, $maximum);
         }
@@ -342,17 +340,13 @@ if ($method === 'POST' && !$loadError && !$standaloneMode) {
         $errors[] = 'Both teams must have eligible roster members in this tournament.';
     }
 
-    $titleLength = function_exists('mb_strlen')
-        ? mb_strlen($form['title'], 'UTF-8')
-        : strlen($form['title']);
+    $titleLength = sportsHubLength($form['title']);
 
     if ($titleLength < 3 || $titleLength > 100) {
         $errors[] = 'Match title must contain 3–100 characters.';
     }
 
-    $venueLength = function_exists('mb_strlen')
-        ? mb_strlen($form['venue'], 'UTF-8')
-        : strlen($form['venue']);
+    $venueLength = sportsHubLength($form['venue']);
 
     if ($venueLength < 2 || $venueLength > 255) {
         $errors[] = 'Venue must contain 2–255 characters.';
@@ -569,10 +563,6 @@ include __DIR__ . '/../includes/header.php';
     <section class="section-container matches-section">
 
         <div class="matches-header">
-            <p class="section-label">
-                NSBM SPORTSHUB / MATCH MANAGEMENT
-            </p>
-
             <h1>Create match fixture.</h1>
 
             <p class="section-description">
@@ -725,7 +715,7 @@ include __DIR__ . '/../includes/header.php';
                             <input type="hidden" name="csrf_token" value="<?= sportsHubEscape($csrfToken) ?>">
                             <input type="hidden" name="match_mode" value="tournament">
                             <input type="hidden" name="tournament_id" value="<?= $tournamentId ?>">
-                            <div class="match-field">
+                            <div class="match-field match-field-wide">
                                 <label for="match_title">Match title</label>
                                 <input id="match_title" name="title" maxlength="100" required
                                        placeholder="e.g. Semi-final 1" value="<?= sportsHubEscape($form['title']) ?>">

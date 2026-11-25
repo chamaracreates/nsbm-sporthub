@@ -33,6 +33,7 @@ if ($matchId === null || $matchId === false) {
                     venue,
                     match_status,
                     home_score,
+                description, image_path, home_wickets, away_wickets, home_balls, away_balls,
                     away_score
                 FROM matches
                 WHERE m_id = :match_id
@@ -98,6 +99,7 @@ include __DIR__ . '/../includes/header.php';
         ];
         $detailImage = $match ? ($detailSportImages[strtolower(trim((string)$match['sport']))] ?? '/assets/images/hero-main.webp') : '';
 
+        $detailImage = sportsHubCustomCover($match['image_path']) ?: $detailImage;
         $status = strtolower(trim((string) $match['match_status']));
         $isCompleted = in_array($status, ['completed', 'finished'], true);
         $hasScore = $isCompleted && $match['home_score'] !== null && $match['away_score'] !== null;
@@ -131,15 +133,16 @@ include __DIR__ . '/../includes/header.php';
                     <div class="match-profile-team match-profile-home">
                         <span class="match-profile-team-label">Home</span>
                         <strong><?= sportsHubEscape($match['home_name']) ?></strong>
+                        <?php if ($hasScore && sportsHubIsCricket((string) $match['sport']) && $match['home_balls'] !== null): ?><span class="match-profile-score-caption"><?= sportsHubEscape(sportsHubOversText($match['home_balls'])) ?> overs</span><?php endif; ?>
                     </div>
                     <div class="match-profile-score">
                         <?php if ($hasScore): ?>
-                            <strong class="match-profile-score-value">
-                                <span><?= (int) $match['home_score'] ?></span>
+                            <strong class="match-profile-score-value<?= sportsHubIsCricket((string) $match['sport']) ? ' match-profile-cricket-score' : '' ?>">
+                                <span><?= sportsHubEscape(sportsHubMatchScore($match, 'home')) ?></span>
                                 <span class="match-profile-score-separator">&ndash;</span>
-                                <span><?= (int) $match['away_score'] ?></span>
+                                <span><?= sportsHubEscape(sportsHubMatchScore($match, 'away')) ?></span>
                             </strong>
-                            <span class="match-profile-score-caption"><?= $isVolleyball ? 'Sets' : 'Full time' ?></span>
+                            <span class="match-profile-score-caption"><?= $isVolleyball ? 'Sets' : (sportsHubIsCricket((string) $match['sport']) ? 'Runs' : 'Full time') ?></span>
                         <?php elseif ($isCompleted): ?>
                             <span class="match-profile-score-caption">Score not available</span>
                         <?php else: ?>
@@ -149,9 +152,13 @@ include __DIR__ . '/../includes/header.php';
                     <div class="match-profile-team match-profile-away">
                         <span class="match-profile-team-label">Away</span>
                         <strong><?= sportsHubEscape($match['away_name']) ?></strong>
+                        <?php if ($hasScore && sportsHubIsCricket((string) $match['sport']) && $match['away_balls'] !== null): ?><span class="match-profile-score-caption"><?= sportsHubEscape(sportsHubOversText($match['away_balls'])) ?> overs</span><?php endif; ?>
                     </div>
                 </div>
 
+                <?php if (trim((string) $match['description']) !== ''): ?>
+                    <p class="match-profile-description"><?= sportsHubEscape($match['description']) ?></p>
+                <?php endif; ?>
                 <dl class="match-profile-facts">
                     <div>
                         <dt>

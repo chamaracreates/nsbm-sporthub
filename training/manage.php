@@ -270,7 +270,7 @@ require __DIR__ . '/../includes/header.php';
 
                                     <?php endif; ?>
 
-                                    <?php if ($isAdmin): ?>
+                                    <?php if ($isAdmin && (int) $session['is_editable_time'] === 1 && (int) $session['has_attendance'] === 0): ?>
                                         <a
                                             href="/admin/delete.php?type=training&amp;id=<?= (int) $session['session_id'] ?>"
                                             class="training-session-action button-danger-outline">

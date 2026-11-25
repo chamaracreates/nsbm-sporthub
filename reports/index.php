@@ -44,6 +44,7 @@ $matchPerformance = sportsHubReportRows($pdo, $queries['matches'], 100)->fetchAl
 
     <title>Reports & Analytics | NSBM SportsHub</title>
 
+    <script src="/assets/js/site-interactions.js"></script>
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/admin.css">
     <link rel="stylesheet" href="../assets/css/report.css">
@@ -53,51 +54,7 @@ $matchPerformance = sportsHubReportRows($pdo, $queries['matches'], 100)->fetchAl
 
     <div class="admin-layout">
 
-        <!-- Sidebar -->
-        <aside class="sidebar">
-
-            <div class="sidebar-brand">
-                NSBM SportsHub
-                <span>ADMINISTRATION</span>
-            </div>
-
-            <nav class="sidebar-nav">
-
-                <a href="../admin/dashboard.php" class="nav-link">
-                    Dashboard
-                </a>
-
-                <a href="../clubs/admin/members.php" class="nav-link">
-                    Club Memberships
-                </a>
-
-                <a href="../clubs/" class="nav-link">
-                    Sports Clubs
-                </a>
-
-                <a href="../training/" class="nav-link">
-                    Training Sessions
-                </a>
-
-                <a href="../tournaments/" class="nav-link">
-                    Tournaments
-                </a>
-
-                <a href="../matches/" class="nav-link">
-                    Matches
-                </a>
-
-                <a href="../bookings/" class="nav-link">
-                    Facilities & Bookings
-                </a>
-
-                <a href="index.php" class="nav-link active">
-                    Reports & Analytics
-                </a>
-
-            </nav>
-
-        </aside>
+        <?php sportsHubAdminSidebar('reports'); ?>
 
         <!-- Main Content -->
         <main class="main-content">
@@ -108,17 +65,6 @@ $matchPerformance = sportsHubReportRows($pdo, $queries['matches'], 100)->fetchAl
                     <h2>Reports & Analytics</h2>
                     <p>NSBM Sports Club Management System</p>
                 </div>
-
-                <div class="admin-account-actions">
-                    <a class="admin-home-link" href="/index.php">View website</a>
-                    <span class="admin-profile">Administrator</span>
-                    <form class="admin-logout-form" action="/logout.php" method="post">
-                        <input type="hidden" name="csrf_token"
-                               value="<?= htmlspecialchars($_SESSION['logout_csrf'], ENT_QUOTES, 'UTF-8') ?>">
-                        <button class="admin-logout-button" type="submit">Log out</button>
-                    </form>
-                </div>
-
             </header>
 
             <!-- Welcome Section -->
@@ -136,7 +82,7 @@ $matchPerformance = sportsHubReportRows($pdo, $queries['matches'], 100)->fetchAl
 
 
             <!-- Report Filters -->
-            <section class="report-section report-filters">
+            <section class="report-section">
                 <div class="report-heading">
                     <div>
                         <h2>Filter Reports</h2>
@@ -172,11 +118,6 @@ $matchPerformance = sportsHubReportRows($pdo, $queries['matches'], 100)->fetchAl
                     $exports['bookings'] = 'Facility bookings';
                 }
                 ?>
-                <div class="report-export-links" role="group" aria-label="CSV exports for applied filters">
-                    <?php foreach ($exports as $type => $label): ?>
-                        <a class="filter-button report-export-button" href="<?= sportsHubEscape('export.php?' . http_build_query(['type' => $type] + $reportFilters)) ?>"><?= sportsHubEscape($label) ?> CSV</a>
-                    <?php endforeach; ?>
-                </div>
                 <form method="GET" action="index.php">
                     <div class="filter-grid">
 
@@ -247,6 +188,15 @@ $matchPerformance = sportsHubReportRows($pdo, $queries['matches'], 100)->fetchAl
                     Facility requests are not attributable to a club or sport.
                     Club-specific match results include tournament-linked matches only. Tournament schedule exports use event start dates.
                 </p>
+                <div class="report-downloads">
+                    <h3>Download reports</h3>
+                    <p>CSV files reflect the applied filters.</p>
+                    <div class="report-export-links" role="group" aria-label="CSV exports for applied filters">
+                        <?php foreach ($exports as $type => $label): ?>
+                            <a class="filter-button report-export-button" href="<?= sportsHubEscape('export.php?' . http_build_query(['type' => $type] + $reportFilters)) ?>"><?= sportsHubEscape($label) ?> CSV</a>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
             </section>
 
 
@@ -255,7 +205,7 @@ $matchPerformance = sportsHubReportRows($pdo, $queries['matches'], 100)->fetchAl
 
                 <h2>Participation Overview</h2>
 
-                <div class="statistics-grid">
+                <div class="statistics-grid report-metric-grid">
 
                     <div class="stat-card">
                         <h3>Students in Report</h3>
@@ -552,7 +502,7 @@ $matchPerformance = sportsHubReportRows($pdo, $queries['matches'], 100)->fetchAl
                     </div>
                 </div>
 
-                <div class="statistics-grid">
+                <div class="statistics-grid report-metric-grid">
                     <div class="stat-card">
                         <h3>Completed Matches</h3>
                         <p class="stat-number">
@@ -582,7 +532,7 @@ $matchPerformance = sportsHubReportRows($pdo, $queries['matches'], 100)->fetchAl
                     </div>
                 </div>
 
-                <div class="report-heading" style="margin-top: 30px;">
+                <div class="report-heading">
                     <div>
                         <h2>Match Results</h2>
                         <p>Match schedules and completed results</p>

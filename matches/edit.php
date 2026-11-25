@@ -65,7 +65,8 @@ function matchEditFind(
     $sql = "
         SELECT
             m.m_id, m.title, m.date, m.venue, m.match_status,
-            m.home_score, m.away_score,
+            m.home_score, m.away_score, m.description, m.image_path,
+            m.home_wickets, m.away_wickets, m.home_balls, m.away_balls,
             t.t_id, COALESCE(t.t_name, 'Standalone match') AS t_name,
             m.sport, t.start_date, t.end_date,
             t.status AS tournament_status,
@@ -137,6 +138,9 @@ $loadError = false;
 $submittedAction = $method === 'POST'
     ? sportsHubInput('action')
     : '';
+
+$mode = $_GET['mode'] ?? '';
+$mode = in_array($mode, ['fixture', 'result', 'details'], true) ? $mode : '';
 
 $saved = $_GET['saved'] ?? '';
 $saved = is_string($saved) ? $saved : '';
@@ -218,13 +222,9 @@ if (!is_int($matchId)) {
                         $awayName = sportsHubInput('away_name');
                         $sport = sportsHubInput('sport');
 
-                        $titleLength = function_exists('mb_strlen')
-                            ? mb_strlen($title, 'UTF-8')
-                            : strlen($title);
+                        $titleLength = sportsHubLength($title);
 
-                        $venueLength = function_exists('mb_strlen')
-                            ? mb_strlen($venue, 'UTF-8')
-                            : strlen($venue);
+                        $venueLength = sportsHubLength($venue);
 
                         if ($titleLength < 3 || $titleLength > 100) {
                             $errors[] =
@@ -242,8 +242,7 @@ if (!is_int($matchId)) {
                                 ['Away team', $awayName, 2, 255],
                                 ['Sport', $sport, 2, 255],
                             ] as [$label, $value, $minimum, $maximum]) {
-                                $size = function_exists('mb_strlen')
-                                    ? mb_strlen($value, 'UTF-8') : strlen($value);
+                                $size = sportsHubLength($value);
                                 if ($size < $minimum || $size > $maximum) {
                                     $errors[] = sprintf('%s must contain %d–%d characters.', $label, $minimum, $maximum);
                                 }
@@ -301,6 +300,18 @@ if (!is_int($matchId)) {
                                 ]);
                             }
                         }
+                    } elseif ($submittedAction === 'details') {
+                        $title = sportsHubInput('title');
+                        $description = sportsHubInput('description');
+                        $image = sportsHubInput('image_path');
+                        if (sportsHubLength($title) < 3 || sportsHubLength($title) > 100 || sportsHubLength($description) > 255) {
+                            $errors[] = 'Enter a title of 3–100 characters and a description of up to 255 characters.';
+                        }
+                        if (!array_key_exists($image, sportsHubCoverLibrary())) $errors[] = 'Choose a cover from the image library.';
+                        if ($errors === []) {
+                            $update = $pdo->prepare('UPDATE matches SET title = :title, description = :description, image_path = :image_path WHERE m_id = :match_id');
+                            $update->execute(['title' => $title, 'description' => $description === '' ? null : $description, 'image_path' => $image ?: null, 'match_id' => $matchId]);
+                        }
                     } elseif ($submittedAction === 'result') {
 
                         if (!$scheduled && !$completed) {
@@ -345,11 +356,23 @@ if (!is_int($matchId)) {
                                 'Enter valid non-negative scores (0–999).';
                         }
 
+                        $cricket = sportsHubIsCricket((string) $lockedMatch['sport']);
+                        $extras = ['home_wickets' => null, 'away_wickets' => null, 'home_balls' => null, 'away_balls' => null];
+                        if ($cricket) {
+                            foreach (['home', 'away'] as $side) {
+                                $wickets = sportsHubInput($side . '_wickets');
+                                $extras[$side . '_wickets'] = $wickets === '' ? null : filter_var($wickets, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 10]]);
+                                $extras[$side . '_balls'] = sportsHubOversBalls(sportsHubInput($side . '_overs'));
+                                if ($extras[$side . '_wickets'] === false || $extras[$side . '_balls'] === false) $errors[] = 'Enter wickets from 0 to 10 and overs using legal balls (for example, 19.5).';
+                            }
+                        }
                         if ($errors === []) {
                             $update = $pdo->prepare(
                                 "UPDATE matches
                                  SET home_score = :home_score,
                                      away_score = :away_score,
+                                     home_wickets = :home_wickets, away_wickets = :away_wickets,
+                                     home_balls = :home_balls, away_balls = :away_balls,
                                      match_status = 'completed'
                                  WHERE m_id = :match_id"
                             );
@@ -358,7 +381,7 @@ if (!is_int($matchId)) {
                                 'home_score' => $homeScore,
                                 'away_score' => $awayScore,
                                 'match_id' => $matchId
-                            ]);
+                            ] + $extras);
                         }
                     } else {
                         $errors[] = 'Invalid management action.';
@@ -367,14 +390,12 @@ if (!is_int($matchId)) {
                     if ($errors === []) {
                         $pdo->commit();
 
-                        $savedAction = $submittedAction === 'fixture'
-                            ? 'fixture'
-                            : 'result';
+                        $savedAction = $submittedAction;
 
                         header(
                             'Location: /matches/edit.php?id=' .
                                 $matchId .
-                                '&saved=' . $savedAction
+                                '&mode=' . $savedAction . '&saved=' . $savedAction
                         );
                         exit;
                     }
@@ -449,7 +470,7 @@ $pageStylesheets = ['/assets/css/matches.css'];
 include __DIR__ . '/../includes/header.php';
 ?>
 
-<main class="matches-page sports-hub-workflow">
+<main class="matches-page sports-hub-workflow match-management-page match-editor-page">
     <section class="section-container matches-section">
 
         <div class="matches-header">
@@ -457,10 +478,10 @@ include __DIR__ . '/../includes/header.php';
                 NSBM SPORTSHUB / MATCH MANAGEMENT
             </p>
 
-            <h1>Manage fixture.</h1>
+            <h1><?= $mode === 'result' ? ($isCompleted ? 'Edit result.' : 'Record result.') : ($mode === 'fixture' ? 'Edit fixture.' : 'Edit match details.') ?></h1>
 
             <p class="section-description">
-                Update fixtures and record results.
+                <?= $mode === 'result' ? 'Enter or correct the scores for this match.' : 'Update fixture details and manage match information.' ?>
             </p>
         </div>
 
@@ -499,6 +520,7 @@ include __DIR__ . '/../includes/header.php';
 
         <?php else: ?>
 
+            <div class="match-editor-layout">
             <div class="match-edit-summary">
                 <p class="section-label">
                     <?= sportsHubEscape($match['t_name']) ?>
@@ -528,9 +550,16 @@ include __DIR__ . '/../includes/header.php';
                         <?= sportsHubEscape(ucfirst($status)) ?>
                     </strong>
                 </p>
+                <?php if ($isCompleted): ?>
+                    <p class="match-editor-score"><?= sportsHubEscape(sportsHubMatchScore($match, 'home', true)) ?> – <?= sportsHubEscape(sportsHubMatchScore($match, 'away', true)) ?></p>
+                <?php endif; ?>
+                <a href="/matches/edit.php?id=<?= (int) $matchId ?>&amp;mode=details" class="button button-outline">Edit match details</a>
             </div>
+            <div class="match-editor-panel">
 
-            <?php if ($saved === 'fixture'): ?>
+            <?php if ($saved === 'details'): ?>
+                <div class="match-edit-success" role="status">Match details saved successfully.</div>
+            <?php elseif ($saved === 'fixture'): ?>
                 <div class="match-edit-success" role="status">
                     Match fixture updated successfully.
                 </div>
@@ -549,7 +578,22 @@ include __DIR__ . '/../includes/header.php';
                 </div>
             <?php endif; ?>
 
-            <?php if ($canEditFixture): ?>
+            <?php if ($mode === 'details'): ?>
+                <div class="match-edit-heading"><h2>Match details</h2><p>Update public content without changing teams, dates or scores.</p></div>
+                <form method="post" action="/matches/edit.php?id=<?= (int) $matchId ?>&amp;mode=details" class="match-create-form">
+                    <input type="hidden" name="csrf_token" value="<?= sportsHubEscape($csrfToken) ?>">
+                    <input type="hidden" name="action" value="details">
+                    <label for="match-title">Match title</label>
+                    <input id="match-title" name="title" required maxlength="100" value="<?= sportsHubEscape($submittedAction === 'details' ? sportsHubInput('title') : $match['title']) ?>">
+                    <label for="match-description">Description</label>
+                    <textarea id="match-description" name="description" rows="4" maxlength="255"><?= sportsHubEscape($submittedAction === 'details' ? sportsHubInput('description') : $match['description']) ?></textarea>
+                    <label for="match-cover">Cover image</label>
+                    <select id="match-cover" name="image_path"><?= sportsHubCoverOptions($submittedAction === 'details' ? sportsHubInput('image_path') : (string) $match['image_path']) ?></select>
+                    <button type="submit" class="button button-accent">Save match details</button>
+                </form>
+            <?php endif; ?>
+
+            <?php if ($canEditFixture && $mode !== 'result' && $mode !== 'details'): ?>
 
                 <div class="match-edit-heading">
                     <h2>Edit fixture details</h2>
@@ -561,7 +605,7 @@ include __DIR__ . '/../includes/header.php';
 
                 <form
                     method="post"
-                    action="/matches/edit.php?id=<?= (int) $matchId ?>"
+                    action="/matches/edit.php?id=<?= (int) $matchId ?>&amp;mode=fixture"
                     class="match-create-form">
 
                     <input
@@ -649,7 +693,8 @@ include __DIR__ . '/../includes/header.php';
 
             <?php endif; ?>
 
-            <div class="match-edit-heading">
+            <?php if ($mode !== 'details' && ($mode !== 'fixture' || !$canEditFixture)): ?>
+            <div class="match-edit-heading" id="match-result">
                 <h2>Match result</h2>
                 <p>
                     Enter both scores to complete the fixture.
@@ -661,7 +706,7 @@ include __DIR__ . '/../includes/header.php';
 
                 <form
                     method="post"
-                    action="/matches/edit.php?id=<?= (int) $matchId ?>"
+                    action="/matches/edit.php?id=<?= (int) $matchId ?>&amp;mode=result"
                     class="match-create-form">
 
                     <input
@@ -674,43 +719,24 @@ include __DIR__ . '/../includes/header.php';
                         name="action"
                         value="result">
 
-                    <label for="home_score">
-                        <?= sportsHubEscape($match['home_team']) ?>
-                        score
-                    </label>
-
-                    <input
-                        id="home_score"
-                        name="home_score"
-                        type="number"
-                        min="0"
-                        max="999"
-                        step="1"
-                        required
-                        value="<?= sportsHubEscape(
-                                    $submittedAction === 'result'
-                                        ? sportsHubInput('home_score')
-                                        : $match['home_score']
-                                ) ?>">
-
-                    <label for="away_score">
-                        <?= sportsHubEscape($match['away_team']) ?>
-                        score
-                    </label>
-
-                    <input
-                        id="away_score"
-                        name="away_score"
-                        type="number"
-                        min="0"
-                        max="999"
-                        step="1"
-                        required
-                        value="<?= sportsHubEscape(
-                                    $submittedAction === 'result'
-                                        ? sportsHubInput('away_score')
-                                        : $match['away_score']
-                                ) ?>">
+                    <?php $cricket = sportsHubIsCricket((string) $match['sport']); ?>
+                    <?php if ($cricket): ?>
+                        <p class="section-description">Single-innings cricket: enter total runs and optionally wickets lost and overs bowled (e.g. 19.5 means 19 overs and 5 balls). Results use total runs.</p>
+                    <?php endif; ?>
+                    <div class="match-result-fields">
+                        <?php foreach (['home', 'away'] as $side): ?>
+                            <div class="match-result-team">
+                                <label for="<?= $side ?>_score"><?= sportsHubEscape($match[$side . '_team']) ?> · <?= $cricket ? 'Runs' : (strcasecmp((string) $match['sport'], 'Volleyball') === 0 ? 'Sets' : 'Score') ?></label>
+                                <input id="<?= $side ?>_score" name="<?= $side ?>_score" type="number" min="0" max="999" step="1" required value="<?= sportsHubEscape($submittedAction === 'result' ? sportsHubInput($side . '_score') : ($isCompleted ? $match[$side . '_score'] : '')) ?>">
+                                <?php if ($cricket): ?>
+                                    <label for="<?= $side ?>_wickets">Wickets lost (optional)</label>
+                                    <input id="<?= $side ?>_wickets" name="<?= $side ?>_wickets" type="number" min="0" max="10" step="1" value="<?= sportsHubEscape($submittedAction === 'result' ? sportsHubInput($side . '_wickets') : $match[$side . '_wickets']) ?>">
+                                    <label for="<?= $side ?>_overs">Overs bowled (optional)</label>
+                                    <input id="<?= $side ?>_overs" name="<?= $side ?>_overs" type="text" inputmode="decimal" maxlength="5" pattern="[0-9]{1,3}([.][0-5])?" value="<?= sportsHubEscape($submittedAction === 'result' ? sportsHubInput($side . '_overs') : sportsHubOversText($match[$side . '_balls'])) ?>">
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
 
                     <button
                         type="submit"
@@ -725,7 +751,7 @@ include __DIR__ . '/../includes/header.php';
             <?php else: ?>
 
                 <div class="match-edit-notice">
-                    <?php if ($isScheduled): ?>
+                    <?php if ($isScheduled || $isCompleted): ?>
                         Results can be entered on or after
                         the scheduled match date.
                     <?php else: ?>
@@ -735,6 +761,9 @@ include __DIR__ . '/../includes/header.php';
                 </div>
 
             <?php endif; ?>
+            <?php endif; ?>
+            </div>
+            </div>
 
         <?php endif; ?>
 

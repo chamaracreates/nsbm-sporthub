@@ -111,7 +111,13 @@ CREATE TABLE `matches` (
   `venue` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `match_status` varchar(100) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'scheduled',
   `home_score` int NOT NULL DEFAULT '0',
-  `away_score` int NOT NULL DEFAULT '0'
+  `away_score` int NOT NULL DEFAULT '0',
+  `description` varchar(255) DEFAULT NULL,
+  `image_path` varchar(255) DEFAULT NULL,
+  `home_wickets` tinyint unsigned DEFAULT NULL,
+  `away_wickets` tinyint unsigned DEFAULT NULL,
+  `home_balls` smallint unsigned DEFAULT NULL,
+  `away_balls` smallint unsigned DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -243,7 +249,8 @@ CREATE TABLE `tournaments` (
   `organizer_name` varchar(180) DEFAULT NULL,
   `source_url` varchar(600) DEFAULT NULL,
   `event_year` smallint unsigned DEFAULT NULL,
-  `is_historical` tinyint(1) NOT NULL DEFAULT 0
+  `is_historical` tinyint(1) NOT NULL DEFAULT 0,
+  `image_path` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------

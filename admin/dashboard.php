@@ -9,6 +9,7 @@ if (empty($_SESSION['logout_csrf']) || !is_string($_SESSION['logout_csrf'])) {
 
 
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/helpers.php';
 
 $pdo = db();
 
@@ -124,6 +125,7 @@ $recentActivities = $pdo->query(
 
     <title>Admin Dashboard | NSBM SportsHub</title>
 
+    <script src="/assets/js/site-interactions.js"></script>
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/admin.css">
 
@@ -132,63 +134,7 @@ $recentActivities = $pdo->query(
 <body>
     <div class="admin-layout">
 
-        <!--sidebar-->
-        <aside class="sidebar">
-
-            <div class="sidebar-brand">
-
-                <a class="admin-site-brand-link" href="/index.php" title="View website">NSBM SportsHub</a>
-                <span>ADMINISTRATION</span>
-            </div>
-
-            <nav class="sidebar-nav">
-                <a href="dashboard.php" class="nav-link active">
-                    Dashboard
-                </a>
-
-                <a href="/admin/manage.php" class="nav-link">
-                    Manage Content
-                </a>
-
-                <a href="../clubs/admin/members.php" class="nav-link">
-                    Club Memberships
-                </a>
-
-                <a href="../clubs/" class="nav-link">
-                    Sports Clubs
-                </a>
-
-                <a href="../training/" class="nav-link">
-                    Training Sessions
-                </a>
-
-                <a href="../tournaments/" class="nav-link">
-                    Tournaments
-                </a>
-
-                <a href="../matches/" class="nav-link">
-                    Matches
-                </a>
-
-                <a href="../bookings/" class="nav-link">
-                    Facilities & Bookings
-                </a>
-
-                <a href="../reports/" class="nav-link">
-                    Reports & Analytics
-                </a>
-
-            </nav>
-            <div class="sidebar-account-section">
-                <form action="/logout.php" method="post">
-                    <input type="hidden" name="csrf_token"
-                           value="<?= htmlspecialchars($_SESSION['logout_csrf'], ENT_QUOTES, 'UTF-8') ?>">
-                    <button type="submit">Log out</button>
-                </form>
-            </div>
-
-
-        </aside>
+        <?php sportsHubAdminSidebar('dashboard'); ?>
 
         <!--Main Content-->
         <main class="main-content">

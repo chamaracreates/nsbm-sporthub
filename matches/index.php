@@ -63,6 +63,7 @@ try {
                 venue,
                 match_status,
                 home_score,
+                description, image_path, home_wickets, away_wickets, home_balls, away_balls,
                 away_score
             FROM matches
             $condition
@@ -187,7 +188,7 @@ include __DIR__ . '/../includes/header.php';
                     $status = strtolower(trim((string) ($match['match_status'] ?? '')));
                     $isCompleted = in_array($status, ['completed', 'finished'], true);
                     $matchSport = (string) ($match['sport'] ?? 'Sports');
-                    $matchPhoto = $matchSportPhotos[$matchSport] ?? '';
+                    $matchPhoto = sportsHubCustomCover($match['image_path']) ?: ($matchSportPhotos[$matchSport] ?? '');
                     $matchHref = '/matches/view.php?id=' . (int) $match['m_id'];
                     ?>
                     <article class="match-card">
@@ -204,7 +205,7 @@ include __DIR__ . '/../includes/header.php';
                             <div class="match-card-teams">
                                 <span><?= sportsHubEscape($match['home_name']) ?></span>
                                 <?php if ($isCompleted): ?>
-                                    <strong><?= (int) $match['home_score'] ?>–<?= (int) $match['away_score'] ?>
+                                    <strong><?= sportsHubEscape(sportsHubMatchScore($match, 'home')) ?>–<?= sportsHubEscape(sportsHubMatchScore($match, 'away')) ?>
                                         <?php if (strcasecmp($matchSport, 'Volleyball') === 0): ?><small class="match-score-unit">sets</small><?php endif; ?>
                                     </strong>
                                 <?php else: ?>

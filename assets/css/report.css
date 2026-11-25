@@ -1,45 +1,53 @@
-/* Administrative reporting */
-/* Reports follows the same design foundation as admin.css and style.css. */
-.report-section { margin: 0 0 32px; padding: clamp(22px,3vw,30px); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--ui-radius-card); }
-.report-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin: 0 0 22px; }
-.report-heading h2 { margin: 0 0 7px; color: var(--color-text); font-size: clamp(19px,2.3vw,24px); font-weight: 700; letter-spacing: -.4px; }
-.report-heading p { margin: 0; color: var(--color-muted); font-size: 14px; line-height: 1.55; }
-.report-table-wrapper { width: 100%; overflow-x: auto; border: 1px solid var(--color-border); border-radius: 16px; background: var(--color-surface); -webkit-overflow-scrolling: touch; }
+.report-section {
+    min-width: 0;
+    margin: 0 0 28px;
+    padding: clamp(20px, 2.8vw, 30px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--ui-radius-card);
+    background: var(--color-surface);
+}
+.report-heading { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 14px; margin: 0 0 20px; }
+.report-heading h2 { margin: 0 0 7px; color: var(--color-text); font-size: clamp(20px, 2.3vw, 24px); font-weight: 720; letter-spacing: -.025em; }
+.report-heading p, .report-note, .report-downloads p { margin: 0; color: var(--color-muted); font-size: 13px; line-height: 1.65; }
+.admin-layout .report-metric-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 175px), 1fr)); }
+.report-section .statistics-grid { margin-bottom: 32px; }
+.report-table-wrapper { width: 100%; max-width: 100%; overflow-x: auto; border: 1px solid var(--color-border); border-radius: var(--ui-radius-control); background: var(--color-surface); -webkit-overflow-scrolling: touch; }
 .report-table { width: 100%; min-width: 720px; border-collapse: collapse; text-align: left; }
-.report-table th { padding: 15px 17px; background: var(--color-surface-alt); color: var(--color-muted); font-size: 12px; font-weight: 700; letter-spacing: .4px; white-space: nowrap; }
-.report-table td { padding: 16px 17px; border-top: 1px solid var(--color-border); color: var(--color-text); font-size: 14px; line-height: 1.5; }
-.report-table tbody tr:hover { background: rgba(255,255,255,.028); }
-.empty-report { padding: 36px 20px !important; color: var(--color-muted) !important; text-align: center; }
-.report-note { margin: 17px 0 0; color: var(--color-muted); font-size: 12px; line-height: 1.65; }
-.report-filters { margin-top: 0; }
-.filter-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; }
+.report-table th { padding: 15px 17px; background: var(--color-surface-alt); color: var(--color-muted); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.report-table td { padding: 16px 17px; border-top: 1px solid var(--color-border); color: var(--color-text); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.report-table tbody tr:hover { background: var(--color-surface-alt); }
+.report-table td.empty-report { padding: 32px 20px; color: var(--color-muted); text-align: center; }
+.report-note { margin-top: 16px; }
+.filter-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; }
 .filter-field { display: flex; flex-direction: column; min-width: 0; gap: 8px; }
 .filter-field label { color: var(--color-text); font-size: 13px; font-weight: 650; }
-.filter-field :is(input,select) { width: 100%; min-width: 0; min-height: var(--ui-field-height); padding: 0 14px; border: 1px solid var(--color-border); border-radius: var(--ui-radius-control); background: var(--color-surface-alt); color: var(--color-text); font: inherit; font-size: 14px; color-scheme: dark; transition: border-color var(--ui-transition), box-shadow var(--ui-transition); }
-.filter-field :is(input,select):focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; border-color: var(--color-accent); }
-.filter-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 24px 0 0; }
-.filter-button { display: inline-flex; align-items: center; justify-content: center; min-height: var(--ui-button-height); padding: 0 23px; border: 1px solid transparent; border-radius: var(--ui-radius-pill); background: var(--color-accent); color: #000; font: inherit; font-size: 14px; font-weight: 700; line-height: 1.2; text-decoration: none; cursor: pointer; transition: background-color var(--ui-transition), transform var(--ui-transition), color var(--ui-transition); }
-.filter-button:hover { background: var(--color-accent-hover); color: #000; transform: translateY(-1px); }
+.filter-field :is(input,select) { width: 100%; min-width: 0; padding: 0 14px; font-size: 14px; }
+.filter-field select { padding-right: 40px; }
+.filter-field :is(input,select):focus-visible { outline: 2px solid var(--color-accent-text); outline-offset: 2px; }
+.filter-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+.filter-button { display: inline-flex; align-items: center; justify-content: center; min-height: var(--ui-button-height); padding: 10px 20px; border: 1px solid transparent; border-radius: var(--ui-radius-pill); background: var(--color-accent); color: #000; font: inherit; font-size: 14px; font-weight: 700; line-height: 1.3; text-decoration: none; cursor: pointer; transition: background-color var(--ui-transition), border-color var(--ui-transition), color var(--ui-transition); }
+.filter-button:hover { background: var(--color-accent-hover); color: #000; }
+.filter-button:focus-visible { outline: 2px solid var(--color-accent-text); outline-offset: 3px; }
 .filter-reset-button, .report-export-button { border-color: var(--color-border); background: var(--color-surface-alt); color: var(--color-text); }
-.filter-reset-button:hover, .report-export-button:hover { background: #292d30; color: var(--color-text); }
-.report-export-links { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 16px; }
-.report-export-button { gap: 8px; }
+.filter-reset-button:hover, .report-export-button:hover { border-color: var(--color-accent-text); background: var(--color-surface); color: var(--color-text); }
+.report-downloads { display: grid; gap: 9px; margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--color-border); }
+.report-downloads h3 { margin: 0; color: var(--color-text); font-size: 17px; font-weight: 700; }
+.report-export-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 245px), 1fr)); gap: 10px; margin-top: 7px; }
+.report-export-button { justify-content: flex-start; gap: 8px; min-width: 0; padding-inline: 14px; font-size: 13px; }
 .report-export-button::before {
     content: "";
     flex: 0 0 16px;
     width: 16px;
     height: 16px;
-    background: var(--color-accent);
+    background: var(--color-accent-text);
     mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3v12m-5-5 5 5 5-5M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3'/%3E%3C/svg%3E") center / contain no-repeat;
 }
-.filter-error { margin: 0 0 16px; color: #ffb6b6; font-size: 14px; }
-@media (max-width: 1080px) { .filter-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
-@media (max-width: 600px) {
-    .report-section { padding: 20px 17px; }
-    .report-heading { flex-direction: column; }
-    .filter-grid { grid-template-columns: minmax(0,1fr); }
-    .filter-actions { align-items: stretch; }
-    .filter-button { flex: 1 1 100%; }
+.filter-error { margin: 0 0 16px; padding: 12px 16px; border-radius: var(--ui-radius-control); background: var(--light-red-surface, #271618); color: var(--light-red, #ffb0b0); font-size: 14px; }
+@media (max-width: 1150px) { .filter-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+@media (max-width: 560px) {
+    .report-section { padding: 18px; }
+    .filter-grid { grid-template-columns: minmax(0,1fr); gap: 14px; }
+    .filter-actions .filter-button { flex: 1 1 120px; }
     .report-table { min-width: 660px; }
 }
-@media (prefers-reduced-motion: reduce) { .filter-button:hover { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .filter-button { transition: none; } }

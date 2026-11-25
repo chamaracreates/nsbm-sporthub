@@ -12,11 +12,6 @@ if (!in_array($method, ['GET','POST'], true)) {
 }
 
 
-function newsLength(string $value): int {
-    if (function_exists('mb_strlen')) return mb_strlen($value, 'UTF-8');
-    $len = preg_match_all('/./us', $value);
-    return $len !== false ? $len : strlen($value);
-}
 /** Never render or delete image paths outside our own upload directory. */
 
 function newsRemoveImage(mixed $path): void {
@@ -95,8 +90,8 @@ try {
                 ];
                 $clubId = filter_var($form['club_id'], FILTER_VALIDATE_INT, ['options'=>['min_range'=>1]]);
                 if (!is_int($clubId)) $errors[] = 'Choose an active sports club.';
-                if (newsLength($form['title']) < 3 || newsLength($form['title']) > 160) $errors[] = 'Headline must be 3–160 characters.';
-                if (newsLength($form['summary']) < 10 || newsLength($form['summary']) > 3000) $errors[] = 'Story must be 10–3000 characters.';
+                if (sportsHubLength($form['title']) < 3 || sportsHubLength($form['title']) > 160) $errors[] = 'Headline must be 3–160 characters.';
+                if (sportsHubLength($form['summary']) < 10 || sportsHubLength($form['summary']) > 3000) $errors[] = 'Story must be 10–3000 characters.';
                 if (!in_array($form['status'], ['draft','published'], true)) $errors[] = 'Choose a valid status.';
                 $existing = null;
                 if ($id) {

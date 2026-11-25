@@ -30,17 +30,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') {
 }
 
 
-/* Format dates for the tournament cards. */
-
-
 /* Determine the current staff access level. */
 $isAdmin = $userRole === 'admin';
-
-/* Use the project's Sri Lankan timezone. */
-$today = (new DateTimeImmutable(
-    'now',
-    new DateTimeZone('Asia/Colombo')
-))->format('Y-m-d');
 
 /* Initialize data containers. */
 $clubs = [];
@@ -110,9 +101,6 @@ try {
      * - Number of participating teams
      * - Number of tournament registrations
      * - Number of associated match fixtures
-     *
-     * These counts determine whether a tournament
-     * is eligible for editing.
      */
     $tournamentStatement = $pdo->prepare(
         "SELECT
@@ -180,7 +168,7 @@ require __DIR__ . '/../includes/header.php';
 
 ?>
 
-<main class="tournaments-page sports-hub-workflow">
+<main class="tournaments-page sports-hub-workflow tournament-management-page">
 
     <section class="tournaments-container section-container">
 
@@ -299,39 +287,6 @@ require __DIR__ . '/../includes/header.php';
 
                     <?php foreach ($tournaments as $tournament): ?>
 
-                        <?php
-                        /*
-                         * Tournament editing is permitted only if:
-                         *
-                         * 1. Status is upcoming
-                         * 2. Start date is in the future
-                         * 3. No teams are associated
-                         * 4. No registrations exist
-                         * 5. No match fixtures exist
-                         *
-                         * The edit.php page independently
-                         * enforces these restrictions.
-                         */
-                        $canEdit =
-                            strtolower(
-                                trim(
-                                    (string) $tournament['status']
-                                )
-                            ) === 'upcoming'
-
-                            && (string) $tournament['start_date']
-                            > $today
-
-                            && (int) $tournament['team_count']
-                            === 0
-
-                            && (int) $tournament['registration_count']
-                            === 0
-
-                            && (int) $tournament['fixture_count']
-                            === 0;
-                        ?>
-
                         <article class="tournament-card">
 
                             <!-- Tournament metadata -->
@@ -384,9 +339,7 @@ require __DIR__ . '/../includes/header.php';
                                     <strong>Venue</strong>
 
                                     <span>
-                                        <?= sportsHubEscape(
-                                            $tournament['venue']
-                                        ) ?>
+                                        <?= sportsHubEscape(trim((string) $tournament['venue']) ?: 'Not specified') ?>
                                     </span>
                                 </p>
 
@@ -422,18 +375,15 @@ require __DIR__ . '/../includes/header.php';
                                 <a
                                     href="/tournaments/view.php?id=<?= (int) $tournament['t_id'] ?>"
                                     class="button button-outline">
-                                    View Tournament
+                                    View details
                                 </a>
 
-                                <?php if ($canEdit): ?>
 
-                                    <a
+                                <a
                                         href="/tournaments/edit.php?id=<?= (int) $tournament['t_id'] ?>"
                                         class="button button-accent">
-                                        Edit Tournament
+                                        Edit tournament
                                     </a>
-
-                                <?php endif; ?>
 
                                 <?php if ($userRole === 'admin'): ?>
                                     <a

@@ -1,3 +1,51 @@
+(() => {
+    'use strict';
+    const root = document.documentElement;
+    const key = 'sportshub-theme';
+    const buttons = [];
+    let theme = 'dark';
+    let hero, darkHeroSource;
+    const icons = {
+        light: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/>',
+        dark: '<path d="M20.8 14.1A9 9 0 0 1 9.9 3.2 9 9 0 1 0 20.8 14.1Z"/>'
+    };
+    function apply(value, save = false) {
+        theme = value === 'light' ? 'light' : 'dark';
+        root.dataset.theme = theme;
+        if (hero) {
+            const source = theme === 'light' ? hero.dataset.lightSrc : darkHeroSource;
+            if (hero.getAttribute('src') !== source) hero.setAttribute('src', source);
+        }
+        if (save) { try { localStorage.setItem(key, theme); } catch {} }
+        const next = theme === 'dark' ? 'light' : 'dark';
+        const label = `Switch to ${next} mode`;
+        for (const button of buttons) {
+            button.setAttribute('aria-label', label);
+            button.title = label;
+            button.querySelector('svg').innerHTML = icons[next];
+            button.querySelector('span').textContent = `${next === 'light' ? 'Light' : 'Dark'} mode`;
+        }
+    }
+    try { apply(localStorage.getItem(key)); } catch { apply('dark'); }
+    document.addEventListener('DOMContentLoaded', () => {
+        hero = document.querySelector('.hero-section-visual img[data-light-src]');
+        if (hero) darkHeroSource = hero.getAttribute('src');
+        for (const selector of ['.account-nav', '.mobile-menu-panel']) {
+            const target = document.querySelector(selector);
+            if (!target) continue;
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'theme-toggle';
+            button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg><span></span>';
+            button.addEventListener('click', () => apply(theme === 'dark' ? 'light' : 'dark', true));
+            target.prepend(button);
+            buttons.push(button);
+        }
+        apply(theme);
+    });
+    window.addEventListener('storage', event => { if (event.key === key || event.key === null) apply(event.newValue); });
+})();
+
 /* Header search dialog, administration actions and news image preview. */
 (() => {
     'use strict';
@@ -149,7 +197,7 @@
 })();
 
 /* Measure the homepage header and restore its background during scrolling. */
-(() => {
+document.addEventListener('DOMContentLoaded', () => {
     'use strict';
     const homepage = document.querySelector('main.homepage');
     const header = homepage?.previousElementSibling;
@@ -171,4 +219,4 @@
         const observer = new ResizeObserver(updateHeight);
         observer.observe(header);
     }
-})();
+});
