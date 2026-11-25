@@ -106,9 +106,9 @@ if ($action === 'update') {
             $errorMessage = 'Please complete all required fields.';
 
         } elseif (
-            mb_strlen($name, 'UTF-8') > 150 ||
-            mb_strlen($sport, 'UTF-8') > 100 ||
-            mb_strlen($description, 'UTF-8') > 255 ||
+            sportsHubLength($name) > 150 ||
+            sportsHubLength($sport) > 100 ||
+            sportsHubLength($description) > 255 ||
             strlen($email) > 255
         ) {
             $errorMessage = 'One or more fields are too long.';
@@ -246,9 +246,9 @@ if ($action === 'create') {
             $errorMessage = 'Please complete all required fields.';
 
         } elseif (
-            mb_strlen($name, 'UTF-8') > 150 ||
-            mb_strlen($sport, 'UTF-8') > 100 ||
-            mb_strlen($description, 'UTF-8') > 255 ||
+            sportsHubLength($name) > 150 ||
+            sportsHubLength($sport) > 100 ||
+            sportsHubLength($description) > 255 ||
             strlen($email) > 255
         ) {
             $errorMessage = 'One or more fields are too long.';

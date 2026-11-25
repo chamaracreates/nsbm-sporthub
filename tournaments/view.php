@@ -41,6 +41,7 @@ if (!is_int($tournamentId)) {
                 t.t_name,
                 t.sport,
                 t.des,
+                t.image_path,
                 t.reg_open_at,
                 t.reg_end_at,
                 t.start_date,
@@ -121,9 +122,6 @@ require __DIR__ . '/../includes/header.php';
         $rawDescription = trim((string) ($tournament['des'] ?? ''));
         // Omit score-availability notes from the event summary.
         $overview = trim(preg_replace('/\s*(Numerical final scores are not stated|Exact final scores are not stated)\.?/iu', '', $rawDescription) ?? $rawDescription);
-        if (stripos((string) $tournament['t_name'], 'Challenge Trophy Basketball 2026') !== false) {
-            $overview = 'NSBM alumni basketball teams secured victories against the university men’s and women’s teams at the 2026 Vice Chancellor’s Challenge Trophy.';
-        }
         if ($overview === '') {
             $overview = 'Discover the tournament schedule, participating teams and competition details.';
         }

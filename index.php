@@ -110,7 +110,8 @@ include __DIR__ . '/includes/header.php';
         <div class="hero-section-visual">
             <img
                 src="/assets/images/herobanner.png"
-                alt="basket ball"
+                data-light-src="/assets/images/herobannerlight.png"
+                alt=""
                 width="1450"
                 height="640"
                 fetchpriority="high">

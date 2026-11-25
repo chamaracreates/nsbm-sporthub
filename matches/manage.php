@@ -2,11 +2,6 @@
 
 declare(strict_types=1);
 
-/*
- * NSBM SportsHub
- * Match management operations.
- */
-
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/helpers.php';
 
@@ -27,8 +22,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') {
 }
 
 
-// Validate the selected filter.
-$allowedFilters = ['all', 'scheduled', 'completed'];
+$today = (new DateTimeImmutable('now', new DateTimeZone('Asia/Colombo')))->format('Y-m-d');
+$allowedFilters = ['all', 'scheduled', 'awaiting', 'completed'];
 $filter = $_GET['filter'] ?? 'all';
 
 if (
@@ -45,6 +40,7 @@ $loadError = false;
 $counts = [
     'all' => 0,
     'scheduled' => 0,
+    'awaiting' => 0,
     'completed' => 0
 ];
 
@@ -88,8 +84,8 @@ try {
     $statement = $pdo->prepare(
         "SELECT
             m.m_id, m.title, m.date, m.venue, m.match_status,
-            m.home_score, m.away_score,
-            t.t_id,
+            m.home_score, m.away_score, m.home_wickets, m.away_wickets, m.home_balls, m.away_balls,
+            t.t_id, t.status AS tournament_status,
             COALESCE(t.t_name, 'Standalone match') AS t_name,
             m.sport,
             m.home_name AS home_team,
@@ -123,39 +119,24 @@ try {
         PDO::FETCH_ASSOC
     );
 
-    // Count and filter the authorized records.
     foreach ($allMatches as $match) {
-        $status = strtolower(
-            trim((string) $match['match_status'])
-        );
+        $status = strtolower(trim((string) $match['match_status']));
+        $scheduled = in_array($status, ['scheduled', 'upcoming'], true);
+        $completed = in_array($status, ['completed', 'finished'], true);
+        $due = (string) $match['date'] <= $today;
+        $category = $completed ? 'completed' : ($scheduled ? ($due ? 'awaiting' : 'scheduled') : null);
 
-        $isScheduled = in_array(
-            $status,
-            ['scheduled', 'upcoming'],
-            true
-        );
-
-        $isCompleted = in_array(
-            $status,
-            ['completed', 'finished'],
-            true
-        );
+        $match['category'] = $category;
+        $match['can_record_result'] = ($scheduled || $completed) && $due;
+        $match['can_edit_fixture'] = $scheduled && ($match['t_id'] === null || in_array(
+            strtolower(trim((string) $match['tournament_status'])), ['upcoming', 'ongoing'], true
+        ));
 
         $counts['all']++;
-
-        if ($isScheduled) {
-            $counts['scheduled']++;
+        if ($category !== null) {
+            $counts[$category]++;
         }
-
-        if ($isCompleted) {
-            $counts['completed']++;
-        }
-
-        if (
-            $filter === 'all' ||
-            ($filter === 'scheduled' && $isScheduled) ||
-            ($filter === 'completed' && $isCompleted)
-        ) {
+        if ($filter === 'all' || $filter === $category) {
             $matches[] = $match;
         }
     }
@@ -174,230 +155,88 @@ include __DIR__ . '/../includes/header.php';
 
 ?>
 
-<main class="matches-page sports-hub-workflow">
-
+<main class="matches-page sports-hub-workflow match-management-page">
     <section class="section-container matches-section">
-
         <div class="matches-header">
-
-            <p class="section-label">
-                NSBM SPORTSHUB / MATCH MANAGEMENT
-            </p>
-
             <h1>Manage matches.</h1>
-
-            <p class="section-description">
-                Schedule independent and tournament fixtures, review matches and record results.
-            </p>
-
+            <p class="section-description">Schedule fixtures, record scores and review match results.</p>
         </div>
 
-        <div class="match-management-actions">
-
-            <a
-                href="/matches/create.php"
-                class="button button-accent">
-                Create match fixture
-            </a>
-
-            <a
-                href="/matches/index.php"
-                class="button button-outline">
-                View public fixtures
-            </a>
-
-            <a
-                href="/matches/standings.php"
-                class="button button-outline">
-                View standings
-            </a>
-
+        <div class="match-management-toolbar">
+            <?php if (!$loadError): ?>
+                <nav class="matches-tabs" aria-label="Match management filters">
+                    <?php foreach (['all' => 'All matches', 'scheduled' => 'Scheduled', 'awaiting' => 'Awaiting results', 'completed' => 'Completed'] as $key => $label): ?>
+                        <a href="?filter=<?= sportsHubEscape($key) ?>"
+                           class="<?= $filter === $key ? 'active' : '' ?>"
+                           <?= $filter === $key ? 'aria-current="page"' : '' ?>>
+                            <?= sportsHubEscape($label) ?> <span class="match-filter-count"><?= $counts[$key] ?></span>
+                        </a>
+                    <?php endforeach; ?>
+                </nav>
+            <?php endif; ?>
+            <a href="/matches/create.php" class="button button-accent">Create match fixture</a>
         </div>
 
         <?php if ($loadError): ?>
-
-            <div class="matches-empty">
-
+            <div class="matches-empty" role="alert">
                 <h2>Unable to load matches.</h2>
-
-                <p>
-                    Match management information is
-                    temporarily unavailable.
-                </p>
-
+                <p>Match management information is temporarily unavailable.</p>
             </div>
-
+        <?php elseif ($matches === []): ?>
+            <div class="matches-empty">
+                <h2>No matches found.</h2>
+                <p><?= $filter === 'awaiting' ? 'There are no fixtures awaiting results.' : 'No fixtures match this filter in your authorized clubs.' ?></p>
+            </div>
         <?php else: ?>
-
-            <!-- Match filters and fixture records. -->
-            <nav
-                class="matches-tabs"
-                aria-label="Match management filters">
-
-                <a
-                    href="?filter=all"
-                    class="<?= $filter === 'all' ? 'active' : '' ?>"
-                    <?= $filter === 'all' ? 'aria-current="page"' : '' ?>>
-                    All matches
-                </a>
-
-                <a
-                    href="?filter=scheduled"
-                    class="<?= $filter === 'scheduled' ? 'active' : '' ?>"
-                    <?= $filter === 'scheduled' ? 'aria-current="page"' : '' ?>>
-                    Scheduled
-                </a>
-
-                <a
-                    href="?filter=completed"
-                    class="<?= $filter === 'completed' ? 'active' : '' ?>"
-                    <?= $filter === 'completed' ? 'aria-current="page"' : '' ?>>
-                    Completed
-                </a>
-
-            </nav>
-
-            <?php if ($matches === []): ?>
-
-                <div class="matches-empty">
-
-                    <h2>No matches found.</h2>
-
-                    <p>
-                        <?php if ($userRole === 'admin'): ?>
-                            No matches match this filter yet. Schedule a standalone
-                            or tournament fixture to get started.
-                        <?php else: ?>
-                            No matches match this filter in your assigned clubs.
-                        <?php endif; ?>
-                    </p>
-
-                    <a
-                        href="/matches/create.php"
-                        class="button button-accent">
-                        Create a fixture
-                    </a>
-
-                </div>
-
-            <?php else: ?>
-
-                <div class="matches-list">
-
-                    <?php foreach ($matches as $match): ?>
-
-                        <?php
-                        $status = strtolower(
-                            trim((string) $match['match_status'])
-                        );
-
-                        $completed = in_array(
-                            $status,
-                            ['completed', 'finished'],
-                            true
-                        );
-
-                        $scoreLabel = $completed
-                            ? (int) $match['home_score']
-                            . ' - ' .
-                            (int) $match['away_score']
-                            : 'VS';
-                        ?>
-
-                        <article class="match-card">
-
+            <div class="matches-list">
+                <?php foreach ($matches as $match): ?>
+                    <?php
+                    $completed = $match['category'] === 'completed';
+                    $awaiting = $match['category'] === 'awaiting';
+                    $statusLabel = match ($match['category']) {
+                        'completed' => 'Completed',
+                        'awaiting' => 'Awaiting result',
+                        'scheduled' => 'Scheduled',
+                        default => ucfirst(trim((string) $match['match_status']))
+                    };
+                    $matchId = (int) $match['m_id'];
+                    ?>
+                    <article class="match-card">
+                        <div class="match-card-inner">
                             <div class="match-card-meta">
-
-                                <span>
-                                    <?= sportsHubEscape($match['sport']) ?>
-                                </span>
-
-                                <span>
-                                    <?= sportsHubEscape(
-                                        ucfirst($status)
-                                    ) ?>
-                                </span>
-
+                                <span><?= sportsHubEscape($match['sport']) ?></span>
+                                <span class="match-management-status<?= $awaiting ? ' is-awaiting' : '' ?>"><?= sportsHubEscape($statusLabel) ?></span>
                             </div>
-
-                            <h2>
-                                <?= sportsHubEscape($match['title']) ?>
-                            </h2>
-
-                            <p class="match-management-tournament">
-                                <?= sportsHubEscape($match['t_name']) ?>
-                            </p>
-
+                            <h2><a href="/matches/view.php?id=<?= $matchId ?>"><?= sportsHubEscape($match['title']) ?></a></h2>
+                            <p class="match-management-tournament"><?= sportsHubEscape($match['t_name']) ?></p>
                             <div class="match-card-teams">
-
-                                <span>
-                                    <?= sportsHubEscape(
-                                        $match['home_team']
-                                    ) ?>
-                                </span>
-
-                                <strong>
-                                    <?= sportsHubEscape($scoreLabel) ?>
-                                </strong>
-
-                                <span>
-                                    <?= sportsHubEscape(
-                                        $match['away_team']
-                                    ) ?>
-                                </span>
-
+                                <span><?= sportsHubEscape($match['home_team']) ?></span>
+                                <strong><?= $completed ? sportsHubEscape(sportsHubMatchScore($match, 'home') . ' – ' . sportsHubMatchScore($match, 'away')) : 'VS' ?><?php if ($completed && strcasecmp((string) $match['sport'], 'Volleyball') === 0): ?><small class="match-score-unit">sets</small><?php endif; ?></strong>
+                                <span><?= sportsHubEscape($match['away_team']) ?></span>
                             </div>
-
                             <div class="match-card-details">
-
-                                <span>
-                                    <?= sportsHubEscape(
-                                        sportsHubDisplayDate($match['date'])
-                                    ) ?>
-                                </span>
-
-                                <span>
-                                    <?= sportsHubEscape($match['venue']) ?>
-                                </span>
-
+                                <span><?= sportsHubEscape(sportsHubDisplayDate($match['date'])) ?></span>
+                                <span><?= sportsHubEscape($match['venue']) ?></span>
                             </div>
-
                             <div class="match-management-card-actions">
-
-                                <a
-                                    href="/matches/view.php?id=<?= (int) $match['m_id'] ?>"
-                                    class="button button-outline">
-                                    View details
-                                </a>
-
-                                <a
-                                    href="/matches/edit.php?id=<?= (int) $match['m_id'] ?>"
-                                    class="button button-accent">
-                                    Manage fixture
-                                </a>
-
-                                <?php if ($userRole === 'admin'): ?>
-                                    <a
-                                        href="/admin/delete.php?type=match&amp;id=<?= (int) $match['m_id'] ?>"
-                                        class="button button-danger-outline">
-                                        Delete fixture
-                                    </a>
+                                <?php if ($match['can_record_result']): ?>
+                                    <a href="/matches/edit.php?id=<?= $matchId ?>&amp;mode=result#match-result" class="button button-accent"><?= $completed ? 'Edit result' : 'Record result' ?></a>
                                 <?php endif; ?>
-
+                                <?php if ($match['can_edit_fixture']): ?>
+                                    <a href="/matches/edit.php?id=<?= $matchId ?>&amp;mode=fixture" class="button <?= $awaiting ? 'button-outline' : 'button-accent' ?>">Edit fixture</a>
+                                <?php endif; ?>
+                                <a href="/matches/edit.php?id=<?= $matchId ?>&amp;mode=details" class="button button-outline">Edit details</a>
+                                <a href="/matches/view.php?id=<?= $matchId ?>" class="button button-outline">View details</a>
+                                <?php if ($userRole === 'admin'): ?>
+                                    <a href="/admin/delete.php?type=match&amp;id=<?= $matchId ?>" class="button button-danger-outline">Delete fixture</a>
+                                <?php endif; ?>
                             </div>
-
-                        </article>
-
-                    <?php endforeach; ?>
-
-                </div>
-
-            <?php endif; ?>
-
+                        </div>
+                    </article>
+                <?php endforeach; ?>
+            </div>
         <?php endif; ?>
-
     </section>
-
 </main>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>

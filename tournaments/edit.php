@@ -24,7 +24,7 @@ if (!in_array($method, ['GET', 'POST'], true)) {
 }
 
 
-/* Load a tournament only within the user's club scope. */
+
 function tournamentEditFind(
     PDO $pdo,
     int $id,
@@ -58,19 +58,21 @@ function tournamentEditFind(
             t.t_name,
             t.sport,
             t.des,
+            t.image_path,
+            t.is_historical,
             t.reg_open_at,
             t.reg_end_at,
             t.start_date,
             t.end_date,
             t.venue,
             t.status,
-            sc.club_name
+            COALESCE(NULLIF(t.organizer_name, ''), sc.club_name, 'Organizer not published') AS club_name
         FROM tournaments AS t
-        INNER JOIN sports_clubs AS sc
+        LEFT JOIN sports_clubs AS sc
             ON sc.club_id = t.club_id
         WHERE t.t_id = :tournament_id
-          AND sc.status = 'active'
-          $scope
+          AND (sc.status = 'active' $scope
+              " . ($role === 'admin' ? "OR t.is_historical = 1" : "") . ")
         LIMIT 1
     ";
 
@@ -178,6 +180,7 @@ $pdo = null;
 $form = [
     't_name' => '',
     'des' => '',
+    'image_path' => '',
     'reg_open_at' => '',
     'reg_end_at' => '',
     'start_date' => '',
@@ -231,166 +234,67 @@ if (!is_int($tournamentId)) {
     }
 }
 
-/* Process an authorized modification. */
 if (
     $method === 'POST' &&
     $tournament !== null &&
     $pageError === null
 ) {
-    if ($isLocked) {
-        http_response_code(409);
-        $errors[] = 'This tournament can no longer be edited.';
-    } else {
-        foreach (array_keys($form) as $field) {
+    $editSchedule = !$isLocked && sportsHubInput('edit_schedule') === '1';
+    foreach (['t_name', 'des', 'image_path'] as $field) {
+        $form[$field] = sportsHubInput($field);
+    }
+    if (!hash_equals($csrfToken, sportsHubInput('csrf_token'))) {
+        $errors[] = 'Invalid form session. Refresh and try again.';
+    }
+    if (sportsHubLength($form['t_name']) < 1 || sportsHubLength($form['t_name']) > 100 || sportsHubLength($form['des']) > 255) {
+        $errors[] = 'Enter a tournament name of up to 100 characters and a description of up to 255 characters.';
+    }
+    if (!array_key_exists($form['image_path'], sportsHubCoverLibrary())) {
+        $errors[] = 'Choose a cover from the image library.';
+    }
+    if (sportsHubInput('edit_schedule') === '1' && $isLocked) {
+        $errors[] = 'The schedule is locked. Reload the page before editing.';
+    }
+    if ($editSchedule) {
+        foreach (['venue', 'reg_open_at', 'reg_end_at', 'start_date', 'end_date'] as $field) {
             $form[$field] = sportsHubInput($field);
         }
-
-        $submittedToken = $_POST['csrf_token'] ?? '';
-
-        if (
-            !is_string($submittedToken) ||
-            !hash_equals($csrfToken, $submittedToken)
-        ) {
-            $errors[] = 'Invalid form session. Refresh and try again.';
+        if (sportsHubLength($form['venue']) < 1 || sportsHubLength($form['venue']) > 100) {
+            $errors[] = 'Venue must contain 1–100 characters.';
         }
-
-        $limits = [
-            't_name' => ['Tournament name', 100],
-            'des' => ['Description', 255],
-            'venue' => ['Venue', 100]
-        ];
-
-        foreach ($limits as $key => [$label, $maximum]) {
-            $length = sportsHubLength($form[$key]);
-
-            if ($length === 0 || $length > $maximum) {
-                $errors[] =
-                    "$label must contain 1–$maximum characters.";
-            }
+        foreach (['reg_open_at', 'reg_end_at', 'start_date', 'end_date'] as $field) {
+            if (!sportsHubValidDate($form[$field])) $errors[] = 'Invalid date: ' . str_replace('_', ' ', $field);
         }
-
-        $dateFields = [
-            'reg_open_at',
-            'reg_end_at',
-            'start_date',
-            'end_date'
-        ];
-
-        $datesValid = true;
-
-        foreach ($dateFields as $field) {
-            if (!sportsHubValidDate($form[$field])) {
-                $errors[] = 'Invalid date: ' .
-                    str_replace('_', ' ', $field);
-                $datesValid = false;
-            }
+        if ($form['reg_open_at'] > $form['reg_end_at'] || $form['reg_end_at'] > $form['start_date'] || $form['start_date'] > $form['end_date'] || $form['start_date'] <= $today) {
+            $errors[] = 'Registration and tournament dates must be in order, and the tournament must start after today.';
         }
-
-        if ($datesValid) {
-            if ($form['reg_open_at'] > $form['reg_end_at']) {
-                $errors[] = 'Registration dates are out of order.';
-            }
-
-            if ($form['reg_end_at'] > $form['start_date']) {
-                $errors[] =
-                    'Registration must close by the start date.';
-            }
-
-            if ($form['start_date'] > $form['end_date']) {
-                $errors[] =
-                    'Tournament end date must follow its start date.';
-            }
-
-            if ($form['start_date'] <= $today) {
-                $errors[] =
-                    'The tournament must start after today.';
-            }
-        }
-
-        if (empty($errors)) {
-            try {
-                /*
-                 * Lock the parent tournament row, then
-                 * recheck authorization and dependencies.
-                 * Foreign-key inserts referencing this row
-                 * must wait for the transaction to finish.
-                 */
-                $pdo->beginTransaction();
-
-                $current = tournamentEditFind(
-                    $pdo,
-                    $tournamentId,
-                    $userId,
-                    (string) $userRole,
-                    true
-                );
-
-                if (
-                    $current === null ||
-                    tournamentEditIsLocked(
-                        $pdo,
-                        $current,
-                        $today
-                    )
-                ) {
-                    $pdo->rollBack();
-                    http_response_code(409);
-
-                    $errors[] =
-                        'Tournament permissions or linked records ' .
-                        'have changed. Editing is unavailable.';
-                } else {
-                    $statement = $pdo->prepare(
-                        "UPDATE tournaments
-                         SET
-                            t_name = :t_name,
-                            des = :description,
-                            reg_open_at = :reg_open_at,
-                            reg_end_at = :reg_end_at,
-                            start_date = :start_date,
-                            end_date = :end_date,
-                            venue = :venue
-                         WHERE t_id = :tournament_id"
-                    );
-
-                    $statement->execute([
-                        't_name' => $form['t_name'],
-                        'description' => $form['des'],
-                        'reg_open_at' => $form['reg_open_at'],
-                        'reg_end_at' => $form['reg_end_at'],
-                        'start_date' => $form['start_date'],
-                        'end_date' => $form['end_date'],
-                        'venue' => $form['venue'],
-                        'tournament_id' => $tournamentId
-                    ]);
-
-                    $pdo->commit();
-
-                    $_SESSION['tournament_edit_success'] =
-                        $tournamentId;
-
-                    header(
-                        'Location: /tournaments/edit.php?id=' .
-                            $tournamentId,
-                        true,
-                        303
-                    );
-                    exit;
+    }
+    if ($errors === []) {
+        try {
+            $pdo->beginTransaction();
+            $current = tournamentEditFind($pdo, $tournamentId, $userId, (string) $userRole, true);
+            if ($current === null || ($editSchedule && tournamentEditIsLocked($pdo, $current, $today))) {
+                $pdo->rollBack();
+                http_response_code(409);
+                $errors[] = 'Permissions or linked records changed. Reload the tournament.';
+            } else {
+                $fields = ['t_name' => $form['t_name'], 'des' => $form['des'], 'image_path' => $form['image_path'] ?: null];
+                if ($editSchedule) {
+                    foreach (['venue', 'reg_open_at', 'reg_end_at', 'start_date', 'end_date'] as $field) $fields[$field] = $form[$field];
                 }
-            } catch (Throwable $error) {
-                if ($pdo->inTransaction()) {
-                    $pdo->rollBack();
-                }
-
-                error_log(
-                    'Tournament edit update: ' .
-                        $error->getMessage()
-                );
-
-                http_response_code(500);
-                $errors[] =
-                    'Unable to save your changes. Please try again.';
+                $assignments = implode(', ', array_map(static fn($field) => $field . ' = :' . $field, array_keys($fields)));
+                $statement = $pdo->prepare('UPDATE tournaments SET ' . $assignments . ' WHERE t_id = :tournament_id');
+                $statement->execute($fields + ['tournament_id' => $tournamentId]);
+                $pdo->commit();
+                $_SESSION['tournament_edit_success'] = $tournamentId;
+                header('Location: /tournaments/edit.php?id=' . $tournamentId, true, 303);
+                exit;
             }
+        } catch (Throwable $error) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            error_log('Tournament edit update: ' . $error->getMessage());
+            http_response_code(500);
+            $errors[] = 'Unable to save your changes. Please try again.';
         }
     }
 }
@@ -447,24 +351,8 @@ require __DIR__ . '/../includes/header.php';
             <?php endif; ?>
 
             <?php if ($isLocked): ?>
-
-                <div class="tournaments-notice">
-                    <h2>Editing unavailable</h2>
-                    <p>
-                        Only upcoming tournaments with a
-                        future start date and no existing
-                        registrations, teams or fixtures
-                        may be edited.
-                    </p>
-
-                    <a
-                        class="button button-outline"
-                        href="/tournaments/manage.php">
-                        Back to Management
-                    </a>
-                </div>
-
-            <?php else: ?>
+                <p class="tournament-edit-context">Schedule and linked records are locked. You can still update the title, description and cover image.</p>
+            <?php endif; ?>
 
                 <?php if (!empty($errors)): ?>
                     <div class="tournament-form-alert"
@@ -494,7 +382,7 @@ require __DIR__ . '/../includes/header.php';
 
                     <div class="tournament-form-grid">
 
-                        <div class="tournament-field">
+                        <div class="tournament-field<?= $isLocked ? ' tournament-field-full' : '' ?>">
                             <label for="t_name">
                                 Tournament name
                             </label>
@@ -510,6 +398,8 @@ require __DIR__ . '/../includes/header.php';
                                         ) ?>">
                         </div>
 
+                        <?php if (!$isLocked): ?>
+                        <input type="hidden" name="edit_schedule" value="1">
                         <div class="tournament-field">
                             <label for="venue">
                                 Tournament venue
@@ -526,6 +416,7 @@ require __DIR__ . '/../includes/header.php';
                                         ) ?>">
                         </div>
 
+                        <?php endif; ?>
                         <div class="tournament-field tournament-field-full">
                             <label for="des">
                                 Description
@@ -535,12 +426,17 @@ require __DIR__ . '/../includes/header.php';
                                 id="des"
                                 name="des"
                                 maxlength="255"
-                                rows="4"
-                                required><?= sportsHubEscape(
+                                rows="4"><?= sportsHubEscape(
                                                 $form['des']
                                             ) ?></textarea>
                         </div>
 
+                        <div class="tournament-field tournament-field-full">
+                            <label for="image_path">Cover image</label>
+                            <select id="image_path" name="image_path"><?= sportsHubCoverOptions($form['image_path']) ?></select>
+                        </div>
+
+                        <?php if (!$isLocked): ?>
                         <?php
                         $dateLabels = [
                             'reg_open_at' => 'Registration opens',
@@ -568,6 +464,7 @@ require __DIR__ . '/../includes/header.php';
                             </div>
 
                         <?php endforeach; ?>
+                        <?php endif; ?>
 
                     </div>
 
@@ -586,8 +483,6 @@ require __DIR__ . '/../includes/header.php';
                     </div>
 
                 </form>
-
-            <?php endif; ?>
 
         <?php endif; ?>
 

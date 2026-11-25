@@ -32,6 +32,7 @@ if (
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars(isset($pageTitle) ? $pageTitle . ' | NSBM SportsHub' : 'NSBM SportsHub', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></title>
+    <script src="/assets/js/site-interactions.js"></script>
     <link rel="stylesheet" href="/assets/css/style.css">
 
     <?php foreach (($pageStylesheets ?? []) as $stylesheet): ?>
@@ -39,7 +40,6 @@ if (
     <?php endforeach; ?>
 
     <script defer src="/assets/js/navigation-icons.js"></script>
-    <script defer src="/assets/js/site-interactions.js"></script>
 </head>
 
 <body>

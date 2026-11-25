@@ -91,6 +91,7 @@ $errorMessage = null;
 $itemTitle = '';
 $dependencies = [];
 $recordFound = false;
+$trainingStarted = false;
 $pdo = null;
 
 try {
@@ -99,16 +100,18 @@ try {
         $pdo->beginTransaction();
     }
     $record = $pdo->prepare(
-        'SELECT ' . $definition['name'] .
+        'SELECT ' . $definition['name'] . ' AS record_title' .
+        ($type === 'training' ? ', TIMESTAMP(date, start_time) > NOW() AS is_upcoming' : '') .
         ' FROM ' . $definition['table'] .
         ' WHERE ' . $definition['key'] . ' = :id' .
         ($method === 'POST' ? ' FOR UPDATE' : '')
     );
     $record->execute(['id' => $id]);
-    $value = $record->fetchColumn();
+    $value = $record->fetch(PDO::FETCH_ASSOC);
     if ($value !== false) {
         $recordFound = true;
-        $itemTitle = (string) $value;
+        $itemTitle = (string) $value['record_title'];
+        $trainingStarted = $type === 'training' && (int) $value['is_upcoming'] !== 1;
         foreach ($definition['checks'] as $check) {
             // These names are immutable constants in the definitions map above.
             $countStmt = $pdo->prepare(
@@ -127,6 +130,9 @@ try {
         if (!$recordFound) {
             $errorMessage = 'This record no longer exists.';
             http_response_code(404);
+        } elseif ($trainingStarted) {
+            $errorMessage = 'Only upcoming training sessions without attendance can be deleted.';
+            http_response_code(409);
         } elseif ($dependencies !== []) {
             $errorMessage = 'This record cannot be deleted while related activity exists.';
             http_response_code(409);
@@ -156,6 +162,9 @@ try {
     } elseif (!$recordFound) {
         http_response_code(404);
         $errorMessage = 'This record was not found.';
+    } elseif ($trainingStarted) {
+        http_response_code(409);
+        $errorMessage = 'Only upcoming training sessions without attendance can be deleted.';
     }
 } catch (Throwable $exception) {
     if ($pdo instanceof PDO && $pdo->inTransaction()) {
@@ -194,10 +203,10 @@ require __DIR__ . '/../includes/header.php';
           <?php endforeach; ?>
         </ul>
         <p>Preserve this history. You may manage or deactivate the relevant record instead.</p>
-      <?php elseif ($recordFound && $method === 'GET'): ?>
+      <?php elseif ($recordFound && !$trainingStarted && $method === 'GET'): ?>
         <p>No linked records were found. Enter <strong>DELETE</strong> to confirm permanent removal.</p>
       <?php endif; ?>
-      <?php if ($recordFound && $dependencies === []): ?>
+      <?php if ($recordFound && !$trainingStarted && $dependencies === []): ?>
         <form method="post" action="/admin/delete.php">
           <input type="hidden" name="csrf_token" value="<?= sportsHubEscape($token) ?>">
           <input type="hidden" name="type" value="<?= sportsHubEscape($type) ?>">

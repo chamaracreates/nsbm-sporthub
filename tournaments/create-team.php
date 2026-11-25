@@ -135,9 +135,7 @@ if ($method === 'POST' && !$loadError) {
             'Invalid form session. Refresh and try again.';
     }
 
-    $nameLength = function_exists('mb_strlen')
-        ? mb_strlen($teamName, 'UTF-8')
-        : strlen($teamName);
+    $nameLength = sportsHubLength($teamName);
 
     if ($nameLength < 1 || $nameLength > 255) {
         $errors[] =

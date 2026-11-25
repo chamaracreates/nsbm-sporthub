@@ -13,13 +13,20 @@ function sportsHubInput(string $key): string
 
 function sportsHubValidDate(string $value): bool
 {
+    if (preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/D', $value) !== 1) {
+        return false;
+    }
     $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
     return $date !== false && $date->format('Y-m-d') === $value;
 }
 
 function sportsHubLength(string $value): int
 {
-    return function_exists('mb_strlen') ? mb_strlen($value, 'UTF-8') : strlen($value);
+    if (function_exists('mb_strlen')) {
+        return mb_strlen($value, 'UTF-8');
+    }
+    $length = preg_match_all('/./us', $value);
+    return $length !== false ? $length : strlen($value);
 }
 
 function sportsHubDisplayDate(string $value): string
@@ -49,6 +56,57 @@ function sportsHubClubCover(string $sport): string
         'volleyball' => '/assets/images/volleyball.jpg'
     ];
     return $images[strtolower(trim($sport))] ?? '';
+}
+
+function sportsHubCoverLibrary(): array
+{
+    $covers = ['' => 'Automatic sport photograph', '/assets/images/hero-main.webp' => 'General sports', '/assets/images/herobanner.png' => 'Basketball'];
+    foreach (['Cricket', 'Badminton', 'Rugby', 'Athletics', 'Chess', 'Martial arts', 'Netball', 'Swimming', 'Table tennis', 'Tennis', 'Volleyball'] as $sport) {
+        $covers[sportsHubClubCover($sport)] = $sport;
+    }
+    return $covers;
+}
+
+function sportsHubCustomCover(mixed $value): string
+{
+    return is_string($value) && array_key_exists($value, sportsHubCoverLibrary()) ? $value : '';
+}
+
+function sportsHubCoverOptions(string $selected): string
+{
+    $html = '';
+    foreach (sportsHubCoverLibrary() as $path => $label) {
+        $html .= '<option value="' . sportsHubEscape($path) . '"' . ($path === $selected ? ' selected' : '') . '>' . sportsHubEscape($label) . '</option>';
+    }
+    return $html;
+}
+
+function sportsHubIsCricket(string $sport): bool
+{
+    return str_contains(strtolower($sport), 'cricket');
+}
+
+function sportsHubOversText(mixed $balls): string
+{
+    return $balls === null ? '' : intdiv((int) $balls, 6) . '.' . ((int) $balls % 6);
+}
+
+function sportsHubOversBalls(string $value): int|null|false
+{
+    if ($value === '') return null;
+    if (!preg_match('/^(\d{1,3})(?:\.([0-5]))?$/D', $value, $parts)) return false;
+    return (int) $parts[1] * 6 + (int) ($parts[2] ?? 0);
+}
+
+function sportsHubMatchScore(array $match, string $side, bool $includeOvers = false): string
+{
+    $score = (string) (int) $match[$side . '_score'];
+    if (!sportsHubIsCricket((string) $match['sport'])) return $score;
+    $wickets = $match[$side . '_wickets'] ?? null;
+    $balls = $match[$side . '_balls'] ?? null;
+    if ($wickets !== null) $score .= '/' . (int) $wickets;
+    if ($includeOvers && $balls !== null) $score .= ' (' . sportsHubOversText($balls) . ' ov)';
+    return $score;
 }
 
 function sportsHubOfficialNews(): array
@@ -140,7 +198,9 @@ function sportsHubTournamentCover(array $tournament, ?bool &$official = null): s
             ];
     $source = trim((string)($tournament['source_url'] ?? ''));
     $sport = trim((string)($tournament['sport'] ?? 'Sports'));
-    $official = isset($officialTournamentImages[$source]);
+    $custom = sportsHubCustomCover($tournament['image_path'] ?? null);
+    $official = $custom === '' && isset($officialTournamentImages[$source]);
+    if ($custom !== '') return $custom;
     return $officialTournamentImages[$source]
         ?? $tournamentSportImages[$sport]
         ?? $tournamentSportImages['Sports'];
@@ -520,4 +580,37 @@ function sportsHubReportRows(PDO $pdo, array $query, int $limit = 0): PDOStateme
     $stmt = $pdo->prepare($sql . ($limit > 0 ? ' LIMIT ' . $limit : ''));
     $stmt->execute($params);
     return $stmt;
+}
+
+function sportsHubAdminSidebar(string $active): void
+{
+    $links = [
+        'dashboard' => ['/admin/dashboard.php', 'Dashboard'],
+        'manage' => ['/admin/manage.php', 'Manage Content'],
+        'members' => ['/clubs/admin/members.php', 'Club Memberships'],
+        'clubs' => ['/clubs/', 'Sports Clubs'],
+        'training' => ['/training/', 'Training Sessions'],
+        'tournaments' => ['/tournaments/', 'Tournaments'],
+        'matches' => ['/matches/', 'Matches'],
+        'bookings' => ['/bookings/', 'Facilities & Bookings'],
+        'reports' => ['/reports/', 'Reports & Analytics'],
+    ];
+    ?>
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <a class="admin-site-brand-link" href="/index.php" title="View website">NSBM SportsHub</a>
+        </div>
+        <nav class="sidebar-nav" aria-label="Administration">
+            <?php foreach ($links as $key => [$href, $label]): ?>
+                <a href="<?= sportsHubEscape($href) ?>" class="nav-link<?= $active === $key ? ' active' : '' ?>"<?= $active === $key ? ' aria-current="page"' : '' ?>><?= sportsHubEscape($label) ?></a>
+            <?php endforeach; ?>
+        </nav>
+        <div class="sidebar-account-section">
+            <form action="/logout.php" method="post">
+                <input type="hidden" name="csrf_token" value="<?= sportsHubEscape($_SESSION['logout_csrf']) ?>">
+                <button type="submit">Log out</button>
+            </form>
+        </div>
+    </aside>
+    <?php
 }

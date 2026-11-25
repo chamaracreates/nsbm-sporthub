@@ -91,6 +91,7 @@ try {
             t.t_name,
             t.sport,
             t.des,
+                t.image_path,
             t.reg_open_at,
             t.reg_end_at,
             t.start_date,
@@ -264,13 +265,4 @@ require __DIR__ . '/../includes/header.php';
 
 </main>
 
-<?php require __DIR__ . '/../includes/footer.php';
-
-require_once __DIR__ . '/../includes/auth.php';
-
-$canManageTournaments = in_array(
-    current_user_role(),
-    ['admin', 'coach', 'mic'],
-    true
-);
-?>
+<?php require __DIR__ . '/../includes/footer.php'; ?>
