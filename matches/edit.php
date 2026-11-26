@@ -139,9 +139,6 @@ $submittedAction = $method === 'POST'
     ? sportsHubInput('action')
     : '';
 
-$mode = $_GET['mode'] ?? '';
-$mode = in_array($mode, ['fixture', 'result', 'details'], true) ? $mode : '';
-
 $saved = $_GET['saved'] ?? '';
 $saved = is_string($saved) ? $saved : '';
 
@@ -215,21 +212,13 @@ if (!is_int($matchId)) {
                                 'This tournament is not accepting fixture changes.';
                         }
 
-                        $title = sportsHubInput('title');
                         $date = sportsHubInput('date');
                         $venue = sportsHubInput('venue');
                         $homeName = sportsHubInput('home_name');
                         $awayName = sportsHubInput('away_name');
                         $sport = sportsHubInput('sport');
 
-                        $titleLength = sportsHubLength($title);
-
                         $venueLength = sportsHubLength($venue);
-
-                        if ($titleLength < 3 || $titleLength > 100) {
-                            $errors[] =
-                                'Match title must contain 3–100 characters.';
-                        }
 
                         if ($venueLength < 2 || $venueLength > 255) {
                             $errors[] =
@@ -270,13 +259,12 @@ if (!is_int($matchId)) {
                             if ($isStandalone) {
                                 $update = $pdo->prepare(
                                     "UPDATE matches
-                                     SET title = :title, date = :match_date,
+                                     SET date = :match_date,
                                          venue = :venue, home_name = :home_name,
                                          away_name = :away_name, sport = :sport
                                      WHERE m_id = :match_id AND t_id IS NULL"
                                 );
                                 $update->execute([
-                                    'title' => $title,
                                     'match_date' => $date,
                                     'venue' => $venue,
                                     'home_name' => $homeName,
@@ -287,13 +275,11 @@ if (!is_int($matchId)) {
                             } else {
                                 $update = $pdo->prepare(
                                     "UPDATE matches
-                                     SET title = :title,
-                                         date = :match_date,
+                                     SET date = :match_date,
                                          venue = :venue
                                      WHERE m_id = :match_id"
                                 );
                                 $update->execute([
-                                    'title' => $title,
                                     'match_date' => $date,
                                     'venue' => $venue,
                                     'match_id' => $matchId
@@ -303,7 +289,7 @@ if (!is_int($matchId)) {
                     } elseif ($submittedAction === 'details') {
                         $title = sportsHubInput('title');
                         $description = sportsHubInput('description');
-                        $image = sportsHubInput('image_path');
+                        $image = sportsHubCoverPath(sportsHubInput('image_path'));
                         if (sportsHubLength($title) < 3 || sportsHubLength($title) > 100 || sportsHubLength($description) > 255) {
                             $errors[] = 'Enter a title of 3–100 characters and a description of up to 255 characters.';
                         }
@@ -395,7 +381,7 @@ if (!is_int($matchId)) {
                         header(
                             'Location: /matches/edit.php?id=' .
                                 $matchId .
-                                '&mode=' . $savedAction . '&saved=' . $savedAction
+                                '&saved=' . $savedAction
                         );
                         exit;
                     }
@@ -474,15 +460,8 @@ include __DIR__ . '/../includes/header.php';
     <section class="section-container matches-section">
 
         <div class="matches-header">
-            <p class="section-label">
-                NSBM SPORTSHUB / MATCH MANAGEMENT
-            </p>
-
-            <h1><?= $mode === 'result' ? ($isCompleted ? 'Edit result.' : 'Record result.') : ($mode === 'fixture' ? 'Edit fixture.' : 'Edit match details.') ?></h1>
-
-            <p class="section-description">
-                <?= $mode === 'result' ? 'Enter or correct the scores for this match.' : 'Update fixture details and manage match information.' ?>
-            </p>
+            <h1>Edit match.</h1>
+            <p class="section-description">Manage match information, scheduling and results.</p>
         </div>
 
         <div class="match-management-actions">
@@ -553,7 +532,6 @@ include __DIR__ . '/../includes/header.php';
                 <?php if ($isCompleted): ?>
                     <p class="match-editor-score"><?= sportsHubEscape(sportsHubMatchScore($match, 'home', true)) ?> – <?= sportsHubEscape(sportsHubMatchScore($match, 'away', true)) ?></p>
                 <?php endif; ?>
-                <a href="/matches/edit.php?id=<?= (int) $matchId ?>&amp;mode=details" class="button button-outline">Edit match details</a>
             </div>
             <div class="match-editor-panel">
 
@@ -578,9 +556,11 @@ include __DIR__ . '/../includes/header.php';
                 </div>
             <?php endif; ?>
 
-            <?php if ($mode === 'details'): ?>
-                <div class="match-edit-heading"><h2>Match details</h2><p>Update public content without changing teams, dates or scores.</p></div>
-                <form method="post" action="/matches/edit.php?id=<?= (int) $matchId ?>&amp;mode=details" class="match-create-form">
+            <div class="match-edit-heading">
+                <h2>Match details</h2>
+                <p>Update public content without changing teams, dates or scores.</p>
+            </div>
+                <form method="post" action="/matches/edit.php?id=<?= (int) $matchId ?>" class="match-create-form">
                     <input type="hidden" name="csrf_token" value="<?= sportsHubEscape($csrfToken) ?>">
                     <input type="hidden" name="action" value="details">
                     <label for="match-title">Match title</label>
@@ -591,21 +571,19 @@ include __DIR__ . '/../includes/header.php';
                     <select id="match-cover" name="image_path"><?= sportsHubCoverOptions($submittedAction === 'details' ? sportsHubInput('image_path') : (string) $match['image_path']) ?></select>
                     <button type="submit" class="button button-accent">Save match details</button>
                 </form>
-            <?php endif; ?>
-
-            <?php if ($canEditFixture && $mode !== 'result' && $mode !== 'details'): ?>
+            <?php if ($canEditFixture): ?>
 
                 <div class="match-edit-heading">
                     <h2>Edit fixture details</h2>
                     <p>
-                        Update title, date and venue.
+                        Update the date and venue.
                         Tournament team selections stay unchanged.
                     </p>
                 </div>
 
                 <form
                     method="post"
-                    action="/matches/edit.php?id=<?= (int) $matchId ?>&amp;mode=fixture"
+                    action="/matches/edit.php?id=<?= (int) $matchId ?>"
                     class="match-create-form">
 
                     <input
@@ -617,22 +595,6 @@ include __DIR__ . '/../includes/header.php';
                         type="hidden"
                         name="action"
                         value="fixture">
-
-                    <label for="edit_match_title">
-                        Match title
-                    </label>
-
-                    <input
-                        id="edit_match_title"
-                        name="title"
-                        type="text"
-                        maxlength="100"
-                        required
-                        value="<?= sportsHubEscape(
-                                    $submittedAction === 'fixture'
-                                        ? sportsHubInput('title')
-                                        : $match['title']
-                                ) ?>">
 
                     <label for="edit_match_date">
                         Match date
@@ -693,7 +655,6 @@ include __DIR__ . '/../includes/header.php';
 
             <?php endif; ?>
 
-            <?php if ($mode !== 'details' && ($mode !== 'fixture' || !$canEditFixture)): ?>
             <div class="match-edit-heading" id="match-result">
                 <h2>Match result</h2>
                 <p>
@@ -706,7 +667,7 @@ include __DIR__ . '/../includes/header.php';
 
                 <form
                     method="post"
-                    action="/matches/edit.php?id=<?= (int) $matchId ?>&amp;mode=result"
+                    action="/matches/edit.php?id=<?= (int) $matchId ?>"
                     class="match-create-form">
 
                     <input
@@ -760,7 +721,6 @@ include __DIR__ . '/../includes/header.php';
                     <?php endif; ?>
                 </div>
 
-            <?php endif; ?>
             <?php endif; ?>
             </div>
             </div>

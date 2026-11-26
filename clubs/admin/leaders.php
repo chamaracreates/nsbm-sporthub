@@ -7,10 +7,11 @@ require_once __DIR__ . '/../../includes/helpers.php';
 
 require_once __DIR__ . '/../../includes/db.php';
 
-// Only administrators can access this page.
-require_admin();
-
-// Escape text before displaying it in HTML.
+$actorId = require_login();
+$actorRole = current_user_role();
+if (!in_array($actorRole, ['admin','mic'], true)) { http_response_code(403); exit('Access denied.'); }
+$scope = $actorRole === 'admin' ? '' : " AND EXISTS (SELECT 1 FROM sport_staff ss WHERE ss.club_id = sc.club_id AND ss.user_id = ? AND ss.staff_role = 'mic' AND ss.status = 'active') AND sc.status = 'active'";
+$params = $actorRole === 'admin' ? [] : [$actorId];
 
 
 if (
@@ -72,20 +73,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $pdo = db();
 
-            $stmt = $pdo->prepare(
-                "DELETE FROM club_leaders
-                WHERE leader_id = :leader_id"
-            );
-
-            $stmt->execute([
-                'leader_id' => $leaderId
-            ]);
+            $pdo->beginTransaction();
+            $stmt = $pdo->prepare('SELECT club_id FROM club_leaders WHERE leader_id = ? FOR UPDATE');
+            $stmt->execute([$leaderId]);
+            $leaderClub = $stmt->fetchColumn();
+            if (!$leaderClub || !sportsHubCanManageClub($pdo, (int)$leaderClub, $actorId, $actorRole)) { $pdo->rollBack(); http_response_code(403); exit('Access denied.'); }
+            $stmt = $pdo->prepare('DELETE FROM club_leaders WHERE leader_id = ?');
+            $stmt->execute([$leaderId]);
 
             if ($stmt->rowCount() !== 1) {
+                $pdo->rollBack();
                 http_response_code(404);
                 exit('Leadership assignment not found.');
             }
 
+            $pdo->commit();
             header(
                 'Location: /clubs/admin/leaders.php?result=removed',
                 true,
@@ -93,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
             exit;
         } catch (Throwable $exception) {
-
+            if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
             error_log(
                 'Club leadership removal error: ' .
                     $exception->getMessage()
@@ -148,10 +150,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'club_id' => $clubId
         ]);
 
-        if (!$stmt->fetchColumn()) {
+        if (!$stmt->fetchColumn() || !sportsHubCanManageClub($pdo, (int)$clubId, $actorId, $actorRole)) {
             $pdo->rollBack();
-            http_response_code(400);
-            exit('Select an active sports club.');
+            http_response_code(403);
+            exit('Select an authorized active sports club.');
         }
 
         // Confirm the student has an approved
@@ -261,17 +263,18 @@ try {
     $pdo = db();
 
     // Retrieve all active sports clubs.
-    $stmt = $pdo->query(
-        "SELECT club_id, club_name, sport
-         FROM sports_clubs
-         WHERE status = 'active'
+    $stmt = $pdo->prepare(
+        "SELECT sc.club_id, sc.club_name, sc.sport
+         FROM sports_clubs sc
+         WHERE sc.status = 'active' $scope
          ORDER BY club_name ASC"
     );
 
+    $stmt->execute($params);
     $clubs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Retrieve students with approved club memberships.
-    $stmt = $pdo->query(
+    $stmt = $pdo->prepare(
         "SELECT
             cm.club_id,
             u.user_id,
@@ -284,14 +287,15 @@ try {
             ON sc.club_id = cm.club_id
          WHERE cm.status = 'approved'
            AND u.role = 'student'
-           AND sc.status = 'active'
+           AND sc.status = 'active' $scope
          ORDER BY u.name ASC"
     );
 
+    $stmt->execute($params);
     $eligibleStudents = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Retrieve existing captain and vice-captain assignments.
-    $stmt = $pdo->query(
+    $stmt = $pdo->prepare(
         "SELECT
             cl.leader_id,
             cl.club_id,
@@ -305,9 +309,11 @@ try {
             ON u.user_id = cl.user_id
          INNER JOIN sports_clubs sc
             ON sc.club_id = cl.club_id
+         WHERE 1=1 $scope
          ORDER BY sc.club_name, cl.leader_role"
     );
 
+    $stmt->execute($params);
     $currentLeaders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $exception) {
     error_log($exception->getMessage());

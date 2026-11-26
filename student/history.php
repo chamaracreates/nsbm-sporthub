@@ -26,7 +26,9 @@ try {
             (SELECT COUNT(DISTINCT ta.session_id) FROM training_attendance ta
              WHERE ta.user_id = u.user_id AND ta.att_status = 'present') AS training_sessions_attended,
             (SELECT COUNT(DISTINCT tr.t_id) FROM tournament_registration tr
-             WHERE tr.user_id = u.user_id) AS tournaments_registered,
+             WHERE tr.user_id = u.user_id AND tr.registration_status = 'approved') AS tournaments_registered,
+            (SELECT COUNT(DISTINCT mr.m_id) FROM match_registration mr
+             WHERE mr.user_id = u.user_id AND mr.registration_status = 'approved') AS matches_registered,
             (SELECT COUNT(DISTINCT br.b_id) FROM booking_request br
              WHERE br.user_id = u.user_id) AS facility_bookings_made
          FROM users u
@@ -323,7 +325,11 @@ require __DIR__ . '/../includes/header.php';
                     </article>
                     <article class="history-stat-card student-history-stat-card">
                         <span class="history-stat-number"><?= (int) $summary['tournaments_registered'] ?></span>
-                        <p>Tournaments registered</p>
+                        <p>Approved tournament registrations</p>
+                    </article>
+                    <article class="history-stat-card student-history-stat-card">
+                        <span class="history-stat-number"><?= (int) $summary['matches_registered'] ?></span>
+                        <p>Approved match registrations</p>
                     </article>
                     <article class="history-stat-card student-history-stat-card">
                         <span class="history-stat-number"><?= (int) $summary['facility_bookings_made'] ?></span>
@@ -617,6 +623,7 @@ require __DIR__ . '/../includes/header.php';
         </section>
 
         <div class="history-back-action">
+            <a href="/student/registrations.php" class="history-back-link">Tournament and match registrations</a>
             <a href="profile.php" class="history-back-link">Back to My Profile</a>
         </div>
     </div>

@@ -24,6 +24,8 @@ body { margin: 0; background: var(--color-background); color: var(--color-text);
 .admin-layout .topbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 18px; margin: 0 0 32px; }
 .admin-layout .topbar h2 { margin: 0 0 4px; color: var(--color-text); font-size: clamp(26px,3vw,34px); font-weight: 750; line-height: 1.16; letter-spacing: -1.1px; }
 .admin-layout .topbar p { margin: 0; color: var(--color-muted); font-size: 14px; }
+.admin-header-actions { display: flex; align-items: center; gap: 6px; margin-inline-start: auto; flex-shrink: 0; }
+.admin-layout .main-content [id]:target { outline: 2px solid var(--color-accent-text); outline-offset: 3px; scroll-margin-block: 20px; }
 .welcome-section {
     position: relative; overflow: hidden; padding: clamp(28px,4vw,48px);
     margin-bottom: 36px; min-height: 200px; display: flex; flex-direction: column; justify-content: center;

@@ -1,12 +1,10 @@
 <?php
 
-
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/db.php';
 
 auth_start();
 
-// Logged-in users should not see an intermediate "Your Account" page.
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
     $existingRole = current_user_role();
     if ($existingRole !== null) {
@@ -21,19 +19,12 @@ if (empty($_SESSION['login_csrf'])) {
 }
 
 $errors = [];
-$now = time();
-$failures = array_values(array_filter((array) ($_SESSION['login_failures'] ?? []),
-    static fn($time) => is_int($time) && $time > $now - 300));
-$_SESSION['login_failures'] = $failures;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-
     $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
     $submittedToken = $_POST['csrf_token'] ?? '';
 
-    // Validate the CSRF token
     if (
         !is_string($submittedToken) ||
         !hash_equals($_SESSION['login_csrf'], $submittedToken)
@@ -45,57 +36,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         !filter_var($email, FILTER_VALIDATE_EMAIL) ||
         strlen($email) > 255 ||
         !is_string($password) ||
-        $password === ''
+        $password === '' || strlen($password) > 72 || str_contains($password, "\0")
     ) {
         $errors[] = 'Invalid email or password.';
 
-    } elseif (count($failures) >= 5) {
-        http_response_code(429);
-        $errors[] = 'Too many login attempts. Please try again in five minutes.';
     } else {
 
         $email = strtolower(trim($email));
 
         try {
-            // Find the account by email
-            $stmt = db()->prepare(
-                "SELECT user_id, name, email, password, role
-                 FROM users
-                 WHERE email = :email
-                 LIMIT 1"
-            );
-
-            $stmt->execute([':email' => $email]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            // Check the hashed password
-            if (
-                !$user ||
-                !password_verify($password, $user['password'])
-            ) {
-                $_SESSION['login_failures'][] = $now;
-                $errors[] = 'Invalid email or password.';
-
+            if (!auth_login_rate_limit($email)) {
+                http_response_code(429);
+                header('Retry-After: 300');
+                $errors[] = 'Too many login attempts. Please try again in five minutes.';
             } else {
+                $stmt = db()->prepare(
+                    "SELECT user_id, name, email, password, role
+                     FROM users
+                     WHERE email = :email
+                     LIMIT 1"
+                );
 
-                if (!session_regenerate_id(true)) {
-                    $errors[] = 'Unable to start a secure session. Please try again.';
+                $stmt->execute([':email' => $email]);
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if (
+                    !$user ||
+                    !password_verify($password, $user['password'])
+                ) {
+                    $errors[] = 'Invalid email or password.';
+
                 } else {
-                    unset($_SESSION['login_failures']);
-                    $_SESSION['user_id'] = (int) $user['user_id'];
-                    $_SESSION['role'] = $user['role'];
-                    $_SESSION['name'] = $user['name'];
-                    $_SESSION['logout_csrf'] = bin2hex(random_bytes(32));
-                    $_SESSION['login_csrf'] = bin2hex(random_bytes(32));
 
-                    // Post/Redirect/Get: render the destination with the new header.
-                    header('Location: /index.php', true, 303);
-                    exit;
+                    if (!session_regenerate_id(true)) {
+                        $errors[] = 'Unable to start a secure session. Please try again.';
+                    } else {
+                        auth_login_rate_limit($email, true);
+                        $_SESSION['user_id'] = (int) $user['user_id'];
+                        $_SESSION['role'] = $user['role'];
+                        $_SESSION['name'] = $user['name'];
+                        $_SESSION['logout_csrf'] = bin2hex(random_bytes(32));
+                        $_SESSION['login_csrf'] = bin2hex(random_bytes(32));
+
+                        header('Location: /index.php', true, 303);
+                        exit;
+                    }
                 }
             }
-
-        } catch (PDOException $e) {
-            error_log('Login database error: ' . $e->getMessage());
+        } catch (Throwable $e) {
+            http_response_code(503);
+            error_log('Login service error: ' . $e->getMessage());
 
             $errors[] = 'Unable to log in right now. Please try again.';
         }

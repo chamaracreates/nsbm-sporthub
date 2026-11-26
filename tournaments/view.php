@@ -18,6 +18,7 @@ $tournamentId = filter_var(
 
 $tournament = null;
 $teams = [];
+$hasRegistration = false;
 $pageError = null;
 
 if (!is_int($tournamentId)) {
@@ -91,6 +92,11 @@ if (!is_int($tournamentId)) {
             ]);
 
             $teams = $statement->fetchAll(PDO::FETCH_ASSOC);
+            if (current_user_role() === 'student') {
+                $statement = $pdo->prepare('SELECT 1 FROM tournament_registration WHERE t_id = ? AND user_id = ?');
+                $statement->execute([$tournamentId, current_user_id()]);
+                $hasRegistration = $statement->fetchColumn() !== false;
+            }
         }
     } catch (Throwable $error) {
         error_log(
@@ -201,14 +207,14 @@ require __DIR__ . '/../includes/header.php';
                     </div>
                 </dl>
 
-                <?php if (!$isCompleted): ?>
+                <?php if (!$isCompleted || $hasRegistration): ?>
                     <div class="tournament-profile-registration">
                         <div>
                             <h3>Registration period</h3>
                             <p>Opens <?= sportsHubEscape(sportsHubTournamentDate($tournament['reg_open_at'])) ?> &middot; Closes <?= sportsHubEscape(sportsHubTournamentDate($tournament['reg_end_at'])) ?></p>
                         </div>
-                        <?php if ($registrationAvailable && $canApply): ?>
-                            <a class="button button-accent" href="/tournaments/register.php?id=<?= (int) $tournament['t_id'] ?>">Register for tournament</a>
+                        <?php if ($hasRegistration || ($registrationAvailable && $canApply)): ?>
+                            <a class="button <?= $registrationAvailable ? 'button-accent' : 'button-outline' ?>" href="/tournaments/register.php?id=<?= (int) $tournament['t_id'] ?>"><?= $registrationAvailable ? 'Register for tournament' : 'View my registration' ?></a>
                         <?php elseif ($registrationAvailable): ?>
                             <p>Registration is available to students.</p>
                         <?php endif; ?>

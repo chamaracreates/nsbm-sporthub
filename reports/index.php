@@ -31,6 +31,7 @@ $clubMemberships = sportsHubReportRows($pdo, $queries['clubs'])->fetchAll(PDO::F
 $activeClubs = count($clubMemberships);
 $trainingAttendance = sportsHubReportRows($pdo, $queries['training'], 100)->fetchAll(PDO::FETCH_ASSOC);
 $tournamentParticipation = sportsHubReportRows($pdo, $queries['tournaments'], 100)->fetchAll(PDO::FETCH_ASSOC);
+$matchRegistrations = sportsHubReportRows($pdo, $queries['match-registrations'], 100)->fetchAll(PDO::FETCH_ASSOC);
 $matchPerformanceSummary = sportsHubReportRows($pdo, $queries['performance'])->fetch(PDO::FETCH_ASSOC);
 $matchPerformance = sportsHubReportRows($pdo, $queries['matches'], 100)->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -59,13 +60,7 @@ $matchPerformance = sportsHubReportRows($pdo, $queries['matches'], 100)->fetchAl
         <!-- Main Content -->
         <main class="main-content">
 
-            <header class="topbar">
-
-                <div>
-                    <h2>Reports & Analytics</h2>
-                    <p>NSBM Sports Club Management System</p>
-                </div>
-            </header>
+            <?php sportsHubAdminTopbar('Reports & Analytics'); ?>
 
             <!-- Welcome Section -->
             <section class="welcome-section">
@@ -82,7 +77,7 @@ $matchPerformance = sportsHubReportRows($pdo, $queries['matches'], 100)->fetchAl
 
 
             <!-- Report Filters -->
-            <section class="report-section">
+            <section id="report-filters" class="report-section">
                 <div class="report-heading">
                     <div>
                         <h2>Filter Reports</h2>
@@ -111,6 +106,7 @@ $matchPerformance = sportsHubReportRows($pdo, $queries['matches'], 100)->fetchAl
                     'training' => 'Training attendance',
                     'tournaments' => 'Tournament registrations',
                     'matches' => 'Match results',
+                    'match-registrations' => 'Match registrations',
                     'training-schedule' => 'Training schedule',
                     'tournament-schedule' => 'Tournament schedule'
                 ];
@@ -201,7 +197,7 @@ $matchPerformance = sportsHubReportRows($pdo, $queries['matches'], 100)->fetchAl
 
 
             <!-- Participation Overview -->
-            <section class="statistics-section">
+            <section id="participation-overview" class="statistics-section">
 
                 <h2>Participation Overview</h2>
 
@@ -229,12 +225,16 @@ $matchPerformance = sportsHubReportRows($pdo, $queries['matches'], 100)->fetchAl
                     </div>
 
                     <div class="stat-card">
-                        <h3>Tournament Registrations</h3>
+                        <h3>Approved Tournament Registrations</h3>
                         <p class="stat-number">
                             <?= number_format((int) $summary['total_tournament_registrations']) ?>
                         </p>
                     </div>
 
+                    <div class="stat-card">
+                        <h3>Approved Match Registrations</h3>
+                        <p class="stat-number"><?= number_format((int) $summary['total_match_registrations']) ?></p>
+                    </div>
                     <div class="stat-card">
                         <h3>Facility Requests</h3>
                         <p class="stat-number">
@@ -249,7 +249,7 @@ $matchPerformance = sportsHubReportRows($pdo, $queries['matches'], 100)->fetchAl
             </section>
 
             <!-- Student Participation Report -->
-            <section class="report-section">
+            <section id="student-participation" class="report-section">
 
                 <div class="report-heading">
                     <div>
@@ -268,7 +268,8 @@ $matchPerformance = sportsHubReportRows($pdo, $queries['matches'], 100)->fetchAl
                                 <th>Email</th>
                                 <th>Clubs Joined</th>
                                 <th>Training Attended</th>
-                                <th>Tournaments</th>
+                                <th>Approved Tournaments</th>
+                                <th>Approved Matches</th>
                                 <th>Facility Requests</th>
                             </tr>
                         </thead>
@@ -300,6 +301,7 @@ $matchPerformance = sportsHubReportRows($pdo, $queries['matches'], 100)->fetchAl
                                             <?= number_format((int) $student['tournaments_registered']) ?>
                                         </td>
 
+                                        <td><?= number_format((int) $student['matches_registered']) ?></td>
                                         <td>
                                             <?= $facilityScopedOut ? '—' : number_format((int) $student['facility_bookings_made']) ?>
                                         </td>
@@ -310,7 +312,7 @@ $matchPerformance = sportsHubReportRows($pdo, $queries['matches'], 100)->fetchAl
                             <?php else: ?>
 
                                 <tr>
-                                    <td colspan="6" class="empty-report">
+                                    <td colspan="7" class="empty-report">
                                         No student participation records available yet.
                                     </td>
                                 </tr>
@@ -325,13 +327,13 @@ $matchPerformance = sportsHubReportRows($pdo, $queries['matches'], 100)->fetchAl
 
                 <p class="report-note">
                     Showing up to 50 student records. Club participations count approved memberships,
-                    training attendance counts present records, and registrations/requests include all statuses.
+                    training attendance counts present records, and competition counts include approved registrations. Facility request counts include all statuses.
                     Facility requests display as — when filtered by club or sport.
                 </p>
 
             </section>
 
-            <section class="report-section">
+            <section id="tournament-participation" class="report-section">
                 <div class="report-heading">
                     <div>
                         <h2>Tournament Participation Report</h2>
@@ -370,8 +372,22 @@ $matchPerformance = sportsHubReportRows($pdo, $queries['matches'], 100)->fetchAl
                 <p class="report-note">Showing up to 100 tournament registrations.</p>
             </section>
 
+            <section id="match-registrations" class="report-section">
+                <div class="report-heading"><div><h2>Match Registration Report</h2><p>Student requests across fixtures</p></div></div>
+                <div class="report-table-wrapper"><table class="report-table">
+                    <thead><tr><th>Fixture</th><th>Sport</th><th>Student</th><th>Requested</th><th>Status</th></tr></thead>
+                    <tbody>
+                        <?php foreach ($matchRegistrations as $registration): ?>
+                            <tr><td><?= sportsHubEscape($registration['match_title']) ?></td><td><?= sportsHubEscape($registration['sport']) ?></td><td><?= sportsHubEscape($registration['student_name']) ?></td><td><?= sportsHubEscape($registration['requested_at']) ?></td><td><?= sportsHubEscape(ucfirst($registration['registration_status'])) ?></td></tr>
+                        <?php endforeach; ?>
+                        <?php if (!$matchRegistrations): ?><tr><td colspan="5" class="empty-report">No match registrations.</td></tr><?php endif; ?>
+                    </tbody>
+                </table></div>
+                <p class="report-note">Showing up to 100 match registrations, filtered by request date.</p>
+            </section>
+
             <!-- Club Membership Report -->
-            <section class="report-section">
+            <section id="club-memberships" class="report-section">
 
                 <div class="report-heading">
                     <div>
@@ -444,7 +460,7 @@ $matchPerformance = sportsHubReportRows($pdo, $queries['matches'], 100)->fetchAl
             </section>
 
             <!-- Training Attendance Report -->
-            <section class="report-section">
+            <section id="training-attendance" class="report-section">
                 <div class="report-heading">
                     <div>
                         <h2>Training Attendance Report</h2>
@@ -494,7 +510,7 @@ $matchPerformance = sportsHubReportRows($pdo, $queries['matches'], 100)->fetchAl
             </section>
 
             <!-- Match Performance Report -->
-            <section class="report-section">
+            <section id="match-performance" class="report-section">
                 <div class="report-heading">
                     <div>
                         <h2>Match Performance Overview</h2>

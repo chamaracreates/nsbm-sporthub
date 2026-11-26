@@ -10,7 +10,7 @@ require_once __DIR__ . '/../includes/helpers.php';
 $type = $_GET['type'] ?? '';
 if (!is_string($type) || !in_array($type, [
     'students', 'clubs', 'training', 'tournaments', 'matches',
-    'training-schedule', 'tournament-schedule', 'bookings'
+    'training-schedule', 'tournament-schedule', 'bookings', 'match-registrations'
 ], true)) {
     http_response_code(400);
     exit('Invalid report type.');

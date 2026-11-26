@@ -85,7 +85,7 @@ try {
         "SELECT
             m.m_id, m.title, m.date, m.venue, m.match_status,
             m.home_score, m.away_score, m.home_wickets, m.away_wickets, m.home_balls, m.away_balls,
-            t.t_id, t.status AS tournament_status,
+            t.t_id,
             COALESCE(t.t_name, 'Standalone match') AS t_name,
             m.sport,
             m.home_name AS home_team,
@@ -127,10 +127,6 @@ try {
         $category = $completed ? 'completed' : ($scheduled ? ($due ? 'awaiting' : 'scheduled') : null);
 
         $match['category'] = $category;
-        $match['can_record_result'] = ($scheduled || $completed) && $due;
-        $match['can_edit_fixture'] = $scheduled && ($match['t_id'] === null || in_array(
-            strtolower(trim((string) $match['tournament_status'])), ['upcoming', 'ongoing'], true
-        ));
 
         $counts['all']++;
         if ($category !== null) {
@@ -219,14 +215,9 @@ include __DIR__ . '/../includes/header.php';
                                 <span><?= sportsHubEscape($match['venue']) ?></span>
                             </div>
                             <div class="match-management-card-actions">
-                                <?php if ($match['can_record_result']): ?>
-                                    <a href="/matches/edit.php?id=<?= $matchId ?>&amp;mode=result#match-result" class="button button-accent"><?= $completed ? 'Edit result' : 'Record result' ?></a>
-                                <?php endif; ?>
-                                <?php if ($match['can_edit_fixture']): ?>
-                                    <a href="/matches/edit.php?id=<?= $matchId ?>&amp;mode=fixture" class="button <?= $awaiting ? 'button-outline' : 'button-accent' ?>">Edit fixture</a>
-                                <?php endif; ?>
-                                <a href="/matches/edit.php?id=<?= $matchId ?>&amp;mode=details" class="button button-outline">Edit details</a>
+                                <a href="/matches/edit.php?id=<?= $matchId ?>" class="button button-accent">Edit match</a>
                                 <a href="/matches/view.php?id=<?= $matchId ?>" class="button button-outline">View details</a>
+                                <a href="/matches/registrations.php?id=<?= $matchId ?>" class="button button-outline">Registrations</a>
                                 <?php if ($userRole === 'admin'): ?>
                                     <a href="/admin/delete.php?type=match&amp;id=<?= $matchId ?>" class="button button-danger-outline">Delete fixture</a>
                                 <?php endif; ?>

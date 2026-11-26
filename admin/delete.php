@@ -16,6 +16,66 @@ if ($method !== 'GET' && $method !== 'POST') {
 
 // All identifiers below come from this fixed server-side map, never a user SQL fragment.
 $definitions = [
+    'club' => [
+        'table' => 'sports_clubs', 'key' => 'club_id', 'name' => 'club_name', 'singular' => 'sports club',
+        'return' => '/clubs/admin/clubs.php',
+        'checks' => [
+            ['table' => 'club_membership', 'column' => 'club_id', 'label' => 'memberships'],
+            ['table' => 'club_leaders', 'column' => 'club_id', 'label' => 'club leaders'],
+            ['table' => 'sport_staff', 'column' => 'club_id', 'label' => 'staff assignments'],
+            ['table' => 'club_news', 'column' => 'club_id', 'label' => 'club news'],
+            ['table' => 'tournaments', 'column' => 'club_id', 'label' => 'tournaments'],
+            ['table' => 'teams', 'column' => 'club_id', 'label' => 'teams'],
+            ['table' => 'training_sessions', 'column' => 'club_id', 'label' => 'training sessions'],
+        ],
+    ],
+    'account' => [
+        'table' => 'users', 'key' => 'user_id', 'name' => 'name', 'singular' => 'student or staff account',
+        'return' => '/admin/accounts.php', 'condition' => "role IN ('student','mic','coach')",
+        'checks' => [
+            ['table' => 'booking_request', 'column' => 'user_id', 'label' => 'booking requests'],
+            ['table' => 'booking_request', 'column' => 'reviewed_by', 'label' => 'booking reviews'],
+            ['table' => 'club_leaders', 'column' => 'user_id', 'label' => 'leadership assignments'],
+            ['table' => 'club_membership', 'column' => 'user_id', 'label' => 'club memberships'],
+            ['table' => 'matches', 'column' => 'home_u_id', 'label' => 'home fixtures'],
+            ['table' => 'matches', 'column' => 'away_u_id', 'label' => 'away fixtures'],
+            ['table' => 'match_registration', 'column' => 'user_id', 'label' => 'match registrations'],
+            ['table' => 'match_registration', 'column' => 'reviewed_by', 'label' => 'match reviews'],
+            ['table' => 'sport_staff', 'column' => 'user_id', 'label' => 'staff assignments'],
+            ['table' => 'teams', 'column' => 'created_by', 'label' => 'created teams'],
+            ['table' => 'team_members', 'column' => 'user_id', 'label' => 'team memberships'],
+            ['table' => 'tournament_results', 'column' => 'user_id', 'label' => 'tournament results'],
+            ['table' => 'tournaments', 'column' => 'created_by', 'label' => 'created tournaments'],
+            ['table' => 'tournament_registration', 'column' => 'user_id', 'label' => 'tournament registrations'],
+            ['table' => 'tournament_registration', 'column' => 'reviewed_by', 'label' => 'tournament reviews'],
+            ['table' => 'training_attendance', 'column' => 'user_id', 'label' => 'attendance records'],
+            ['table' => 'training_attendance', 'column' => 'recorded_by', 'label' => 'recorded attendance'],
+        ],
+    ],
+    'team' => [
+        'table' => 'teams', 'key' => 'team_id', 'name' => 'team_name', 'singular' => 'team',
+        'return' => '/tournaments/teams.php',
+        'checks' => [
+            ['table' => 'team_members', 'column' => 'team_id', 'label' => 'team members'],
+            ['table' => 'matches', 'column' => 'home_team_id', 'label' => 'home fixtures'],
+            ['table' => 'matches', 'column' => 'away_team_id', 'label' => 'away fixtures'],
+            ['table' => 'tournament_results', 'column' => 'team_id', 'label' => 'tournament results'],
+        ],
+    ],
+    'staff-assignment' => [
+        'table' => 'sport_staff', 'key' => 'staff_id', 'name' => 'staff_role', 'singular' => 'staff assignment',
+        'return' => '/clubs/admin/staff.php', 'checks' => [],
+    ],
+    'tournament-registration' => [
+        'table' => 'tournament_registration', 'key' => 'reg_id', 'name' => 'registration_status', 'singular' => 'tournament registration',
+        'return' => '/tournaments/registrations.php', 'checks' => [],
+        'condition' => "registration_status IN ('pending','rejected','withdrawn')",
+    ],
+    'booking-request' => [
+        'table' => 'booking_request', 'key' => 'b_id', 'name' => 'purpose', 'singular' => 'booking request',
+        'return' => '/bookings/admin/requests.php', 'checks' => [],
+        'condition' => "booking_status IN ('pending','rejected','cancelled','canceled')",
+    ],
     'match' => [
         'table' => 'matches',
         'key' => 'm_id',
@@ -73,6 +133,7 @@ if (!is_int($id)) {
 }
 
 $definition = $definitions[$type];
+$returnUrl = $definition['return'] ?? '/admin/manage.php';
 if (!isset($_SESSION['admin_delete_csrf']) || !is_string($_SESSION['admin_delete_csrf'])) {
     $_SESSION['admin_delete_csrf'] = bin2hex(random_bytes(32));
 }
@@ -98,12 +159,17 @@ try {
     $pdo = db();
     if ($method === 'POST') {
         $pdo->beginTransaction();
+        if ($type === 'tournament-registration') {
+            $parent = $pdo->prepare('SELECT t.t_id FROM tournaments t JOIN tournament_registration tr ON tr.t_id = t.t_id WHERE tr.reg_id = ? FOR UPDATE');
+            $parent->execute([$id]);
+        }
     }
     $record = $pdo->prepare(
         'SELECT ' . $definition['name'] . ' AS record_title' .
         ($type === 'training' ? ', TIMESTAMP(date, start_time) > NOW() AS is_upcoming' : '') .
         ' FROM ' . $definition['table'] .
         ' WHERE ' . $definition['key'] . ' = :id' .
+        (isset($definition['condition']) ? ' AND ' . $definition['condition'] : '') .
         ($method === 'POST' ? ' FOR UPDATE' : '')
     );
     $record->execute(['id' => $id]);
@@ -112,6 +178,16 @@ try {
         $recordFound = true;
         $itemTitle = (string) $value['record_title'];
         $trainingStarted = $type === 'training' && (int) $value['is_upcoming'] !== 1;
+        if ($type === 'tournament-registration') {
+            $roster = $pdo->prepare('SELECT COUNT(*) FROM tournament_registration tr JOIN teams t ON t.t_id = tr.t_id JOIN team_members tm ON tm.team_id = t.team_id AND tm.user_id = tr.user_id WHERE tr.reg_id = ?');
+            $roster->execute([$id]);
+            if ($count = (int) $roster->fetchColumn()) $dependencies[] = ['label' => 'team assignments', 'count' => $count];
+        }
+        if ($type === 'club') {
+            $standalone = $pdo->prepare('SELECT COUNT(*) FROM matches m JOIN sports_clubs sc ON sc.sport = m.sport WHERE sc.club_id = ? AND m.t_id IS NULL');
+            $standalone->execute([$id]);
+            if ($count = (int) $standalone->fetchColumn()) $dependencies[] = ['label' => 'standalone fixtures for this sport', 'count' => $count];
+        }
         foreach ($definition['checks'] as $check) {
             // These names are immutable constants in the definitions map above.
             $countStmt = $pdo->prepare(
@@ -153,7 +229,7 @@ try {
             $_SESSION['admin_delete_csrf'] = bin2hex(random_bytes(32));
             $_SESSION['admin_delete_feedback'] =
                 ucfirst($definition['singular']) . ' deleted successfully.';
-            header('Location: /admin/manage.php', true, 303);
+            header('Location: ' . $returnUrl, true, 303);
             exit;
         }
         if ($pdo->inTransaction()) {
@@ -188,6 +264,7 @@ require __DIR__ . '/../includes/header.php';
     <div class="admin-confirm-card">
       <?php if ($recordFound): ?>
         <h2><?= sportsHubEscape($itemTitle) ?></h2>
+        <?php if ($type === 'account'): ?><p>Deleting an eligible student account also removes its personal profile and profile photo.</p><?php endif; ?>
       <?php endif; ?>
       <?php if ($errorMessage !== null): ?>
         <p role="alert" class="admin-hub-notice"><?= sportsHubEscape($errorMessage) ?></p>
@@ -202,7 +279,7 @@ require __DIR__ . '/../includes/header.php';
             </li>
           <?php endforeach; ?>
         </ul>
-        <p>Preserve this history. You may manage or deactivate the relevant record instead.</p>
+        <p>Remove the relevant dependent records where permitted before deleting this item.</p>
       <?php elseif ($recordFound && !$trainingStarted && $method === 'GET'): ?>
         <p>No linked records were found. Enter <strong>DELETE</strong> to confirm permanent removal.</p>
       <?php endif; ?>
@@ -218,7 +295,7 @@ require __DIR__ . '/../includes/header.php';
         </form>
       <?php endif; ?>
       <div class="admin-hub-actions">
-        <a href="/admin/manage.php">Cancel and return to management</a>
+        <a href="<?= sportsHubEscape($returnUrl) ?>">Cancel and return to management</a>
       </div>
     </div>
   </div>

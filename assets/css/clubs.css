@@ -341,7 +341,7 @@
 
 /* Table container */
 
-.clubs-page .club-admin-table-wrap {
+.club-admin-table-wrap {
     width: 100%;
     overflow-x: auto;
     background: var(--light-surface, #121212);
@@ -351,28 +351,26 @@
 
 /* Membership table */
 
-.clubs-page .club-admin-table {
+.club-admin-table {
     width: 100%;
     min-width: 850px;
     border-collapse: collapse;
     text-align: left;
 }
 
-.clubs-page .club-admin-table thead {
-    background: var(--light-raised, #1c1c1c);
+.club-admin-table thead {
+    background: var(--color-surface);
 }
 
-.clubs-page .club-admin-table th {
-    color: var(--color-accent-text);
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.7px;
-    padding: 20px 16px;
+.club-admin-table th {
+    color: var(--color-muted);
+    font-size: 13px;
+    font-weight: 650;
+    padding: 16px;
     white-space: nowrap;
 }
 
-.clubs-page .club-admin-table td {
+.club-admin-table td {
     color: var(--light-ink, #e5e5e5);
     font-size: 14px;
     line-height: 1.5;
@@ -381,20 +379,20 @@
     vertical-align: middle;
 }
 
-.clubs-page .club-admin-table tbody tr:hover {
+.club-admin-table tbody tr:hover {
     background: var(--light-raised, #1a1a1a);
 }
 
 /* Membership actions */
 
-.clubs-page .club-admin-actions {
+.club-admin-actions {
     display: flex;
     gap: 8px;
     align-items: center;
     flex-wrap: wrap;
 }
 
-.clubs-page .club-admin-actions button {
+.club-admin-actions button {
     border: none;
     border-radius: 8px;
     padding: 10px 15px;
@@ -423,7 +421,7 @@
     background: var(--light-red-surface, #512424);
 }
 
-.clubs-page .club-admin-actions button:focus-visible {
+.club-admin-actions button:focus-visible {
     outline: 2px solid var(--color-accent-text);
     outline-offset: 3px;
 }
@@ -434,8 +432,8 @@
         padding-bottom: 50px;
     }
 
-    .clubs-page .club-admin-table th,
-    .clubs-page .club-admin-table td {
+    .club-admin-table th,
+    .club-admin-table td {
         padding: 15px 12px;
     }
 }
@@ -955,7 +953,7 @@
     transition: background-color var(--ui-transition), border-color var(--ui-transition), transform var(--ui-transition);
 }
 .clubs-page :is(.clubs-filters button,.clubs-view-link,.club-apply-button,.club-create-button):hover,
-.clubs-page .club-admin-actions button:not(.club-admin-reject):not(.club-admin-edit-button):hover,
+.club-admin-actions button:not(.club-admin-reject):not(.club-admin-edit-button):hover,
 .club-staff-admin-form .club-staff-form-actions button:not(.club-admin-reject):hover {
     background: var(--color-accent-hover); color: #000; transform: translateY(-1px);
 }
@@ -992,7 +990,7 @@
     margin: 0;
     flex: 1 1 auto;
 }
-@media (max-width: 760px) { .clubs-page .clubs-grid, .clubs-page .my-memberships-grid { grid-template-columns: minmax(0,1fr); } .clubs-page .club-admin-actions { flex-wrap: wrap; } }
+@media (max-width: 760px) { .clubs-page .clubs-grid, .clubs-page .my-memberships-grid { grid-template-columns: minmax(0,1fr); } }
 @media (prefers-reduced-motion: reduce) { .clubs-page .clubs-card:hover, .clubs-page :is(.clubs-view-link,.club-apply-button):hover { transform: none; } }
 
 /* Club directory: balanced tablet field/action layout. */

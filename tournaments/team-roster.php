@@ -288,7 +288,7 @@ if (
                            AND u.role = 'student'
                            AND cm.club_id = :club_id
                            AND cm.status = 'approved'
-                         LIMIT 1"
+                         LIMIT 1 FOR UPDATE"
                     );
 
                     $eligible->execute([

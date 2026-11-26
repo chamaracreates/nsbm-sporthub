@@ -39,7 +39,7 @@ $formValues = [
     'club_name' => '',
     'sport' => '',
     'club_email' => '',
-    'status' => 'active',
+
     'description' => ''
 ];
 
@@ -94,7 +94,7 @@ if ($action === 'update') {
         $name = $updateValues['club_name'];
         $sport = $updateValues['sport'];
         $email = $updateValues['club_email'];
-        $status = $updateValues['status'];
+
         $description = $updateValues['description'];
 
         if (
@@ -115,9 +115,6 @@ if ($action === 'update') {
 
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $errorMessage = 'Please enter a valid email address.';
-
-        } elseif (!in_array($status, ['active', 'archived'], true)) {
-            $errorMessage = 'Invalid club status.';
 
         } else {
             try {
@@ -182,8 +179,7 @@ if ($action === 'update') {
                              SET club_name = :club_name,
                                  sport = :sport,
                                  description = :description,
-                                 club_email = :club_email,
-                                 status = :status
+                                 club_email = :club_email
                              WHERE club_id = :club_id"
                         );
 
@@ -192,7 +188,6 @@ if ($action === 'update') {
                             'sport' => $sport,
                             'description' => $description,
                             'club_email' => $email,
-                            'status' => $status,
                             'club_id' => $clubId
                         ]);
 
@@ -234,7 +229,7 @@ if ($action === 'create') {
         $name = $formValues['club_name'];
         $sport = $formValues['sport'];
         $email = $formValues['club_email'];
-        $status = $formValues['status'];
+
         $description = $formValues['description'];
 
         if (
@@ -255,9 +250,6 @@ if ($action === 'create') {
 
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $errorMessage = 'Please enter a valid email address.';
-
-        } elseif (!in_array($status, ['active', 'archived'], true)) {
-            $errorMessage = 'Invalid club status.';
 
         } else {
             try {
@@ -299,15 +291,14 @@ if ($action === 'create') {
                                 club_email, status)
                             VALUES
                                 (:club_name, :sport, :description,
-                                :club_email, :status)"
+                                :club_email, 'active')"
                         );
 
                         $insert->execute([
                             'club_name' => $name,
                             'sport' => $sport,
                             'description' => $description,
-                            'club_email' => $email,
-                            'status' => $status
+                            'club_email' => $email
                         ]);
 
                         $successMessage =
@@ -318,7 +309,7 @@ if ($action === 'create') {
                             'club_name' => '',
                             'sport' => '',
                             'club_email' => '',
-                            'status' => 'active',
+
                             'description' => ''
                         ];
                     }
@@ -451,6 +442,12 @@ require __DIR__ . '/../../includes/header.php';
 
 <main class="clubs-page sports-hub-workflow">
     <section class="shell clubs-directory">
+        <div class="club-create-actions">
+            <a class="button button-outline" href="/clubs/admin/members.php">Memberships</a>
+            <a class="button button-outline" href="/clubs/admin/staff.php">MICs and coaches</a>
+            <a class="button button-outline" href="/clubs/admin/leaders.php">Club leadership</a>
+        </div>
+        <?php if (isset($_SESSION['admin_delete_feedback'])): ?><p class="club-create-success" role="status"><?= sportsHubEscape($_SESSION['admin_delete_feedback']) ?></p><?php unset($_SESSION['admin_delete_feedback']); endif; ?>
 
         <h1>Manage Sports Clubs</h1>
 
@@ -544,25 +541,6 @@ require __DIR__ . '/../../includes/header.php';
                 value="<?= sportsHubEscape($formValues['club_email']) ?>"
                 placeholder="e.g. basketball@nsbm.ac.lk"
             >
-        </div>
-
-        <div class="club-create-field">
-            <label for="status">Status</label>
-
-            <select id="status" name="status" required>
-                <option
-                    value="active"
-                    <?= $formValues['status'] === 'active' ? 'selected' : '' ?>
-                >
-                    Active
-                </option>
-                <option
-                    value="archived"
-                    <?= $formValues['status'] === 'archived' ? 'selected' : '' ?>
-                >
-                    Archived
-                </option>
-            </select>
         </div>
 
         <div class="club-create-field club-create-full">
@@ -685,25 +663,6 @@ require __DIR__ . '/../../includes/header.php';
             >
         </div>
 
-        <div class="club-create-field">
-            <label for="edit_status">Status</label>
-
-            <select id="edit_status" name="status" required>
-                <option
-                    value="active"
-                    <?= $editClub['status'] === 'active' ? 'selected' : '' ?>
-                >
-                    Active
-                </option>
-                <option
-                    value="archived"
-                    <?= $editClub['status'] === 'archived' ? 'selected' : '' ?>
-                >
-                    Archived
-                </option>
-            </select>
-        </div>
-
         <div class="club-create-field club-create-full">
             <label for="edit_description">
                 Club Description
@@ -798,6 +757,7 @@ require __DIR__ . '/../../includes/header.php';
                                 >
                                     Edit
                                 </a>
+                                <a class="button button-danger-outline" href="/admin/delete.php?type=club&amp;id=<?= (int) $club['club_id'] ?>">Delete club</a>
                             </td>
 
                         </tr>

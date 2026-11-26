@@ -22,8 +22,8 @@ Public sports information is available without authentication. Student services 
 | Module | Functionality |
 | --- | --- |
 | Sports Clubs | Club profiles, membership applications, staff assignments, captain and vice-captain management |
-| Tournaments | Competition administration, student registration, team formation and roster management |
-| Fixtures and Results | Standalone and tournament match scheduling, score recording, results and standings |
+| Tournaments | Competition administration, student registration and re-registration, team formation and roster management |
+| Fixtures and Results | Standalone and tournament match scheduling, student registration and review, score recording, results and standings |
 | Training | Session scheduling, venue allocation and attendance management |
 | Facility Bookings | Facility information, reservation requests, availability validation and administrative review |
 | Sports News | Club news publishing, image management and news feeds |
@@ -67,7 +67,7 @@ The same application code supports containerized development and shared hosting 
 | Administrator | System-wide management, staff and club administration, content publishing, request approvals and reporting |
 | Member in Charge (MIC) | Authorized sports management functions within assigned clubs |
 | Coach | Authorized club-specific training, attendance and competition functions |
-| Student | Membership applications, tournament registration, facility reservations and personal participation records |
+| Student | Membership applications, tournament and match registration, facility reservations and personal participation records |
 | Public Visitor | Browse publicly available sports information without authentication |
 
 Protected operations are restricted by authenticated roles, club assignments and record ownership as applicable. Public visitor access does not represent a stored account role.
@@ -233,6 +233,21 @@ echo "Email: $email\nPassword: $password\n";
 
 Store the generated password securely. An existing account with the same email is not overwritten. The seed-author record is not an administrator login and must remain non-authenticating. To provision an account with a custom password, use the password-hashing procedure in the production administrator section with the appropriate database.
 
+### Upgrading an existing database
+
+For installations created before the participation workflow update, back up the database and execute the following SQL statements exactly once using the database administrator account.
+
+```sql
+ALTER TABLE club_membership
+    ADD COLUMN experience_level varchar(20) DEFAULT NULL,
+    ADD COLUMN application_reason varchar(500) DEFAULT NULL;
+
+ALTER TABLE matches
+    ADD COLUMN registration_open tinyint(1) NOT NULL DEFAULT 0;
+```
+
+ It adds membership application details and a match registration availability flag without replacing existing data. Existing fixtures remain closed until authorized staff explicitly open registration. Standalone fixtures remain administrator-managed; tournament-linked fixtures use the existing club staff authorization rules. Fresh installations use the updated canonical schema and must not run this migration again. Permanent deletion of clubs and other records is dependency-checked; remove eligible dependent records first. No new archive workflow is provided. Existing legacy status values remain compatible.
+
 ## Production Deployment
 
 ### Production environment
@@ -376,11 +391,14 @@ The application implements session-based authentication, password hashing, role-
 | Password storage | PHP `password_hash()` and `password_verify()` for authentication |
 | Authorization | Server-side role, club-assignment and record-ownership checks where applicable |
 | Session protection | Strict session mode, HTTP-only cookies, SameSite=Lax and Secure cookies when PHP detects HTTPS |
+| Login rate limiting | Private, lock-protected counters shared by sessions on one PHP host; five attempts per email/client and 60 attempts per client in five minutes |
 | Database access | PDO prepared statements and relational constraints |
 | Request validation | Server-side validation and CSRF token checks for protected state-changing operations |
 | Internal resources | Web server restrictions on shared PHP components and non-public files |
 | Upload security | File validation and server restrictions on executable uploads |
 | Transport security | HTTPS for the deployed application; FTPS for file transfers |
+
+Login requires a writable PHP temporary directory outside the public document root. The application stores bounded, expiring, hashed client/email counters there; no database changes are needed. A successful login clears the email/client counter, while the client-wide limit remains. Verify login on the hosted server before release; if storage is unavailable, login fails closed. Distributed deployments need additional edge rate limiting.
 
 Keep real credentials, private database exports and temporary diagnostics outside the repository and public document root. Verify HTTPS enforcement, secure cookie attributes, authorization rules and access restrictions after deploying changes. Maintain database backups and apply schema upgrades separately from fresh-install initialization.
 
@@ -400,7 +418,7 @@ Manual production verification was reported on 25 November 2026.
 
 The checks covered public module loading, global search, both colour themes, administrator authentication and management interfaces, reporting and CSV export, student registration, profile and password changes, membership and booking approvals, tournament registration, participation history, authorization and logout. Security verification included internal file and configuration access restrictions, unauthenticated dashboard and report restrictions, HTTPS redirection and removal of temporary diagnostics.
 
-The results represent the reported manual acceptance checks, not an automated test suite, exhaustive security audit or penetration test. Repeat relevant checks after deployment changes, including separate MIC and coach workflows, upload restrictions and session cookie attributes.
+These results predate the participation workflow update. The results represent the reported manual acceptance checks, not an automated test suite, exhaustive security audit or penetration test. Repeat relevant checks after deployment changes, including separate MIC and coach workflows, upload restrictions and session cookie attributes.
 
 ### Local verification
 

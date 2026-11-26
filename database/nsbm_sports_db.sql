@@ -70,7 +70,9 @@ CREATE TABLE `club_membership` (
   `user_id` int NOT NULL,
   `club_id` int NOT NULL,
   `status` enum('pending','approved','rejected') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pending',
-  `joined_date` date DEFAULT NULL
+  `joined_date` date DEFAULT NULL,
+  `experience_level` varchar(20) DEFAULT NULL,
+  `application_reason` varchar(500) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -110,6 +112,7 @@ CREATE TABLE `matches` (
   `date` date NOT NULL,
   `venue` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `match_status` varchar(100) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'scheduled',
+  `registration_open` tinyint(1) NOT NULL DEFAULT 0,
   `home_score` int NOT NULL DEFAULT '0',
   `away_score` int NOT NULL DEFAULT '0',
   `description` varchar(255) DEFAULT NULL,

@@ -109,11 +109,11 @@ include __DIR__ . '/includes/header.php';
 
         <div class="hero-section-visual">
             <img
-                src="/assets/images/herobanner.png"
-                data-light-src="/assets/images/herobannerlight.png"
+                src="/assets/images/herobanner.webp"
+                data-light-src="/assets/images/herobannerlight.webp"
                 alt=""
-                width="1450"
-                height="640"
+                width="1888"
+                height="833"
                 fetchpriority="high">
         </div>
 

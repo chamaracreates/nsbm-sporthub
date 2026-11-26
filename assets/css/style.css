@@ -1345,6 +1345,14 @@ a:focus-visible {
         z-index: 2;
     }
 
+    .hero-section #hero-title {
+        font-size: clamp(52px, 9.5vw, 106px);
+    }
+
+    .hero-section-subtitle {
+        font-size: clamp(17px, 2.4vw, 26px);
+    }
+
     .hero-section-cta {
         grid-column: 1;
         grid-row: 2;
@@ -1369,7 +1377,6 @@ a:focus-visible {
     }
 
     .hero-section #hero-title {
-        font-size: clamp(35px, 7.5vw, 65px);
         line-height: 1.05;
         letter-spacing: -0.04em;
     }
@@ -1378,7 +1385,6 @@ a:focus-visible {
         width: 95%;
         max-width: 620px;
         margin: 22px auto 0;
-        font-size: clamp(15px, 2vw, 18px);
         line-height: 1.5;
     }
 
@@ -2061,7 +2067,7 @@ select:disabled {
     flex: 0 0 auto;
 }
 .site-header .mobile-controls > .header-profile-menu { display: none; }
-.site-header :is(.header-profile-trigger, .phase13-search-trigger, .mobile-account-link, .mobile-menu-trigger, .account-nav > .theme-toggle, .profile-menu > summary) {
+:is(.site-header, .admin-header-actions) :is(.header-profile-trigger, .phase13-search-trigger, .mobile-account-link, .mobile-menu-trigger, .theme-toggle, .profile-menu > summary) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -2082,19 +2088,19 @@ select:disabled {
     text-decoration: none;
     transition: color .2s ease, background-color .2s ease;
 }
-.site-header :is(.header-profile-trigger, .phase13-search-trigger, .mobile-account-link, .mobile-menu-trigger, .account-nav > .theme-toggle, .profile-menu > summary) > svg {
+:is(.site-header, .admin-header-actions) :is(.header-profile-trigger, .phase13-search-trigger, .mobile-account-link, .mobile-menu-trigger, .theme-toggle, .profile-menu > summary) > svg {
     width: var(--header-glyph-size, 22px);
     height: var(--header-glyph-size, 22px);
     flex: 0 0 auto;
 }
 .site-header .header-profile-trigger::-webkit-details-marker { display: none; }
 .site-header .header-profile-trigger::marker { content: ""; }
-.site-header :is(.header-profile-trigger, .phase13-search-trigger, .mobile-account-link, .mobile-menu-trigger, .account-nav > .theme-toggle, .profile-menu > summary):hover,
+:is(.site-header, .admin-header-actions) :is(.header-profile-trigger, .phase13-search-trigger, .mobile-account-link, .mobile-menu-trigger, .theme-toggle, .profile-menu > summary):hover,
 .site-header :is(.header-profile-menu, .profile-menu, .mobile-menu)[open] > summary {
     color: var(--color-accent-text);
     background: var(--color-surface-alt);
 }
-.site-header :is(.header-profile-trigger, .phase13-search-trigger, .mobile-account-link, .mobile-menu-trigger, .account-nav > .theme-toggle, .profile-menu > summary):focus-visible {
+:is(.site-header, .admin-header-actions) :is(.header-profile-trigger, .phase13-search-trigger, .mobile-account-link, .mobile-menu-trigger, .theme-toggle, .profile-menu > summary):focus-visible {
     outline: 2px solid var(--color-accent-text);
     outline-offset: 3px;
 }
@@ -2837,9 +2843,7 @@ select:not([multiple]):not([size]):disabled { opacity: .6; }
   .homepage .club-spotlight-summary { font-size: 14px !important; }
 }
 
-/* Shared site navigation, administration and responsive components. */
-/* Shared management layouts and controls */
-/* Management pages use consistent colour and spacing tokens. */
+/* Shared management layouts and controls. */
 .sports-hub-workflow,
 .admin-content-hub,
 .admin-delete-page {
@@ -2973,7 +2977,7 @@ select:not([multiple]):not([size]):disabled { opacity: .6; }
     outline: 2px solid var(--light-ink, #a8ff00);
     outline-offset: 2px;
 }
-.sports-hub-workflow :is(.button, .facility-admin-button, .club-create-button, .club-admin-edit-button, .club-admin-approve, .club-admin-reject, .club-apply-button, .training-primary-button, .training-session-action, .training-create-link) {
+.sports-hub-workflow :is(.button, .facility-admin-button, .club-create-button, .club-admin-edit-button, .club-admin-approve, .club-admin-reject, .club-apply-button, .training-session-action, .training-create-link) {
     box-sizing: border-box;
     display: inline-flex;
     justify-content: center;
@@ -2990,12 +2994,12 @@ select:not([multiple]):not([size]):disabled { opacity: .6; }
     white-space: normal;
     transition: background-color .18s ease, color .18s ease;
 }
-.sports-hub-workflow :is(.button-accent, .club-create-button, .club-admin-approve, .training-primary-button, .training-session-action:not(.button-danger-outline):not(.training-session-edit), .training-create-link, .facility-admin-button:not(.button-danger-outline)) {
+.sports-hub-workflow :is(.button-accent, .club-create-button, .club-admin-approve, .training-session-action:not(.button-danger-outline):not(.training-session-edit), .training-create-link, .facility-admin-button:not(.button-danger-outline)) {
     background-color: #a8ff00;
     border: 1px solid transparent;
     color: #080a08;
 }
-.sports-hub-workflow :is(.button-accent, .club-create-button, .club-admin-approve, .training-primary-button, .training-session-action:not(.button-danger-outline):not(.training-session-edit), .training-create-link, .facility-admin-button:not(.button-danger-outline)):hover {
+.sports-hub-workflow :is(.button-accent, .club-create-button, .club-admin-approve, .training-session-action:not(.button-danger-outline):not(.training-session-edit), .training-create-link, .facility-admin-button:not(.button-danger-outline)):hover {
     background-color: #c5ff60;
     color: #080a08;
 }
@@ -3189,7 +3193,7 @@ select:not([multiple]):not([size]):disabled { opacity: .6; }
     .sports-hub-workflow .club-staff-admin-panel {
         padding: 22px;
     }
-    .sports-hub-workflow :is(.button, .facility-admin-button, .club-create-button, .club-admin-edit-button, .club-admin-approve, .club-admin-reject, .club-apply-button, .training-primary-button, .training-session-action, .training-create-link) {
+    .sports-hub-workflow :is(.button, .facility-admin-button, .club-create-button, .club-admin-edit-button, .club-admin-approve, .club-admin-reject, .club-apply-button, .training-session-action, .training-create-link) {
         min-height: 42px;
     }
     .admin-hub-grid { grid-template-columns: 1fr; }
@@ -3841,9 +3845,7 @@ main.clubs-page .v16-empty-state p {
     }
 }
 
-/* Dashboard and report interface */
 /* Dashboard and reporting layout. */
-/* Dashboard and reporting selectors are scoped to their page containers. */
 .admin-layout {
     --admin-accent: var(--color-accent, #a8ff00);
     --admin-text: var(--color-text, #f5f5f7);
@@ -4438,8 +4440,7 @@ main.clubs-page .v16-empty-state p {
 }
 @media(prefers-reduced-motion:reduce){.phase14-search-result{transition:none;}}
 
-/* Responsive navigation and management components */
-/* Shared header, directory and administration selectors use global design tokens. */
+/* Responsive navigation and management components. */
 :root {
   --ui-accent: var(--color-accent, #a8ff00);
   --ui-ink: var(--color-text, #f5f5f7);
@@ -4681,6 +4682,7 @@ main.clubs-page .v16-empty-state p {
     order: 1;
     margin: 0;
   }
+  .site-header .mobile-controls > .theme-toggle { order: 0; }
   .site-header .mobile-controls > .phase13-search-trigger { order: 2; }
   .site-header .mobile-controls > .mobile-menu { order: 3; }
   .site-header .mobile-menu-account { display: flex !important; gap: 12px; }
@@ -4691,8 +4693,7 @@ main.clubs-page .v16-empty-state p {
   .site-header .topbar { gap: 8px; }
 }
 
-/* Shared content presentation and form controls */
-/* Shared layout and interaction rules. */
+/* Shared content presentation and form controls. */
 :root { --nsbm-ui-green:#a8ff00; }
 
 /* Registration button typography and dimensions. */
@@ -4728,7 +4729,8 @@ main.clubs-page .v16-empty-state p {
 
 /* Tournament detail hero, fact panel, and sidebar cards. */
 .tournaments-page .tournament-view-navigation {
-    margin:12px 0 18px !important; padding:0;
+    display:flex; flex-wrap:wrap; align-items:center; gap:10px;
+    margin:0 0 24px; padding:0;
 }
 .tournaments-page .nsbm-tournament-hero {
     position:relative; display:flex; align-items:flex-end; isolation:isolate;
@@ -4897,8 +4899,7 @@ main.clubs-page .v16-empty-state p {
   .tournaments-page .nsbm-tournament-hero-content {padding:20px;}
 }
 
-/* Global component and page layout rules */
-/* Shared spacing and layout rules for module workflows. */
+/* Shared workflow layouts. */
 :root { --nsbm-lime:#a8ff00; }
 /* Student and admin profile menus: compact and neutral. */
 .site-header :is(.account-nav,.mobile-controls) .header-profile-panel {
@@ -5527,15 +5528,3 @@ main.tournaments-page:not(.sports-hub-workflow) .tournament-card-footer-link:foc
         --directory-top-inset: 36px;
     }
 }
-
-.theme-toggle {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    min-height: 40px; padding: 8px 12px; border: 1px solid var(--color-border);
-    border-radius: var(--ui-radius-pill); background: var(--color-surface-alt);
-    color: var(--color-text); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
-}
-.theme-toggle:hover { background: var(--color-surface); border-color: var(--color-accent-text); }
-.theme-toggle:focus-visible { outline: 2px solid var(--color-accent-text); outline-offset: 3px; }
-.theme-toggle svg { width: 18px; height: 18px; flex: 0 0 18px; }
-.account-nav .theme-toggle span { display: none; }
-.mobile-menu-panel .theme-toggle { align-self: flex-start; margin-block: 8px; }

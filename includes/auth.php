@@ -53,6 +53,94 @@ function auth_start(): void
 }
 
 
+function auth_login_rate_limit(string $email, bool $reset = false): bool
+{
+    $address = $_SERVER['REMOTE_ADDR'] ?? '';
+    $packed = is_string($address) ? @inet_pton($address) : false;
+    $client = $packed === false ? 'unknown' : bin2hex($packed);
+    $clientKey = hash('sha256', 'client:' . $client);
+    $accountKey = hash('sha256', 'account:' . $client . ':' . $email);
+    $directory = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR
+        . 'sportshub-auth-' . hash('sha256', __DIR__);
+    if (!is_dir($directory) && !@mkdir($directory, 0700) && !is_dir($directory)) {
+        throw new RuntimeException('Unable to initialize login rate limiting.');
+    }
+    $storage = realpath($directory);
+    $documentRoot = realpath(($_SERVER['DOCUMENT_ROOT'] ?? '') ?: dirname(__DIR__));
+    if ($storage === false || is_link($directory) || $documentRoot === false ||
+        $storage === $documentRoot || str_starts_with($storage, rtrim($documentRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR) ||
+        (@fileperms($storage) & 0777) !== 0700) {
+        throw new RuntimeException('Login rate-limit storage is not private.');
+    }
+
+    $lock = @fopen($storage . '/attempts.lock', 'c');
+    if ($lock === false) {
+        throw new RuntimeException('Unable to open login rate-limit storage.');
+    }
+    try {
+        if (!flock($lock, LOCK_EX)) {
+            throw new RuntimeException('Unable to lock login rate-limit storage.');
+        }
+        $path = $storage . '/attempts.json';
+        $entries = [];
+        if (is_file($path)) {
+            $data = @file_get_contents($path, false, null, 0, 1048577);
+            if ($data === false || strlen($data) > 1048576) {
+                throw new RuntimeException('Unable to read login rate-limit storage.');
+            }
+            $entries = json_decode($data, true, 8, JSON_THROW_ON_ERROR);
+            if (!is_array($entries)) {
+                throw new RuntimeException('Invalid login rate-limit storage.');
+            }
+        }
+        $now = time();
+        foreach ($entries as $key => $entry) {
+            if (!is_array($entry) || !isset($entry['expires'], $entry['count']) ||
+                !is_int($entry['expires']) || !is_int($entry['count'])) {
+                throw new RuntimeException('Invalid login rate-limit entry.');
+            }
+            if ($entry['expires'] <= $now) {
+                unset($entries[$key]);
+            }
+        }
+
+        if ($reset) {
+            unset($entries[$accountKey]);
+        } else {
+            if (($entries[$clientKey]['count'] ?? 0) >= 60 ||
+                ($entries[$accountKey]['count'] ?? 0) >= 5 ||
+                count($entries) + (int) !isset($entries[$clientKey]) + (int) !isset($entries[$accountKey]) > 4096) {
+                return false;
+            }
+            foreach ([$clientKey, $accountKey] as $key) {
+                $entries[$key] ??= ['expires' => $now + 300, 'count' => 0];
+                $entries[$key]['count']++;
+            }
+        }
+
+        // Atomic replacement keeps the previous counter intact if writing fails.
+        $temporary = @tempnam($storage, 'attempts-');
+        if ($temporary === false) {
+            throw new RuntimeException('Unable to write login rate-limit storage.');
+        }
+        try {
+            $encoded = json_encode($entries, JSON_THROW_ON_ERROR);
+            if (@file_put_contents($temporary, $encoded) !== strlen($encoded) || !@rename($temporary, $path)) {
+                throw new RuntimeException('Unable to save login rate-limit storage.');
+            }
+        } finally {
+            if (is_file($temporary)) {
+                @unlink($temporary);
+            }
+        }
+        return true;
+    } finally {
+        flock($lock, LOCK_UN);
+        fclose($lock);
+    }
+}
+
+
 function current_user_id(): ?int
 {
     auth_start();

@@ -77,10 +77,11 @@ if (!is_int($tournamentId)) {
 
         $statement = $pdo->prepare(
             "SELECT t.t_id, t.t_name, t.sport, t.venue, t.status,
-                    t.reg_open_at, t.reg_end_at, t.start_date, t.is_historical, sc.club_name
+                    t.reg_open_at, t.reg_end_at, t.start_date, t.is_historical, COALESCE(NULLIF(t.organizer_name, ''), sc.club_name, 'Organizer not published') AS club_name
              FROM tournaments AS t
-             INNER JOIN sports_clubs AS sc ON sc.club_id = t.club_id
-             WHERE t.t_id = :tournament_id AND sc.status = 'active'
+             LEFT JOIN sports_clubs AS sc ON sc.club_id = t.club_id
+             WHERE t.t_id = :tournament_id AND (sc.status = 'active' OR t.is_historical = 1)
+                 AND LOWER(TRIM(t.status)) <> 'draft'
              LIMIT 1"
         );
         $statement->execute(['tournament_id' => $tournamentId]);
@@ -137,7 +138,7 @@ if (
     if (!is_string($submittedToken) || !hash_equals($csrfToken, $submittedToken)) {
         http_response_code(403);
         $errors[] = 'Invalid form session. Refresh the page and try again.';
-    } elseif ($registration !== null) {
+    } elseif ($registration !== null && (!in_array($registration['registration_status'], ['withdrawn', 'rejected'], true) || $rosterMember)) {
         $errors[] = 'A registration record already exists for this tournament.';
     } elseif (!$isOpen) {
         $errors[] = 'Registration is not currently open.';
@@ -155,20 +156,26 @@ if (
             $statement->execute(['tournament_id' => $tournamentId]);
             $current = $statement->fetch(PDO::FETCH_ASSOC);
 
-            if (!is_array($current) || !sportsHubRegistrationOpen($current, date('Y-m-d'))) {
+            if (!is_array($current) || !sportsHubRegistrationOpen($current, $today)) {
                 $pdo->rollBack();
                 $errors[] = 'The registration window is no longer open.';
             } else {
-                $statement = $pdo->prepare(
-                    "INSERT INTO tournament_registration
-                        (t_id, user_id, reg_date, registration_status)
-                     VALUES (:tournament_id, :user_id, :reg_date, 'pending')"
-                );
-                $statement->execute([
-                    'tournament_id' => $tournamentId,
-                    'user_id' => $userId,
-                    'reg_date' => $today,
-                ]);
+                $statement = $pdo->prepare('SELECT reg_id, registration_status FROM tournament_registration WHERE t_id = ? AND user_id = ? FOR UPDATE');
+                $statement->execute([$tournamentId, $userId]);
+                $existing = $statement->fetch();
+                if ($existing) {
+                    if (!in_array($existing['registration_status'], ['withdrawn', 'rejected'], true)) {
+                        throw new DomainException('A registration is already active.');
+                    }
+                    $statement = $pdo->prepare('SELECT 1 FROM team_members tm JOIN teams t ON t.team_id = tm.team_id WHERE t.t_id = ? AND tm.user_id = ?');
+                    $statement->execute([$tournamentId, $userId]);
+                    if ($statement->fetchColumn()) throw new DomainException('Contact tournament staff about your existing team.');
+                    $statement = $pdo->prepare("UPDATE tournament_registration SET registration_status = 'pending', reg_date = ?, reviewed_by = NULL, reviewed_at = NULL WHERE reg_id = ?");
+                    $statement->execute([$today, $existing['reg_id']]);
+                } else {
+                    $statement = $pdo->prepare("INSERT INTO tournament_registration (t_id, user_id, reg_date, registration_status) VALUES (?, ?, ?, 'pending')");
+                    $statement->execute([$tournamentId, $userId, $today]);
+                }
                 $pdo->commit();
 
                 $_SESSION['tournament_register_success'] = $tournamentId;
@@ -190,18 +197,17 @@ require __DIR__ . '/../includes/header.php';
 ?>
 
 
-<main class="tournaments-page">
+<main class="tournaments-page sports-hub-workflow">
     <section class="tournaments-container section-container">
-        <div class="tournament-view-navigation">
-            <a href="/tournaments/index.php" class="button button-outline">All Tournaments</a>
-        </div>
-
         <header class="tournaments-heading">
-            <p class="section-label">NSBM SPORTSHUB / REGISTRATION</p>
-            <h1>Register for a tournament.</h1>
+            <h1>Tournament registration.</h1>
             <p class="section-description">Submit and manage your tournament registration.</p>
         </header>
 
+        <div class="tournament-view-navigation">
+            <a href="/tournaments/index.php" class="button button-outline">Back to tournaments</a>
+            <a href="/student/registrations.php" class="button button-outline">My registrations</a>
+        </div>
         <?php if ($pageError !== null): ?>
             <div class="tournaments-notice" role="alert">
                 <h2>Registration unavailable</h2>
@@ -222,15 +228,15 @@ require __DIR__ . '/../includes/header.php';
                 <dl class="tournament-view-facts">
                     <div>
                         <dt>Registration opens</dt>
-                        <dd><?= sportsHubEscape($tournament['reg_open_at']) ?></dd>
+                        <dd><?= sportsHubEscape(sportsHubTournamentDate($tournament['reg_open_at'])) ?></dd>
                     </div>
                     <div>
                         <dt>Registration closes</dt>
-                        <dd><?= sportsHubEscape($tournament['reg_end_at']) ?></dd>
+                        <dd><?= sportsHubEscape(sportsHubTournamentDate($tournament['reg_end_at'])) ?></dd>
                     </div>
                     <div>
                         <dt>Tournament starts</dt>
-                        <dd><?= sportsHubEscape($tournament['start_date']) ?></dd>
+                        <dd><?= sportsHubEscape(sportsHubTournamentDate($tournament['start_date'])) ?></dd>
                     </div>
                     <div>
                         <dt>Venue</dt>
@@ -284,23 +290,24 @@ require __DIR__ . '/../includes/header.php';
                     <?php elseif ($canWithdraw): ?>
                         <form method="post" action="/tournaments/withdraw.php"
                             class="tournament-form-actions"
-                            onsubmit="return confirm('Withdraw this registration? You will not be able to reapply automatically.');">
+                            onsubmit="return confirm('Withdraw this registration?');">
                             <input type="hidden" name="csrf_token" value="<?= sportsHubEscape($csrfToken) ?>">
                             <input type="hidden" name="tournament_id" value="<?= (int) $tournamentId ?>">
                             <button type="submit" class="button button-outline">Withdraw Registration</button>
                         </form>
                         <p class="tournament-view-muted">
-                            Withdrawal is final. Contact tournament staff if you need to register again.
+                            You may register again while registration is open.
                         </p>
                     <?php endif; ?>
-                <?php elseif ($isOpen): ?>
+                <?php endif; ?>
+                <?php if ($isOpen && !$rosterMember && ($registration === null || in_array($registration['registration_status'], ['withdrawn', 'rejected'], true))): ?>
                     <form method="post"
                         action="/tournaments/register.php?id=<?= (int) $tournamentId ?>"
                         class="tournament-form-actions">
                         <input type="hidden" name="csrf_token" value="<?= sportsHubEscape($csrfToken) ?>">
-                        <button type="submit" class="button button-accent">Submit Registration</button>
+                        <button type="submit" class="button button-accent"> <?= $registration === null ? 'Submit registration' : 'Register again' ?></button>
                     </form>
-                <?php else: ?>
+                <?php elseif (!$isOpen): ?>
                     <p class="tournament-view-muted">Registration is not currently open.</p>
                 <?php endif; ?>
             </article>

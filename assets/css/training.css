@@ -252,23 +252,6 @@
     font-weight: 500;
 }
 
-/* Style the Mark Present action. */
-.training-attendance-row button {
-    padding: 12px;
-    border: none;
-    border-radius: 9px;
-    background: var(--color-accent);
-    color: #000;
-    font: inherit;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-/* Apply hover feedback only to enabled buttons. */
-.training-attendance-row button:not(:disabled):hover {
-    background: var(--color-accent-hover);
-}
-
 /* Prevent repeated attendance submissions. */
 .training-attendance-row button:disabled {
     cursor: default;
@@ -421,8 +404,7 @@
 .training-field input:focus-visible,
 .training-field select:focus-visible,
 .training-field textarea:focus-visible,
-.training-primary-button:focus-visible,
-.training-secondary-link:focus-visible {
+.training-form-actions .button:focus-visible {
     outline: 2px solid var(--color-accent-text);
     outline-offset: 3px;
 }
@@ -435,31 +417,6 @@
     margin-top: 32px;
 }
 
-.training-primary-button {
-    padding: 14px 24px;
-    border: 0;
-    border-radius: 10px;
-    background: var(--color-accent);
-    color: #000;
-    font: inherit;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.training-primary-button:hover {
-    background: var(--color-accent-hover);
-}
-
-.training-secondary-link {
-    color: var(--color-text);
-    font-size: 14px;
-    text-decoration: none;
-}
-
-.training-secondary-link:hover {
-    color: var(--color-accent-text);
-}
 
 .training-form-alert,
 .training-form-success {
@@ -504,7 +461,7 @@
         flex-direction: column;
     }
 
-    .training-primary-button {
+    .training-form-actions .button {
         width: 100%;
     }
 }
@@ -585,16 +542,6 @@
     background: var(--color-accent-hover);
 }
 
-/* Distinguish the session editing action. */
-.training-session-edit {
-    background: transparent;
-    color: var(--color-accent-text);
-}
-
-.training-session-edit:hover {
-    background: var(--color-surface-alt);
-}
-
 /* Maintain accessible keyboard navigation. */
 .training-session-action:focus-visible {
     outline: 2px solid var(--color-accent-text);
@@ -628,26 +575,23 @@
     min-height: var(--ui-field-height); border-color: var(--color-border); border-radius: var(--ui-radius-control);
     background: var(--color-surface-alt); color: var(--color-text); font-family: inherit; font-size: 14px; color-scheme: inherit;
 }
-.training-primary-button, .training-create-link, .training-session-action:not(.training-session-edit), .training-attendance-row button:not(:disabled) {
+.training-create-link, .training-session-action:not(.training-session-edit) {
     display: inline-flex; align-items: center; justify-content: center; min-height: var(--ui-button-height);
     padding: 0 22px; border: 1px solid transparent; border-radius: var(--ui-radius-pill);
     background: var(--color-accent); color: #000; font-family: inherit; font-size: 14px; font-weight: 700; text-decoration: none; cursor: pointer;
     transition: background-color var(--ui-transition), transform var(--ui-transition);
 }
-.training-primary-button:hover, .training-create-link:hover, .training-session-action:not(.training-session-edit):hover, .training-attendance-row button:not(:disabled):hover {
+.training-create-link:hover, .training-session-action:not(.training-session-edit):hover {
     background: var(--color-accent-hover); color: #000; transform: translateY(-1px);
 }
-.training-session-edit, .training-secondary-link {
+.training-session-edit {
     min-height: var(--ui-button-height); border: 1px solid var(--color-border); border-radius: var(--ui-radius-pill);
     background: var(--color-surface-alt); color: var(--color-text);
 }
-.training-session-edit:hover, .training-secondary-link:hover { background: var(--light-hover, #292d30); color: var(--color-text); }
+.training-session-edit:hover { background: var(--light-hover, #292d30); color: var(--color-text); }
 @media (max-width: 600px) { .training-session-actions { align-items: stretch; } .training-session-action { width: 100%; } }
 
-/* Public training directory */
-/* NSBM SportsHub | Public Training Sessions catalogue only.
-   Loaded AFTER training.css. Management, forms and attendance are not restyled.
-   Shared reference: style.css; black backgrounds, subdued cards and lime accents. */
+/* Public training directory. */
 .training-page.training-directory-page {
     min-height: 65vh;
     padding: var(--directory-top-inset) 0 clamp(72px, 9vw, 110px);

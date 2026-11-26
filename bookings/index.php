@@ -61,17 +61,16 @@ require __DIR__ . '/../includes/header.php';
                 Requests are reviewed by the university sports administration.
             </p>
 
-            <div class="booking-directory-actions">
-                <?php if ($visitorRole === 'student'): ?>
-                    <a class="booking-request-link" href="/bookings/request.php">Request a Booking</a>
-                    <a class="booking-directory-secondary" href="/bookings/history.php">My Bookings</a>
-                <?php elseif ($visitorRole === 'admin'): ?>
-                    <a class="booking-request-link" href="/bookings/admin/index.php">Manage Facilities</a>
-                    <a class="booking-directory-secondary" href="/bookings/admin/requests.php">Review Bookings</a>
-                <?php elseif ($visitorRole === null): ?>
-                    <a class="booking-request-link" href="/login.php">Log in to Book</a>
-                <?php endif; ?>
-            </div>
+            <?php if (in_array($visitorRole, ['student', 'admin'], true)): ?>
+                <div class="booking-directory-actions">
+                    <?php if ($visitorRole === 'student'): ?>
+                        <a class="button button-outline" href="/bookings/history.php">My bookings</a>
+                    <?php elseif ($visitorRole === 'admin'): ?>
+                        <a class="button button-accent" href="/bookings/admin/index.php">Manage facilities</a>
+                        <a class="button button-outline" href="/bookings/admin/requests.php">Review bookings</a>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
 
         </section>
 
@@ -158,19 +157,18 @@ require __DIR__ . '/../includes/header.php';
                             <div class="facility-card-body">
                                 <h3 class="booking-card-title"><?= sportsHubEscape($facility['res_name']) ?></h3>
                                 <p class="booking-description"><?= sportsHubEscape($facilityInformation) ?></p>
-                                <!-- Facility booking actions. -->
                                 <div class="facility-card-footer">
                                     <div class="facility-card-actions">
                                         <?php if ($visitorRole === 'admin'): ?>
-                                            <a class="booking-request-link facility-edit-link"
+                                            <a class="button button-outline"
                                                href="/bookings/admin/edit.php?res_id=<?= (int) $facility['res_id'] ?>">Edit facility</a>
                                         <?php elseif (!$isBookable): ?>
                                             <span class="booking-request-unavailable">Currently unavailable</span>
                                         <?php elseif ($visitorRole === 'student'): ?>
-                                            <a class="booking-request-link"
-                                               href="/bookings/request.php?res_id=<?= (int) $facility['res_id'] ?>">Book Now</a>
+                                            <a class="button button-accent"
+                                               href="/bookings/request.php?res_id=<?= (int) $facility['res_id'] ?>">Book facility</a>
                                         <?php elseif ($visitorRole === null): ?>
-                                            <a class="booking-request-link" href="/login.php">Book Now</a>
+                                            <a class="button button-accent" href="/login.php">Log in to book</a>
                                         <?php else: ?>
                                             <span class="booking-request-unavailable">Student bookings only</span>
                                         <?php endif; ?>

@@ -222,6 +222,7 @@ try {
         "SELECT
             tr.reg_id,
             tr.registration_status,
+            sp.student_number, sp.study_program,
             tr.reg_date,
             tr.reviewed_at,
             t.t_id,
@@ -242,6 +243,7 @@ try {
          INNER JOIN tournaments AS t ON t.t_id = tr.t_id
          INNER JOIN sports_clubs AS sc ON sc.club_id = t.club_id
          INNER JOIN users AS student ON student.user_id = tr.user_id
+         LEFT JOIN student_profiles sp ON sp.user_id = tr.user_id
          LEFT JOIN users AS reviewer ON reviewer.user_id = tr.reviewed_by
          WHERE sc.status = 'active'
            $scopeSql
@@ -269,6 +271,10 @@ require __DIR__ . '/../includes/header.php';
         <header class="tournaments-heading">
             <p class="section-label">NSBM SPORTSHUB / TOURNAMENT REGISTRATIONS</p>
             <h1>Review registrations.</h1>
+        <?php if (isset($_SESSION['admin_delete_feedback'])): ?>
+            <p class="tournament-form-success" role="status"><?= sportsHubEscape($_SESSION['admin_delete_feedback']) ?></p>
+            <?php unset($_SESSION['admin_delete_feedback']); ?>
+        <?php endif; ?>
             <p class="section-description">
                 Review student participation requests for tournaments in your authorized sports clubs.
             </p>
@@ -336,6 +342,7 @@ require __DIR__ . '/../includes/header.php';
                             <p class="tournament-club">
                                 <?= sportsHubEscape($registration['student_email']) ?>
                             </p>
+                            <p><?= sportsHubEscape($registration['student_number'] ?? 'Student ID not provided') ?> · <?= sportsHubEscape($registration['study_program'] ?? 'Programme not provided') ?></p>
                             <div class="tournament-details">
                                 <p><strong>Tournament</strong><span><?= sportsHubEscape($registration['t_name']) ?></span></p>
                                 <p><strong>Applied</strong><span><?= sportsHubEscape($registration['reg_date']) ?></span></p>
@@ -367,6 +374,9 @@ require __DIR__ . '/../includes/header.php';
                                 </div>
                             <?php elseif ($registration['registration_status'] === 'pending'): ?>
                                 <p class="tournament-view-muted">Review is closed for this tournament.</p>
+                            <?php endif; ?>
+                            <?php if ($userRole === 'admin' && !$studentInTeam && in_array($registration['registration_status'], ['pending','rejected','withdrawn'], true)): ?>
+                                <a class="button button-danger-outline" href="/admin/delete.php?type=tournament-registration&amp;id=<?= (int) $registration['reg_id'] ?>">Delete request</a>
                             <?php endif; ?>
                         </article>
                     <?php endforeach; ?>

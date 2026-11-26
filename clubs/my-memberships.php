@@ -168,15 +168,15 @@ require __DIR__ . '/../includes/header.php';
                         <?php if ($membership['club_status'] === 'active'): ?>
 
                             <a
-                                href="/clubs/view.php?id=<?= (int) $membership['club_id'] ?>"
+                                href="/clubs/join.php?id=<?= (int) $membership['club_id'] ?>"
                                 class="clubs-view-link"
                             >
-                                View club
+                                Manage membership
                             </a>
 
                         <?php else: ?>
 
-                            <p>This club is currently archived.</p>
+                            <p>This club is currently unavailable.</p>
 
                         <?php endif; ?>
 

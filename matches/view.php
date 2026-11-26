@@ -15,6 +15,7 @@ $matchId = filter_input(
 
 $match = null;
 $errorMessage = '';
+$hasRegistration = false;
 
 // Retrieve the selected match from the database.
 if ($matchId === null || $matchId === false) {
@@ -22,30 +23,16 @@ if ($matchId === null || $matchId === false) {
     $errorMessage = 'A valid match ID is required.';
 } else {
     try {
-        $sql = "SELECT
-                    m_id,
-                    t_id,
-                    title,
-                    home_name,
-                    away_name,
-                    sport,
-                    date,
-                    venue,
-                    match_status,
-                    home_score,
-                description, image_path, home_wickets, away_wickets, home_balls, away_balls,
-                    away_score
-                FROM matches
-                WHERE m_id = :match_id
-                LIMIT 1";
+        $match = sportsHubRegistrationMatch(db(), (int)$matchId);
 
-        $statement = db()->prepare($sql);
-
-        $statement->execute([
-            'match_id' => $matchId
-        ]);
-
-        $match = $statement->fetch(PDO::FETCH_ASSOC);
+        if ($match && !sportsHubMatchRegistrationOpen($match)) {
+            require_once __DIR__ . '/../includes/auth.php';
+            if (current_user_role() === 'student') {
+                $stmt = db()->prepare('SELECT 1 FROM match_registration WHERE m_id = ? AND user_id = ?');
+                $stmt->execute([$matchId, current_user_id()]);
+                $hasRegistration = $stmt->fetchColumn() !== false;
+            }
+        }
 
         if (!$match) {
             http_response_code(404);
@@ -175,6 +162,12 @@ include __DIR__ . '/../includes/header.php';
                         <dd><?= sportsHubEscape($venue !== '' ? $venue : 'Not published') ?></dd>
                     </div>
                 </dl>
+                <?php if ($hasRegistration || (sportsHubMatchRegistrationOpen($match) && (current_user_role() === 'student' || !is_logged_in()))): ?>
+                    <div class="match-profile-section-heading">
+                        <p><?= sportsHubMatchRegistrationOpen($match) ? 'Registration open' : 'Registration closed' ?></p>
+                        <a class="button <?= sportsHubMatchRegistrationOpen($match) ? 'button-accent' : 'button-outline' ?>" href="/matches/register.php?id=<?= (int)$match['m_id'] ?>"><?= sportsHubMatchRegistrationOpen($match) ? 'Register for match' : 'View my registration' ?></a>
+                    </div>
+                <?php endif; ?>
             </section>
         </div>
     <?php endif; ?>
