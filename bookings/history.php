@@ -223,6 +223,9 @@ require_once __DIR__ . '/../includes/header.php';
 
 <td>
     <?php if ($booking['booking_status'] === 'pending'): ?>
+        <?php if ($booking['date'] . ' ' . $booking['starts_at'] > date('Y-m-d H:i:s')): ?>
+            <a class="facility-admin-button facility-button-secondary" href="/bookings/request.php?edit=<?= (int)$booking['b_id'] ?>">Edit request</a>
+        <?php endif; ?>
 
         <form
             method="POST"

@@ -146,7 +146,6 @@ $isStudent = $viewerId !== null && current_user_role() === 'student';
 
 $membershipStatus = null;
 $membershipCheckFailed = false;
-$csrfToken = '';
 
 if ($club && $isStudent) {
     try {
@@ -169,15 +168,6 @@ if ($club && $isStudent) {
             $membershipStatus = (string) $status;
         }
 
-        // Generate a secure token for new applications.
-        if ($membershipStatus === null) {
-            if (empty($_SESSION['club_join_csrf'])) {
-                $_SESSION['club_join_csrf'] =
-                    bin2hex(random_bytes(32));
-            }
-
-            $csrfToken = $_SESSION['club_join_csrf'];
-        }
 
     } catch (Throwable $exception) {
         error_log(
@@ -287,18 +277,9 @@ if ($club && !$loadError) {
                             <p class="club-hero-status" role="alert">
                                 Membership status is temporarily unavailable.
                             </p>
-                        <?php elseif ($isStudent && $membershipStatus === null): ?>
-                            <form action="/clubs/join.php" method="post">
-                                <input type="hidden" name="club_id"
-                                    value="<?= (int) $club['club_id'] ?>">
-                                <input type="hidden" name="csrf_token"
-                                    value="<?= sportsHubEscape($csrfToken) ?>">
-                                <button type="submit" class="club-apply-button">Join us</button>
-                            </form>
                         <?php elseif ($isStudent): ?>
-                            <p class="club-hero-status" role="status">
-                                Membership: <strong><?= sportsHubEscape(ucfirst($membershipStatus)) ?></strong>
-                            </p>
+                            <a href="/clubs/join.php?id=<?= (int) $club['club_id'] ?>" class="club-apply-button"><?= $membershipStatus === null ? 'Join us' : 'Manage membership' ?></a>
+                            <?php if ($membershipStatus !== null): ?><p class="club-hero-status">Membership: <?= sportsHubEscape(ucfirst($membershipStatus)) ?></p><?php endif; ?>
                         <?php endif; ?>
                     </div>
                 </div>

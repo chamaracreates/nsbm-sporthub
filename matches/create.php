@@ -207,7 +207,6 @@ $standalone = [
     'venue' => sportsHubInput('venue'),
 ];
 
-// A separately reviewed migration is required, not executed by this script.
 $standaloneSchemaReady = false;
 if ($standaloneMode && !$loadError) {
     try {
@@ -239,7 +238,7 @@ if ($method === 'POST' && $standaloneMode && !$loadError) {
     }
     if (!$standaloneSchemaReady) {
         $errors[] = 'Independent fixtures are not enabled in the database yet. '
-            . 'An administrator must apply migration 003 after a backup.';
+            . 'An administrator must back up the database and apply the required schema upgrade.';
     }
 
     $limits = [
@@ -299,7 +298,7 @@ if ($method === 'POST' && $standaloneMode && !$loadError) {
                 $pdo->rollBack();
             }
             error_log('Independent fixture creation: ' . $error->getMessage());
-            $errors[] = 'Unable to save the fixture. Check the database migration and logs.';
+            $errors[] = 'Unable to save the fixture. Check the database schema and application logs.';
         }
     }
 }

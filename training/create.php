@@ -710,7 +710,7 @@ require __DIR__ . '/../includes/header.php';
                         <div class="training-form-actions">
                             <button
                                 type="submit"
-                                class="training-primary-button">
+                                class="button button-accent">
                                 Create Training Session
                             </button>
 

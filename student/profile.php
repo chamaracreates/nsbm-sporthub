@@ -106,7 +106,9 @@ require __DIR__ . '/../includes/header.php';
             <nav class="student-identity-nav" aria-label="Student profile actions">
                 <a href="/student/edit-profile.php" class="student-profile-action student-profile-action-primary">Edit profile</a>
                 <a href="/student/history.php" class="student-profile-action student-profile-action-secondary">Participation history</a>
-                <a href="/student/change-password.php" class="student-profile-action student-profile-action-secondary">Change password</a>
+                <a href="/clubs/my-memberships.php" class="student-profile-action student-profile-action-secondary">My memberships</a>
+                <a href="/student/registrations.php" class="student-profile-action student-profile-action-secondary">My registrations</a>
+                <a href="/bookings/history.php" class="student-profile-action student-profile-action-secondary">My bookings</a>
             </nav>
         </header>
         <div class="student-identity-details">

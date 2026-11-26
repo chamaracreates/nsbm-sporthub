@@ -287,8 +287,8 @@ require __DIR__ . '/../includes/header.php'; ?>
 </form>
 
 <p class="change-password-back">
-    <a href="profile.php" class="change-password-back-link">
-        Back to My Profile
+    <a href="edit-profile.php" class="change-password-back-link">
+        Back to edit profile
     </a>
 </p>
 

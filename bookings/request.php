@@ -49,6 +49,12 @@ $form = [
 ];
 
 $today = date('Y-m-d');
+$editId = null;
+$existing = null;
+if (isset($_GET['edit'])) {
+    $editId = filter_var($_GET['edit'], FILTER_VALIDATE_INT, ['options'=>['min_range'=>1]]);
+    if (!$editId) { http_response_code(400); exit('Invalid booking request.'); }
+}
 
 try {
     $pdo = db();
@@ -61,6 +67,16 @@ try {
     );
 
     $facilities = $statement->fetchAll(PDO::FETCH_ASSOC);
+    if ($editId !== null) {
+        $statement = $pdo->prepare("SELECT res_id, date, starts_at, ends_at, purpose FROM booking_request
+            WHERE b_id = ? AND user_id = ? AND booking_status = 'pending' AND TIMESTAMP(date, starts_at) > NOW()");
+        $statement->execute([$editId, $userId]);
+        $existing = $statement->fetch();
+        if (!$existing) { http_response_code(404); exit('Pending booking not found or no longer editable.'); }
+        if ($requestMethod === 'GET') {
+            $form = ['res_id'=>(string)$existing['res_id'], 'date'=>$existing['date'], 'starts_at'=>substr($existing['starts_at'],0,5), 'ends_at'=>substr($existing['ends_at'],0,5), 'purpose'=>$existing['purpose'] ?? ''];
+        }
+    }
 
 } catch (Throwable $error) {
     error_log(
@@ -73,7 +89,7 @@ try {
 }
 
 // Preselect only facilities currently available for booking.
-if ($requestMethod === 'GET' && !$loadError) {
+if ($requestMethod === 'GET' && !$loadError && $editId === null) {
     $requestedId = filter_input(
         INPUT_GET,
         'res_id',
@@ -119,6 +135,8 @@ if ($requestMethod === 'POST' && !$loadError) {
 
     if (!is_int($facilityId)) {
         $errors[] = 'Please select a valid facility.';
+    } elseif ($editId !== null && $facilityId !== (int)$existing['res_id']) {
+        $errors[] = 'To change facilities, cancel this request and create a new one.';
     }
 
     $selectedDate = DateTimeImmutable::createFromFormat(
@@ -200,6 +218,12 @@ if ($requestMethod === 'POST' && !$loadError) {
                 $errors[] = 'The selected facility is unavailable.';
             }
 
+            if ($editId !== null && !$errors) {
+                $lock = $pdo->prepare("SELECT b_id FROM booking_request WHERE b_id = ? AND user_id = ? AND res_id = ? AND booking_status = 'pending' AND TIMESTAMP(date, starts_at) > NOW() FOR UPDATE");
+                $lock->execute([$editId, $userId, $facilityId]);
+                if (!$lock->fetchColumn()) $errors[] = 'This request can no longer be edited.';
+            }
+
             // Check overlapping approved bookings.
             if (empty($errors)) {
                 $overlapCheck = $pdo->prepare(
@@ -233,12 +257,14 @@ if ($requestMethod === 'POST' && !$loadError) {
                     "SELECT b_id FROM booking_request
                      WHERE res_id = :res_id AND user_id = :user_id
                        AND date = :booking_date AND booking_status = 'pending'
+                       AND b_id <> :editing_id
                        AND starts_at < :end_time AND ends_at > :start_time
                      LIMIT 1"
                 );
                 $duplicateCheck->execute([
                     'res_id' => $facilityId,
                     'user_id' => $userId,
+                    'editing_id' => $editId ?? 0,
                     'booking_date' => $form['date'],
                     'end_time' => $form['ends_at'],
                     'start_time' => $form['starts_at']
@@ -274,47 +300,20 @@ if ($requestMethod === 'POST' && !$loadError) {
             }
 
             if (empty($errors)) {
-                $insert = $pdo->prepare(
-                    "INSERT INTO booking_request
-                        (
-                            res_id,
-                            user_id,
-                            date,
-                            starts_at,
-                            ends_at,
-                            purpose,
-                            booking_status
-                        )
-                     VALUES
-                        (
-                            :res_id,
-                            :user_id,
-                            :booking_date,
-                            :starts_at,
-                            :ends_at,
-                            :purpose,
-                            'pending'
-                        )"
-                );
-
-                $insert->execute([
-                    'res_id' => $facilityId,
-                    'user_id' => $userId,
-                    'booking_date' => $form['date'],
-                    'starts_at' => $form['starts_at'],
-                    'ends_at' => $form['ends_at'],
-                    'purpose' => $form['purpose'] !== ''
-                        ? $form['purpose']
-                        : null
-                ]);
+                if ($editId === null) {
+                    $save = $pdo->prepare("INSERT INTO booking_request (res_id,user_id,date,starts_at,ends_at,purpose,booking_status) VALUES (?, ?, ?, ?, ?, ?, 'pending')");
+                    $save->execute([$facilityId,$userId,$form['date'],$form['starts_at'],$form['ends_at'],$form['purpose'] ?: null]);
+                } else {
+                    $save = $pdo->prepare("UPDATE booking_request SET date = ?, starts_at = ?, ends_at = ?, purpose = ? WHERE b_id = ? AND user_id = ? AND booking_status = 'pending'");
+                    $save->execute([$form['date'],$form['starts_at'],$form['ends_at'],$form['purpose'] ?: null,$editId,$userId]);
+                }
 
                 $pdo->commit();
 
-                $_SESSION['booking_request_feedback'] =
-                    'Your booking request was submitted successfully.';
+                $_SESSION['booking_history_feedback'] = $editId === null ? 'Your booking request was submitted successfully.' : 'Your booking request was updated.';
 
                 header(
-                    'Location: /bookings/request.php',
+                    'Location: /bookings/history.php',
                     true,
                     303
                 );
@@ -340,9 +339,6 @@ if ($requestMethod === 'POST' && !$loadError) {
     }
 }
 
-$feedback = $_SESSION['booking_request_feedback'] ?? null;
-unset($_SESSION['booking_request_feedback']);
-
 $pageStylesheets = ['/assets/css/bookings.css'];
 
 require_once __DIR__ . '/../includes/header.php';
@@ -357,17 +353,10 @@ require_once __DIR__ . '/../includes/header.php';
             <a href="/bookings/index.php">&larr; Back to facilities</a>
             <a href="/bookings/history.php">My bookings &rarr;</a>
         </nav>
-        <h1>Request a facility booking</h1>
+        <h1><?= $editId === null ? 'Request a facility booking' : 'Edit booking request' ?></h1>
         <p>Select a facility and preferred time. Your request will be reviewed by an administrator.</p>
     </header>
 
-    <?php if (is_string($feedback)): ?>
-
-        <div class="facility-admin-success" role="status">
-            <?= sportsHubEscape($feedback) ?>
-        </div>
-
-    <?php endif; ?>
 
     <?php if ($loadError): ?>
 
@@ -398,7 +387,7 @@ require_once __DIR__ . '/../includes/header.php';
 
         <form
             method="POST"
-            action="/bookings/request.php"
+            action="/bookings/request.php<?= $editId === null ? '' : '?edit=' . (int)$editId ?>"
             class="facility-admin-form booking-request-form"
             aria-labelledby="booking-details-title"
         >
@@ -422,6 +411,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <option value="">Select a facility</option>
 
                     <?php foreach ($facilities as $facility): ?>
+                        <?php if ($editId !== null && (int)$existing['res_id'] !== (int)$facility['res_id']) continue; ?>
                         <option
                             value="<?= (int) $facility['res_id'] ?>"
                             <?= (string) $facility['res_id'] === $form['res_id']
@@ -496,7 +486,7 @@ require_once __DIR__ . '/../includes/header.php';
                     type="submit"
                     class="facility-admin-button"
                 >
-                    Submit Booking Request
+                    <?= $editId === null ? 'Submit booking request' : 'Save changes' ?>
                 </button>
 
                 <a

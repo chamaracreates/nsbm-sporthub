@@ -249,6 +249,7 @@ if (
     if (sportsHubLength($form['t_name']) < 1 || sportsHubLength($form['t_name']) > 100 || sportsHubLength($form['des']) > 255) {
         $errors[] = 'Enter a tournament name of up to 100 characters and a description of up to 255 characters.';
     }
+    $form['image_path'] = sportsHubCoverPath($form['image_path']);
     if (!array_key_exists($form['image_path'], sportsHubCoverLibrary())) {
         $errors[] = 'Choose a cover from the image library.';
     }

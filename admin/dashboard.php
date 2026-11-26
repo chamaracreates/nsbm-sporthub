@@ -138,12 +138,7 @@ $recentActivities = $pdo->query(
         <!--Main Content-->
         <main class="main-content">
 
-            <header class="topbar">
-                <div>
-                    <h2>Admin Dashboard</h2>
-                    <p>NSBM Sports Club Management System</p>
-                </div>
-            </header>
+            <?php sportsHubAdminTopbar('Admin Dashboard'); ?>
 
             <!--Welcome Section-->
             <section class="welcome-section">
@@ -156,7 +151,7 @@ $recentActivities = $pdo->query(
             </section>
 
             <!--Dashboard Statistics-->
-            <section class="statistics-section">
+            <section id="overview" class="statistics-section">
                 <h2>Overview</h2>
 
                 <div class="statistics-grid">
@@ -199,7 +194,7 @@ $recentActivities = $pdo->query(
             <!--Recent Activities-->
 
             <!-- Quick actions are separate from the dashboard metrics. -->
-            <nav class="v15-shortcuts" aria-label="Administrative shortcuts">
+            <nav id="quick-actions" class="v15-shortcuts" aria-label="Administrative shortcuts">
                 <h2>Quick actions</h2>
                 <div class="v15-shortcut-links">
                     <a href="/bookings/admin/requests.php">Review bookings</a>
@@ -210,7 +205,7 @@ $recentActivities = $pdo->query(
                 </div>
             </nav>
 
-            <section class="recent-activities">
+            <section id="recent-activities" class="recent-activities">
 
                 <h2>Recent Activities</h2>
 

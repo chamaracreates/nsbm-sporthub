@@ -701,15 +701,15 @@ require __DIR__ . '/../includes/header.php';
                         <div class="training-form-actions">
 
                             <button
-                                class="training-primary-button"
+                                class="button button-accent"
                                 type="submit">
                                 Save Changes
                             </button>
 
                             <a
-                                class="training-secondary-link"
+                                class="button button-outline"
                                 href="/training/manage.php">
-                                Back to Training Management
+                                Cancel
                             </a>
 
                         </div>

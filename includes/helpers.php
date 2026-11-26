@@ -60,20 +60,27 @@ function sportsHubClubCover(string $sport): string
 
 function sportsHubCoverLibrary(): array
 {
-    $covers = ['' => 'Automatic sport photograph', '/assets/images/hero-main.webp' => 'General sports', '/assets/images/herobanner.png' => 'Basketball'];
+    $covers = ['' => 'Automatic sport photograph', '/assets/images/hero-main.webp' => 'General sports', '/assets/images/herobanner.webp' => 'Basketball'];
     foreach (['Cricket', 'Badminton', 'Rugby', 'Athletics', 'Chess', 'Martial arts', 'Netball', 'Swimming', 'Table tennis', 'Tennis', 'Volleyball'] as $sport) {
         $covers[sportsHubClubCover($sport)] = $sport;
     }
     return $covers;
 }
 
+function sportsHubCoverPath(string $path): string
+{
+    return $path === '/assets/images/herobanner.png' ? '/assets/images/herobanner.webp' : $path;
+}
+
 function sportsHubCustomCover(mixed $value): string
 {
-    return is_string($value) && array_key_exists($value, sportsHubCoverLibrary()) ? $value : '';
+    $path = is_string($value) ? sportsHubCoverPath($value) : '';
+    return array_key_exists($path, sportsHubCoverLibrary()) ? $path : '';
 }
 
 function sportsHubCoverOptions(string $selected): string
 {
+    $selected = sportsHubCustomCover($selected);
     $html = '';
     foreach (sportsHubCoverLibrary() as $path => $label) {
         $html .= '<option value="' . sportsHubEscape($path) . '"' . ($path === $selected ? ' selected' : '') . '>' . sportsHubEscape($label) . '</option>';
@@ -391,9 +398,22 @@ function sportsHubReportQueries(array $filters): array
         SELECT tr.user_id, COUNT(DISTINCT tr.t_id) AS total
         FROM tournament_registration tr
         JOIN tournaments t ON t.t_id = tr.t_id
-        " . ($tourneyWhere ? 'WHERE ' . implode(' AND ', $tourneyWhere) : '') . "
+        WHERE " . implode(' AND ', array_merge(["tr.registration_status = 'approved'"], $tourneyWhere)) . "
         GROUP BY tr.user_id
     ";
+
+    [$matchRegWhere, $matchRegParams] = $makeScope('DATE(mr.requested_at)', 't.club_id', 'm.sport', 'match_reg');
+    $matchRegAgg = "SELECT mr.user_id, COUNT(DISTINCT mr.m_id) AS total
+        FROM match_registration mr JOIN matches m ON m.m_id = mr.m_id
+        LEFT JOIN tournaments t ON t.t_id = m.t_id
+        WHERE " . implode(' AND ', array_merge(["mr.registration_status = 'approved'"], $matchRegWhere)) . " GROUP BY mr.user_id";
+    $queries['match-registrations'] = ["
+        SELECT m.title AS match_title, m.sport, u.name AS student_name,
+               mr.requested_at, mr.registration_status
+        FROM match_registration mr JOIN matches m ON m.m_id = mr.m_id
+        LEFT JOIN tournaments t ON t.t_id = m.t_id JOIN users u ON u.user_id = mr.user_id
+        WHERE " . implode(' AND ', array_merge(["u.role = 'student'"], $matchRegWhere)) . "
+        ORDER BY mr.requested_at DESC, mr.match_reg_id DESC", $matchRegParams];
 
     $bookingParams = [];
     if ($facilityScopedOut) {
@@ -413,7 +433,7 @@ function sportsHubReportQueries(array $filters): array
     }
 
     $participationParams = array_merge(
-        $memberParams, $trainingParams, $tourneyParams, $bookingParams
+        $memberParams, $trainingParams, $tourneyParams, $bookingParams, $matchRegParams
     );
     $participationFrom = "
         FROM users u
@@ -421,10 +441,11 @@ function sportsHubReportQueries(array $filters): array
         LEFT JOIN ($trainingAgg) ac ON ac.user_id = u.user_id
         LEFT JOIN ($tourneyAgg) tc ON tc.user_id = u.user_id
         LEFT JOIN ($bookingAgg) bc ON bc.user_id = u.user_id
+        LEFT JOIN ($matchRegAgg) mr ON mr.user_id = u.user_id
         WHERE u.role = 'student'
     ";
     $studentActivity = 'COALESCE(mc.total, 0) + COALESCE(ac.total, 0)'
-        . ' + COALESCE(tc.total, 0) + COALESCE(bc.total, 0)';
+        . ' + COALESCE(tc.total, 0) + COALESCE(bc.total, 0) + COALESCE(mr.total, 0)';
     if ($hasFilters) {
         $participationFrom .= " AND ($studentActivity) > 0";
     }
@@ -435,6 +456,7 @@ function sportsHubReportQueries(array $filters): array
             COALESCE(SUM(mc.total), 0) AS total_club_participation,
             COALESCE(SUM(ac.total), 0) AS total_training_attendance,
             COALESCE(SUM(tc.total), 0) AS total_tournament_registrations,
+            COALESCE(SUM(mr.total), 0) AS total_match_registrations,
             COALESCE(SUM(bc.total), 0) AS total_facility_bookings
         $participationFrom
     ", $participationParams];
@@ -444,6 +466,7 @@ function sportsHubReportQueries(array $filters): array
                COALESCE(mc.total, 0) AS total_clubs_joined,
                COALESCE(ac.total, 0) AS training_sessions_attended,
                COALESCE(tc.total, 0) AS tournaments_registered,
+               COALESCE(mr.total, 0) AS matches_registered,
                $facilityCount AS facility_bookings_made
         $participationFrom
         ORDER BY u.name ASC, u.user_id ASC
@@ -588,12 +611,13 @@ function sportsHubAdminSidebar(string $active): void
         'dashboard' => ['/admin/dashboard.php', 'Dashboard'],
         'manage' => ['/admin/manage.php', 'Manage Content'],
         'members' => ['/clubs/admin/members.php', 'Club Memberships'],
-        'clubs' => ['/clubs/', 'Sports Clubs'],
-        'training' => ['/training/', 'Training Sessions'],
-        'tournaments' => ['/tournaments/', 'Tournaments'],
-        'matches' => ['/matches/', 'Matches'],
-        'bookings' => ['/bookings/', 'Facilities & Bookings'],
-        'reports' => ['/reports/', 'Reports & Analytics'],
+        'accounts' => ['/admin/accounts.php', 'Student and Staff Accounts'],
+        'clubs' => ['/clubs/admin/clubs.php', 'Sports Clubs'],
+        'training' => ['/training/manage.php', 'Training Sessions'],
+        'tournaments' => ['/tournaments/manage.php', 'Tournaments'],
+        'matches' => ['/matches/manage.php', 'Matches'],
+        'bookings' => ['/bookings/admin/index.php', 'Facilities & Bookings'],
+        'reports' => ['/reports/index.php', 'Reports & Analytics'],
     ];
     ?>
     <aside class="sidebar">
@@ -613,4 +637,75 @@ function sportsHubAdminSidebar(string $active): void
         </div>
     </aside>
     <?php
+}
+
+
+function sportsHubAdminTopbar(string $title): void
+{
+    ?>
+    <header class="topbar">
+        <div>
+            <h2><?= sportsHubEscape($title) ?></h2>
+            <p>NSBM Sports Club Management System</p>
+        </div>
+        <div class="admin-header-actions">
+            <button type="button" class="phase13-search-trigger" aria-label="Search administration and reports" title="Search administration and reports">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+            </button>
+        </div>
+    </header>
+    <?php
+}
+
+function sportsHubMatchRegistrationOpen(array $match): bool
+{
+    return (int) ($match['registration_open'] ?? 0) === 1
+        && in_array(strtolower(trim($match['match_status'])), ['scheduled', 'upcoming'], true)
+        && $match['date'] > date('Y-m-d')
+        && ($match['t_id'] === null || ($match['club_status'] === 'active'
+            && in_array($match['tournament_status'], ['upcoming', 'ongoing'], true)
+            && (int) $match['is_historical'] === 0));
+}
+
+function sportsHubRegistrationMatch(PDO $pdo, int $id, bool $lock = false): ?array
+{
+    $stmt = $pdo->prepare("SELECT m.*, t.club_id, t.status AS tournament_status, t.is_historical,
+        sc.status AS club_status FROM matches m
+        LEFT JOIN tournaments t ON t.t_id = m.t_id
+        LEFT JOIN sports_clubs sc ON sc.club_id = t.club_id
+        WHERE m.m_id = ?" . ($lock ? ' FOR UPDATE' : ''));
+    $stmt->execute([$id]);
+    return $stmt->fetch() ?: null;
+}
+
+function sportsHubCanManageClub(PDO $pdo, ?int $clubId, int $userId, string $role): bool
+{
+    if ($role === 'admin') {
+        return true;
+    }
+    if ($clubId === null || !in_array($role, ['mic', 'coach'], true)) {
+        return false;
+    }
+    $stmt = $pdo->prepare("SELECT 1 FROM sport_staff ss JOIN sports_clubs sc ON sc.club_id = ss.club_id
+        WHERE ss.club_id = ? AND ss.user_id = ? AND ss.staff_role = ?
+        AND ss.status = 'active' AND sc.status = 'active'" . ($pdo->inTransaction() ? ' FOR UPDATE' : ''));
+    $stmt->execute([$clubId, $userId, $role]);
+    return $stmt->fetchColumn() !== false;
+}
+
+function sportsHubMembershipCanDelete(PDO $pdo, int $clubId, int $userId): bool
+{
+    $queries = [
+        'SELECT 1 FROM club_leaders WHERE club_id = ? AND user_id = ?',
+        'SELECT 1 FROM team_members tm JOIN teams t ON t.team_id = tm.team_id WHERE t.club_id = ? AND tm.user_id = ?',
+        'SELECT 1 FROM training_attendance a JOIN training_sessions s ON s.session_id = a.session_id WHERE s.club_id = ? AND a.user_id = ?',
+    ];
+    foreach ($queries as $sql) {
+        $stmt = $pdo->prepare($sql . ' LIMIT 1' . ($pdo->inTransaction() ? ' FOR UPDATE' : ''));
+        $stmt->execute([$clubId, $userId]);
+        if ($stmt->fetchColumn() !== false) {
+            return false;
+        }
+    }
+    return true;
 }

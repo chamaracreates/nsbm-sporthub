@@ -92,6 +92,10 @@ require __DIR__ . '/../../includes/header.php';
         <section class="booking-introduction">
 
 <h1>Booking Requests</h1>
+        <?php if (isset($_SESSION['admin_delete_feedback'])): ?>
+            <p class="facility-admin-success" role="status"><?= sportsHubEscape($_SESSION['admin_delete_feedback']) ?></p>
+            <?php unset($_SESSION['admin_delete_feedback']); ?>
+        <?php endif; ?>
 
             <p class="booking-intro-text">
                 Review student facility booking requests,
@@ -260,6 +264,9 @@ require __DIR__ . '/../../includes/header.php';
 
         <span>—</span>
 
+    <?php endif; ?>
+    <?php if (in_array($booking['booking_status'], ['pending','rejected','cancelled','canceled'], true)): ?>
+        <a class="button button-danger-outline" href="/admin/delete.php?type=booking-request&amp;id=<?= (int) $booking['b_id'] ?>">Delete request</a>
     <?php endif; ?>
 </td>
 

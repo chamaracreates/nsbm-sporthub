@@ -132,6 +132,10 @@ require __DIR__ . '/../includes/header.php';
             </p>
 
             <h1>Manage teams.</h1>
+        <?php if (isset($_SESSION['admin_delete_feedback'])): ?>
+            <p class="tournament-form-success" role="status"><?= sportsHubEscape($_SESSION['admin_delete_feedback']) ?></p>
+            <?php unset($_SESSION['admin_delete_feedback']); ?>
+        <?php endif; ?>
 
             <p class="section-description">
                 Explore participating teams, review their
@@ -287,6 +291,7 @@ require __DIR__ . '/../includes/header.php';
                                     class="button button-accent">
                                     Manage Roster
                                 </a>
+                                <?php if ($userRole === 'admin'): ?><a class="button button-danger-outline" href="/admin/delete.php?type=team&amp;id=<?= (int) $team['team_id'] ?>">Delete team</a><?php endif; ?>
 
                             </div>
 

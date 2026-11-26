@@ -7,7 +7,7 @@ require_admin();
 $modules = [
     [
         'name' => 'Sports clubs',
-        'description' => 'Create, edit and archive sports clubs; manage memberships, staff and leaders.',
+        'description' => 'Create, edit and delete eligible sports clubs; manage memberships, staff and leaders.',
         'manage' => '/clubs/admin/clubs.php',
         'create' => '/clubs/admin/clubs.php',
         'extra' => '/clubs/admin/members.php',
@@ -23,7 +23,7 @@ $modules = [
     ],
     [
         'name' => 'Fixtures & results',
-        'description' => 'Schedule standalone or tournament fixtures, record results and manage unused matches.',
+        'description' => 'Schedule fixtures, review registrations, record results and manage unused matches.',
         'manage' => '/matches/manage.php',
         'create' => '/matches/create.php',
         'extra' => '/matches/standings.php',
@@ -65,6 +65,16 @@ unset($_SESSION['admin_delete_feedback']);
       </p>
     <?php endif; ?>
     <div class="admin-hub-grid">
+        <article class="admin-hub-card">
+            <h2>Club staff and leadership</h2>
+            <p>Create MIC and coach accounts, assign clubs and manage student leaders.</p>
+            <div class="admin-hub-actions">
+                <a href="/admin/accounts.php">Student and staff accounts</a>
+                <a href="/clubs/admin/staff.php">Staff assignments</a>
+                <a href="/clubs/admin/create-staff.php" class="primary">Create staff account</a>
+                <a href="/clubs/admin/leaders.php">Club leadership</a>
+            </div>
+        </article>
         <article class="admin-hub-card phase14-news-module">
             <h2>Club news</h2>
             <p>Create, edit and publish club announcements, achievements and stories with cover images.</p>

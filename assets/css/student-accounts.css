@@ -983,8 +983,8 @@
 /* Statistics grid */
 .student-history-page .history-stats-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+    gap: 18px;
 }
 
 /* Individual statistic card */
@@ -1927,8 +1927,7 @@
     margin-bottom: 22px;
 }
 
-.student-history-student-grid,
-.student-history-stats-grid {
+.student-history-student-grid {
     display: grid;
     gap: 18px;
 }
@@ -1938,9 +1937,6 @@
     margin-bottom: 20px;
 }
 
-.student-history-stats-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-}
 
 .student-history-page .history-stat-card {
     min-width: 0;
@@ -2082,9 +2078,6 @@
         grid-template-columns: 1fr;
     }
 
-    .student-history-stats-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
 }
 
 @media (max-width: 640px) {
@@ -2094,8 +2087,7 @@
     }
 
     .student-profile-panel-grid,
-    .student-history-student-grid,
-    .student-history-stats-grid {
+    .student-history-student-grid {
         grid-template-columns: 1fr;
     }
 
@@ -2201,15 +2193,6 @@
 .student-identity-page .student-identity-facts dd {
     margin: 0; color: var(--color-text); font-size: 15px; font-weight: 550; line-height: 1.55; overflow-wrap: anywhere;
 }
-@media (min-width: 1100px) {
-    .student-identity-page .student-identity-header {
-        grid-template-columns: 96px minmax(0, 1fr) auto;
-    }
-    .student-identity-page .student-identity-nav {
-        grid-column: 3; justify-content: flex-end; flex-wrap: nowrap;
-    }
-    .student-identity-page .student-identity-nav a { white-space: nowrap; }
-}
 @media (max-width: 720px) {
     .student-identity-page .student-identity-header {
     grid-template-columns: 64px minmax(0, 1fr);
@@ -2275,7 +2258,7 @@
 .edit-profile-page .profile-heading { margin: 0 0 24px; }
 .edit-profile-page .profile-heading h1 { margin: 0 0 8px; font-size: clamp(28px, 4vw, 38px); line-height: 1.15; }
 .edit-profile-page .profile-heading > p { margin: 0; line-height: 1.6; }
-.edit-profile-page :is(.student-photo-panel, .edit-profile-form) {
+.edit-profile-page :is(.student-photo-panel, .edit-profile-form, .student-security-panel) {
     box-sizing: border-box; width: 100%; padding: clamp(18px, 3vw, 28px); margin: 0 0 20px;
     border-radius: 20px; background: var(--color-surface); border: 1px solid var(--color-border);
 }

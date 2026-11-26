@@ -288,6 +288,11 @@ require __DIR__ . '/../includes/header.php';
                 <button type="submit" class="student-profile-action student-profile-action-primary">Save changes</button>
             </div>
         </form>
+        <section class="profile-card student-security-panel" aria-labelledby="student-security-title">
+            <h2 id="student-security-title">Account security</h2>
+            <p>Update the password used to sign in to your account.</p>
+            <a href="/student/change-password.php" class="student-profile-action student-profile-action-secondary">Change password</a>
+        </section>
     </div>
 </main>
 

@@ -314,7 +314,7 @@ try {
     // Existing staff assignments.
     $assignments = db()->query(
         "SELECT
-            ss.staff_id,
+            ss.staff_id, ss.user_id, ss.club_id,
             ss.staff_role,
             ss.specialization,
             ss.status,
@@ -343,6 +343,21 @@ try {
 }
 
 // Load the shared website header.
+$selectedUser = filter_var($_GET['user_id'] ?? null, FILTER_VALIDATE_INT) ?: 0;
+$selectedClub = 0;
+$selectedSpecialization = '';
+$editAssignment = filter_var($_GET['edit'] ?? null, FILTER_VALIDATE_INT);
+if ($editAssignment) {
+    foreach ($assignments as $assignment) {
+        if ((int)$assignment['staff_id'] === $editAssignment) {
+            $selectedUser = (int)$assignment['user_id'];
+            $selectedClub = (int)$assignment['club_id'];
+            $selectedSpecialization = $assignment['specialization'] ?? '';
+            break;
+        }
+    }
+}
+
 $pageStylesheets = ['/assets/css/clubs.css'];
 require __DIR__ . '/../../includes/header.php';
 ?>
@@ -359,6 +374,10 @@ require __DIR__ . '/../../includes/header.php';
         <div class="v15-page-heading">
             <div>
                 <h1>MIC &amp; Coach Management</h1>
+        <?php if (isset($_SESSION['admin_delete_feedback'])): ?>
+            <p class="club-admin-success" role="status"><?= sportsHubEscape($_SESSION['admin_delete_feedback']) ?></p>
+            <?php unset($_SESSION['admin_delete_feedback']); ?>
+        <?php endif; ?>
                 <p>Create confirmed staff accounts, assign MICs and coaches to clubs, and manage their appointments.</p>
             </div>
             <div class="v15-page-actions">
@@ -419,7 +438,7 @@ require __DIR__ . '/../../includes/header.php';
 
                     <div class="v16-empty-state" role="status">
                         <h3>No active clubs available</h3>
-                        <p>Activate a sports club before assigning an MIC or coach.</p>
+                        <p>Create an active sports club before assigning an MIC or coach.</p>
                     </div>
 
                 <?php else: ?>
@@ -462,7 +481,7 @@ require __DIR__ . '/../../includes/header.php';
                             ): ?>
 
                                 <option
-                                    value="<?= (int) $person['user_id'] ?>"
+                                    value="<?= (int) $person['user_id'] ?>" <?= $selectedUser === (int)$person['user_id'] ? 'selected' : '' ?>
                                 >
                                     <?= sportsHubEscape($person['name']) ?>
                                     (<?= sportsHubEscape(
@@ -493,7 +512,7 @@ require __DIR__ . '/../../includes/header.php';
                                 <?php foreach ($clubs as $club): ?>
 
                                     <option
-                                        value="<?= (int) $club['club_id'] ?>"
+                                        value="<?= (int) $club['club_id'] ?>" <?= $selectedClub === (int)$club['club_id'] ? 'selected' : '' ?>
                                     >
                                         <?= sportsHubEscape($club['club_name']) ?>
                                     </option>
@@ -513,7 +532,7 @@ require __DIR__ . '/../../includes/header.php';
                                 name="specialization"
                                 type="text"
                                 maxlength="100"
-                                placeholder="e.g. Track and Field"
+                                placeholder="e.g. Track and Field" value="<?= sportsHubEscape($selectedSpecialization) ?>"
                             >
                         </div>
 
@@ -653,7 +672,8 @@ require __DIR__ . '/../../includes/header.php';
                                             <?php endif; ?>
 
                                         </form>
-
+                                        <a class="button button-outline" href="/clubs/admin/staff.php?edit=<?= (int)$assignment['staff_id'] ?>">Edit assignment</a>
+                                        <a class="button button-danger-outline" href="/admin/delete.php?type=staff-assignment&amp;id=<?= (int) $assignment['staff_id'] ?>">Delete assignment</a>
                                     </td>
 
                                 </tr>

@@ -46,8 +46,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         if (!in_array($role, ['mic', 'coach'], true)) {
             $errors[] = 'Select MIC or Coach as the account role.';
         }
-        if (strlen($password) < 12 || strlen($password) > 128) {
-            $errors[] = 'The initial password must contain 12 to 128 characters.';
+        if (strlen($password) < 12 || strlen($password) > 72) {
+            $errors[] = 'The initial password must contain 12 to 72 bytes.';
         }
         if ($password !== $confirm) {
             $errors[] = 'The passwords do not match.';
@@ -76,7 +76,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                     'role' => $form['role'],
                 ]);
                 $_SESSION['staff_account_csrf'] = bin2hex(random_bytes(32));
-                header('Location: /clubs/admin/staff.php?result=account_created', true, 303);
+                header('Location: /clubs/admin/staff.php?result=account_created&user_id=' . (int)$pdo->lastInsertId(), true, 303);
                 exit;
             }
         } catch (PDOException $exception) {
@@ -143,11 +143,11 @@ require __DIR__ . '/../../includes/header.php';
                 </div>
                 <div class="v15-field">
                     <label for="staff-account-password">Initial password</label>
-                    <input id="staff-account-password" type="password" name="password" minlength="12" maxlength="128" required autocomplete="new-password">
+                    <input id="staff-account-password" type="password" name="password" minlength="12" maxlength="72" required autocomplete="new-password">
                 </div>
                 <div class="v15-field v15-wide">
                     <label for="staff-account-confirm">Confirm password</label>
-                    <input id="staff-account-confirm" type="password" name="confirm_password" minlength="12" maxlength="128" required autocomplete="new-password">
+                    <input id="staff-account-confirm" type="password" name="confirm_password" minlength="12" maxlength="72" required autocomplete="new-password">
                 </div>
                 <div class="v15-create-account-actions v15-wide">
                     <a class="v15-action v15-action-secondary" href="/clubs/admin/staff.php">Cancel</a>

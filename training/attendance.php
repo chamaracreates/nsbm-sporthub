@@ -204,16 +204,30 @@ try {
 
         $attendanceStatus = $_POST['attendance_status'] ?? null;
 
-        /* Only Present attendance is permitted. */
         if (
             !is_int($studentId) ||
-            $attendanceStatus !== 'present'
+            !in_array($attendanceStatus, ['present', 'remove'], true)
         ) {
             http_response_code(400);
             exit('Invalid attendance information.');
         }
 
-        /* Verify the student's approved club membership. */
+        $pdo->beginTransaction();
+        $clubId = (int) $selectedSession['club_id'];
+        $statement = $pdo->prepare('SELECT club_id FROM sports_clubs WHERE club_id = ? FOR UPDATE');
+        $statement->execute([$clubId]);
+        if (!$statement->fetchColumn() || !sportsHubCanManageClub($pdo, $clubId, $userId, $userRole)) {
+            $pdo->rollBack();
+            http_response_code(403);
+            exit('Access denied.');
+        }
+        $statement = $pdo->prepare('SELECT session_id FROM training_sessions WHERE session_id = ? AND club_id = ? AND TIMESTAMP(date, start_time) <= NOW() FOR UPDATE');
+        $statement->execute([$sessionId, $clubId]);
+        if (!$statement->fetchColumn()) {
+            $pdo->rollBack();
+            http_response_code(409);
+            exit('The training session has changed.');
+        }
         $eligibilitySql = "
             SELECT 1
             FROM club_membership AS cm
@@ -234,41 +248,22 @@ try {
         ]);
 
         if (!$statement->fetchColumn()) {
+            $pdo->rollBack();
             http_response_code(403);
             exit('Student is not eligible for this session.');
         }
 
-        /* Save Present attendance without creating duplicate records. */
-        $saveSql = "
-            INSERT INTO training_attendance (
-                user_id,
-                session_id,
-                att_status,
-                recorded_by
-            )
-            VALUES (
-                :student_id,
-                :session_id,
-                'present',
-                :recorded_by
-            )
-            ON DUPLICATE KEY UPDATE
-                att_status = 'present',
-                recorded_by = :updated_by
-        ";
-
-        $statement = $pdo->prepare($saveSql);
-
-        $statement->execute([
-            'student_id' => $studentId,
-            'session_id' => $sessionId,
-            'recorded_by' => $userId,
-            'updated_by' => $userId,
-        ]);
-
-        /* Store success feedback for the redirected page. */
-        $_SESSION['training_attendance_feedback'] =
-            'Student attendance marked as Present successfully.';
+        if ($attendanceStatus === 'remove') {
+            $statement = $pdo->prepare('DELETE FROM training_attendance WHERE user_id = ? AND session_id = ?');
+            $statement->execute([$studentId, $sessionId]);
+            $_SESSION['training_attendance_feedback'] = 'Attendance record removed.';
+        } else {
+            $statement = $pdo->prepare("INSERT INTO training_attendance (user_id, session_id, att_status, recorded_by)
+                VALUES (?, ?, 'present', ?) ON DUPLICATE KEY UPDATE att_status = 'present', recorded_by = VALUES(recorded_by)");
+            $statement->execute([$studentId, $sessionId, $userId]);
+            $_SESSION['training_attendance_feedback'] = 'Student attendance marked as present.';
+        }
+        $pdo->commit();
 
         header(
             'Location: /training/attendance.php?session_id=' .
@@ -309,6 +304,7 @@ try {
         $students = $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 } catch (Throwable $error) {
+    if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
     error_log(
         'Training attendance error: ' . $error->getMessage()
     );
@@ -562,11 +558,6 @@ require __DIR__ . '/../includes/header.php';
                                                 echo $studentId;
                                                 ?>">
 
-                                    <input
-                                        type="hidden"
-                                        name="attendance_status"
-                                        value="present">
-
                                     <strong>
                                         <?php
                                         echo sportsHubEscape(
@@ -584,19 +575,11 @@ require __DIR__ . '/../includes/header.php';
                                         ?>
                                     </span>
 
-                                    <button
-                                        type="submit"
-                                        <?php
-                                        echo $isPresent
-                                            ? 'disabled'
-                                            : '';
-                                        ?>>
-                                        <?php
-                                        echo $isPresent
-                                            ? 'Recorded'
-                                            : 'Mark Present';
-                                        ?>
-                                    </button>
+                                    <?php if ($isPresent): ?>
+                                        <button type="submit" name="attendance_status" value="remove" class="button button-danger-outline" onclick="return confirm('Remove this attendance record?');">Remove record</button>
+                                    <?php else: ?>
+                                        <button type="submit" name="attendance_status" value="present" class="button button-accent">Mark present</button>
+                                    <?php endif; ?>
 
                                 </form>
 
