@@ -4,7 +4,9 @@
     const key = 'sportshub-theme';
     const buttons = [];
     let theme = 'dark';
-    let hero, darkHeroSource;
+    const heroReady = new Map();
+    let requestedTheme = 'dark';
+    let themeRequest = 0;
     const icons = {
         light: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/>',
         dark: '<path d="M20.8 14.1A9 9 0 0 1 9.9 3.2 9 9 0 1 0 20.8 14.1Z"/>'
@@ -12,10 +14,6 @@
     function apply(value, save = false) {
         theme = value === 'light' ? 'light' : 'dark';
         root.dataset.theme = theme;
-        if (hero) {
-            const source = theme === 'light' ? hero.dataset.lightSrc : darkHeroSource;
-            if (hero.getAttribute('src') !== source) hero.setAttribute('src', source);
-        }
         if (save) { try { localStorage.setItem(key, theme); } catch {} }
         const next = theme === 'dark' ? 'light' : 'dark';
         const label = `Switch to ${next} mode`;
@@ -25,10 +23,25 @@
             button.querySelector('svg').innerHTML = icons[next];
         }
     }
+    function requestTheme(value, save = false) {
+        const target = value === 'light' ? 'light' : 'dark';
+        requestedTheme = target;
+        const request = ++themeRequest;
+        const readiness = heroReady.get(target);
+        if (target === theme || !readiness) {
+            apply(target, save);
+            return;
+        }
+        readiness.then(() => {
+            if (request === themeRequest) apply(target, save);
+        });
+    }
     try { apply(localStorage.getItem(key)); } catch { apply('dark'); }
+    requestedTheme = theme;
     document.addEventListener('DOMContentLoaded', () => {
-        hero = document.querySelector('.hero-section-visual img[data-light-src]');
-        if (hero) darkHeroSource = hero.getAttribute('src');
+        for (const image of document.querySelectorAll('.hero-section-visual img[data-hero-theme]')) {
+            heroReady.set(image.dataset.heroTheme, image.decode().catch(() => {}));
+        }
         for (const selector of ['.account-nav', '.mobile-controls', '.admin-header-actions']) {
             const target = document.querySelector(selector);
             if (!target) continue;
@@ -36,13 +49,13 @@
             button.type = 'button';
             button.className = 'theme-toggle';
             button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>';
-            button.addEventListener('click', () => apply(theme === 'dark' ? 'light' : 'dark', true));
+            button.addEventListener('click', () => requestTheme(requestedTheme === 'dark' ? 'light' : 'dark', true));
             target.prepend(button);
             buttons.push(button);
         }
         apply(theme);
     });
-    window.addEventListener('storage', event => { if (event.key === key || event.key === null) apply(event.newValue); });
+    window.addEventListener('storage', event => { if (event.key === key || event.key === null) requestTheme(event.newValue); });
 })();
 
 /* Header search dialog, administration actions and news image preview. */

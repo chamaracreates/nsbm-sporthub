@@ -230,7 +230,8 @@ require __DIR__ . '/../../includes/header.php';
                             </td>
 
                             <td>
-                                <details><summary>View information</summary>
+                                <details class="membership-application">
+                                    <summary>View information <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
                                     <?php foreach (['student_number'=>'Student ID','study_program'=>'Degree','academic_year'=>'Year','phone'=>'Phone','experience_level'=>'Experience','application_reason'=>'Reason'] as $key=>$label): ?>
                                         <?php if ($role !== 'coach' || in_array($key, ['study_program','academic_year','experience_level'], true)): ?><p><strong><?= sportsHubEscape($label) ?>:</strong> <?= sportsHubEscape($application[$key] ?? 'Not provided') ?></p><?php endif; ?>
                                     <?php endforeach; ?>
@@ -246,58 +247,20 @@ require __DIR__ . '/../../includes/header.php';
 
                             <td>
 
-                                <?php if ($role !== 'coach' && $application['status'] === 'pending'): ?>
-
-                                    <form
-                                        method="post"
-                                        action="/clubs/admin/members.php"
-                                        class="club-admin-actions"
-                                    >
-
-                                        <input
-                                            type="hidden"
-                                            name="mem_id"
-                                            value="<?= (int) $application['mem_id'] ?>"
-                                        >
-
-                                        <input
-                                            type="hidden"
-                                            name="csrf_token"
-                                            value="<?= sportsHubEscape($csrfToken) ?>"
-                                        >
-
-                                        <button
-                                            type="submit"
-                                            name="decision"
-                                            value="approve"
-                                            class="club-admin-approve"
-                                        >
-                                            Approve
-                                        </button>
-
-                                        <button
-                                            type="submit"
-                                            name="decision"
-                                            value="reject"
-                                            class="club-admin-reject"
-                                        >
-                                            Reject
-                                        </button>
-
-                                    </form>
-
-                                <?php else: ?>
-
-                                    <span><?= $role === 'coach' ? 'Approved member' : 'Processed' ?></span>
-
-                                <?php endif; ?>
                                 <?php if ($role !== 'coach'): ?>
-                                    <form method="post" class="club-admin-actions" onsubmit="return confirm('Permanently delete this membership request or record?');">
-                                        <input type="hidden" name="csrf_token" value="<?= sportsHubEscape($csrfToken) ?>">
+                                    <form method="post" action="/clubs/admin/members.php" class="membership-actions"
+                                          onsubmit="return event.submitter?.value !== 'delete' || confirm('Permanently delete this membership record?');">
                                         <input type="hidden" name="mem_id" value="<?= (int) $application['mem_id'] ?>">
+                                        <input type="hidden" name="csrf_token" value="<?= sportsHubEscape($csrfToken) ?>">
                                         <input type="hidden" name="confirmation" value="DELETE">
-                                        <button class="button button-danger-outline" name="decision" value="delete">Delete</button>
+                                        <?php if ($application['status'] === 'pending'): ?>
+                                            <button type="submit" name="decision" value="approve" class="button button-accent">Approve</button>
+                                            <button type="submit" name="decision" value="reject" class="button button-outline">Reject</button>
+                                        <?php endif; ?>
+                                        <button type="submit" name="decision" value="delete" class="button button-danger-outline">Delete</button>
                                     </form>
+                                <?php else: ?>
+                                    <span>Approved member</span>
                                 <?php endif; ?>
                             </td>
 

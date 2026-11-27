@@ -32,10 +32,15 @@ if (
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars(isset($pageTitle) ? $pageTitle . ' | NSBM SportsHub' : 'NSBM SportsHub', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></title>
-    <script src="/assets/js/site-interactions.js"></script>
-    <link rel="stylesheet" href="/assets/css/style.css">
+    <?php if (!empty($preloadHomepageHero)): ?>
+        <link rel="preload" as="image" href="/assets/images/herobanner.webp" fetchpriority="high">
+        <link rel="preload" as="image" href="/assets/images/herobannerlight.webp" fetchpriority="high">
+    <?php endif; ?>
+    <script src="/assets/js/site-interactions.js?v=20261127-hero"></script>
+    <link rel="stylesheet" href="/assets/css/style.css?v=20261127-hero">
 
     <?php foreach (($pageStylesheets ?? []) as $stylesheet): ?>
+        <?php if (in_array($stylesheet, ['/assets/css/clubs.css', '/assets/css/tournaments.css', '/assets/css/training.css'], true)) $stylesheet .= '?v=20261127-live2'; ?>
         <link rel="stylesheet" href="<?= htmlspecialchars($stylesheet, ENT_QUOTES, 'UTF-8') ?>">
     <?php endforeach; ?>
 

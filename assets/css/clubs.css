@@ -385,6 +385,33 @@
 
 /* Membership actions */
 
+.membership-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: max-content;
+    margin: 0;
+}
+.membership-application {
+    min-width: 145px;
+    max-width: 260px;
+    overflow-wrap: anywhere;
+}
+.membership-application summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    color: var(--color-accent-text);
+    font-size: 13px;
+    font-weight: 650;
+    list-style: none;
+}
+.membership-application summary::-webkit-details-marker { display: none; }
+.membership-application summary svg { width: 15px; height: 15px; flex: none; }
+.membership-application[open] summary svg { transform: rotate(180deg); }
+.membership-application p { margin: 10px 0 0; color: var(--color-muted); }
+
 .club-admin-actions {
     display: flex;
     gap: 8px;

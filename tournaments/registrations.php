@@ -222,7 +222,10 @@ try {
         "SELECT
             tr.reg_id,
             tr.registration_status,
-            sp.student_number, sp.study_program,
+            tr.experience_level, tr.participation_notes,
+            tr.experience_duration, tr.competition_level, tr.preferred_event,
+            tr.sporting_achievements, tr.declaration_accepted_at,
+            sp.student_number, sp.study_program, sp.academic_year, sp.phone,
             tr.reg_date,
             tr.reviewed_at,
             t.t_id,
@@ -261,7 +264,7 @@ try {
     $loadError = true;
 }
 
-$pageStylesheets = ['/assets/css/tournaments.css'];
+$pageStylesheets = ['/assets/css/tournaments.css?v=20261127-registration5'];
 require __DIR__ . '/../includes/header.php';
 ?>
 
@@ -352,6 +355,15 @@ require __DIR__ . '/../includes/header.php';
                                     <p><strong>Reviewed at</strong><span><?= sportsHubEscape($registration['reviewed_at']) ?></span></p>
                                 <?php endif; ?>
                             </div>
+
+                            <details class="tournament-application-details">
+                                <summary>Application information</summary>
+                                <dl class="tournament-form-grid membership-profile-facts">
+                                    <?php foreach (['academic_year'=>'Academic year', 'phone'=>'Contact number', 'experience_level'=>'Experience level', 'experience_duration'=>'Time playing this sport', 'competition_level'=>'Highest previous competition level', 'preferred_event'=>'Preferred event or position', 'sporting_achievements'=>'Previous teams, competitions and achievements', 'participation_notes'=>'Participation notes', 'declaration_accepted_at'=>'Declarations accepted (Sri Lanka time)'] as $key => $label): ?>
+                                        <div class="tournament-field-full"><dt><?= sportsHubEscape($label) ?></dt><dd><?= sportsHubEscape($registration[$key] ?? 'Not recorded') ?></dd></div>
+                                    <?php endforeach; ?>
+                                </dl>
+                            </details>
 
                             <?php if ($reviewAllowed): ?>
                                 <div class="tournament-management-actions">

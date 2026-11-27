@@ -86,7 +86,7 @@ try {
     $error = $e instanceof DomainException ? $e->getMessage() : 'Unable to process membership. Please try again.';
 }
 $pageTitle = 'Club membership';
-$pageStylesheets = ['/assets/css/tournaments.css'];
+$pageStylesheets = ['/assets/css/tournaments.css?v=20261127-membership3'];
 require __DIR__ . '/../includes/header.php';
 ?>
 <main class="tournaments-page sports-hub-workflow">
@@ -95,37 +95,45 @@ require __DIR__ . '/../includes/header.php';
             <h1>Club membership.</h1>
             <p class="section-description">Apply, update or manage your club membership.</p>
         </header>
-        <div class="tournament-view-navigation"><a class="button button-outline" href="/clubs/my-memberships.php">My memberships</a><a class="button button-outline" href="/clubs/view.php?id=<?= (int) $clubId ?>">View club</a></div>
+        <div class="tournament-view-navigation"><a class="button button-accent" href="/clubs/my-memberships.php">My memberships</a><a class="button button-outline" href="/clubs/view.php?id=<?= (int) $clubId ?>">View club</a></div>
         <?php if ($error !== ''): ?><p class="tournament-form-alert" role="alert"><?= sportsHubEscape($error) ?></p><?php elseif (isset($_GET['saved'])): ?><p class="tournament-form-success" role="status">Membership updated.</p><?php endif; ?>
         <?php if ($club && $profile): ?>
-            <article class="tournament-view-panel">
-                <h2><?= sportsHubEscape($club['club_name']) ?></h2>
-                <?php if ($membership): ?><p>Application status: <strong><?= sportsHubEscape(ucfirst($membership['status'])) ?></strong></p><?php endif; ?>
-                <dl class="tournament-form-grid membership-profile-facts">
-                    <?php foreach (['name'=>'Name','email'=>'Email','student_number'=>'Student ID','study_program'=>'Degree programme','academic_year'=>'Academic year','phone'=>'Contact number'] as $key=>$label): ?>
-                        <div><dt><?= sportsHubEscape($label) ?></dt><dd><?= sportsHubEscape($profile[$key] ?: 'Not provided') ?></dd></div>
-                    <?php endforeach; ?>
-                </dl>
-                <a class="button button-outline" href="/student/edit-profile.php">Edit profile</a>
-            </article>
+            <div class="membership-workflow">
+                <article class="tournament-form">
+                    <div class="membership-card-heading">
+                        <h2><?= sportsHubEscape($club['club_name']) ?></h2>
+                        <?php if ($membership): ?>
+                            <span class="tournament-status registration-status-<?= sportsHubEscape($membership['status']) ?>"><?= sportsHubEscape(ucfirst($membership['status'])) ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <dl class="tournament-form-grid membership-profile-facts">
+                        <?php foreach (['name'=>'Name','student_number'=>'Student ID','email'=>'Email','study_program'=>'Degree programme','academic_year'=>'Academic year','phone'=>'Contact number'] as $key=>$label): ?>
+                            <div<?= in_array($key, ['email', 'study_program'], true) ? ' class="tournament-field-full"' : '' ?>><dt><?= sportsHubEscape($label) ?></dt><dd><?= sportsHubEscape($profile[$key] ?: 'Not provided') ?></dd></div>
+                        <?php endforeach; ?>
+                    </dl>
+                    <div class="membership-card-actions">
+                        <a class="button button-accent" href="/student/edit-profile.php">Edit profile</a>
+                    </div>
+                </article>
                 <?php if ($club['status'] === 'active' && ($membership['status'] ?? '') !== 'approved'): ?>
                     <form method="post" class="tournament-form">
-                        <h2>Membership application</h2>
+                        <div class="membership-card-heading"><h2>Membership application</h2></div>
                         <input type="hidden" name="csrf_token" value="<?= sportsHubEscape($token) ?>">
                         <input type="hidden" name="action" value="apply">
                         <div class="tournament-form-grid">
-                            <div class="tournament-field"><label for="experience">Experience level</label><select id="experience" name="experience" required><option value="">Select experience</option><?php foreach (['Beginner','Intermediate','Advanced'] as $level): ?><option <?= $experience === $level ? 'selected' : '' ?>><?= sportsHubEscape($level) ?></option><?php endforeach; ?></select></div>
-                            <div class="tournament-field tournament-field-full"><label for="reason">Why would you like to join?</label><textarea id="reason" name="reason" maxlength="500" required><?= sportsHubEscape($reason) ?></textarea></div>
+                            <div class="tournament-field tournament-field-full"><label for="experience">Experience level</label><select id="experience" name="experience" required><option value="">Select experience</option><?php foreach (['Beginner','Intermediate','Advanced'] as $level): ?><option <?= $experience === $level ? 'selected' : '' ?>><?= sportsHubEscape($level) ?></option><?php endforeach; ?></select></div>
+                            <div class="tournament-field tournament-field-full"><label for="reason">Why would you like to join?</label><textarea id="reason" name="reason" maxlength="500" required><?= sportsHubEscape($reason) ?></textarea><small>Maximum 500 characters.</small></div>
                         </div>
-                        <div class="tournament-form-actions"><button class="button button-accent" type="submit"><?= ($membership['status'] ?? '') === 'pending' ? 'Update application' : 'Submit application' ?></button></div>
+                        <div class="membership-card-actions"><button class="button button-accent" type="submit"><?= ($membership['status'] ?? '') === 'pending' ? 'Update application' : 'Submit application' ?></button></div>
                     </form>
                 <?php endif; ?>
-                <?php if (in_array($membership['status'] ?? '', ['pending','approved'], true)): ?>
-                    <form method="post" class="tournament-form-actions" onsubmit="return confirm('Permanently remove this membership or request?');">
-                        <input type="hidden" name="csrf_token" value="<?= sportsHubEscape($token) ?>">
-                        <button class="button button-danger-outline" name="action" value="<?= $membership['status'] === 'pending' ? 'withdraw' : 'leave' ?>"><?= $membership['status'] === 'pending' ? 'Withdraw application' : 'Leave club' ?></button>
-                    </form>
-                <?php endif; ?>
+            </div>
+            <?php if (in_array($membership['status'] ?? '', ['pending','approved'], true)): ?>
+                <form method="post" class="tournament-form-actions" onsubmit="return confirm('Permanently remove this membership or request?');">
+                    <input type="hidden" name="csrf_token" value="<?= sportsHubEscape($token) ?>">
+                    <button class="button button-danger-outline" name="action" value="<?= $membership['status'] === 'pending' ? 'withdraw' : 'leave' ?>"><?= $membership['status'] === 'pending' ? 'Withdraw application' : 'Leave club' ?></button>
+                </form>
+            <?php endif; ?>
         <?php endif; ?>
     </section>
 </main>

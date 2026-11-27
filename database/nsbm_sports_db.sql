@@ -269,7 +269,14 @@ CREATE TABLE `tournament_registration` (
   `reg_date` date NOT NULL,
   `reviewed_by` int DEFAULT NULL,
   `registration_status` enum('pending','approved','rejected','withdrawn') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pending',
-  `reviewed_at` datetime DEFAULT NULL
+  `reviewed_at` datetime DEFAULT NULL,
+  `experience_level` varchar(20) DEFAULT NULL,
+  `participation_notes` varchar(500) DEFAULT NULL,
+  `experience_duration` varchar(30) DEFAULT NULL,
+  `competition_level` varchar(40) DEFAULT NULL,
+  `preferred_event` varchar(100) DEFAULT NULL,
+  `sporting_achievements` varchar(500) DEFAULT NULL,
+  `declaration_accepted_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
