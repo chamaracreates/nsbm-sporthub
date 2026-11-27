@@ -90,6 +90,7 @@ try {
 // Map news entries to their published article cover images.
 $officialNewsMedia = sportsHubOfficialNews();
 
+$preloadHomepageHero = true;
 include __DIR__ . '/includes/header.php';
 ?>
 
@@ -110,7 +111,14 @@ include __DIR__ . '/includes/header.php';
         <div class="hero-section-visual">
             <img
                 src="/assets/images/herobanner.webp"
-                data-light-src="/assets/images/herobannerlight.webp"
+                data-hero-theme="dark"
+                alt=""
+                width="1888"
+                height="833"
+                fetchpriority="high">
+            <img
+                src="/assets/images/herobannerlight.webp"
+                data-hero-theme="light"
                 alt=""
                 width="1888"
                 height="833"

@@ -22,8 +22,11 @@ require __DIR__ . '/../includes/header.php';
 ?>
 <main class="tournaments-page sports-hub-workflow">
     <section class="tournaments-container section-container">
-        <header class="tournaments-heading"><h1>My registrations.</h1><p class="section-description">Track tournament and match participation requests.</p></header>
-        <div class="tournament-view-navigation"><a class="button button-outline" href="/tournaments/index.php">Explore tournaments</a><a class="button button-outline" href="/matches/index.php">Explore fixtures</a></div>
+        <header class="tournaments-heading"><h1>My registrations</h1><p class="section-description">Track tournament and match participation requests.</p></header>
+        <nav class="tournament-view-navigation" aria-label="Explore competitions">
+            <a class="button button-accent" href="/tournaments/index.php">Explore tournaments</a>
+            <a class="button button-outline" href="/matches/index.php">Explore fixtures</a>
+        </nav>
         <?php if ($error): ?><p class="tournament-form-alert" role="alert">Unable to load registrations.</p><?php endif; ?>
         <?php foreach ($groups as $label=>$rows): ?>
             <section class="registration-section">
@@ -31,7 +34,18 @@ require __DIR__ . '/../includes/header.php';
                 <?php if (!$rows): ?>
                     <div class="tournaments-notice"><p>No <?= $label === 'Tournaments' ? 'tournament' : 'match' ?> registrations yet.</p></div>
                 <?php else: ?>
-                <div class="tournaments-grid"><?php foreach ($rows as $row): ?><article class="tournament-card"><div class="tournament-card-top"><span class="tournament-status"><?= sportsHubEscape(ucfirst($row['registration_status'])) ?></span></div><h2><?= sportsHubEscape($row['title']) ?></h2><p><?= sportsHubEscape(sportsHubDisplayDate($row['event_date'])) ?></p><a class="button button-outline" href="/<?= $label === 'Tournaments' ? 'tournaments' : 'matches' ?>/register.php?id=<?= (int)$row['id'] ?>">Manage registration</a></article><?php endforeach; ?></div>
+                    <div class="registration-list">
+                        <?php foreach ($rows as $row): ?>
+                            <article class="registration-card">
+                                <div class="registration-card-content">
+                                    <span class="tournament-status registration-status-<?= sportsHubEscape($row['registration_status']) ?>"><?= sportsHubEscape(ucfirst($row['registration_status'])) ?></span>
+                                    <h3><?= sportsHubEscape($row['title']) ?></h3>
+                                    <p><time datetime="<?= sportsHubEscape($row['event_date']) ?>"><?= sportsHubEscape(sportsHubDisplayDate($row['event_date'])) ?></time></p>
+                                </div>
+                                <a class="button button-accent" href="/<?= $label === 'Tournaments' ? 'tournaments' : 'matches' ?>/register.php?id=<?= (int) $row['id'] ?>">Manage registration</a>
+                            </article>
+                        <?php endforeach; ?>
+                    </div>
                 <?php endif; ?>
             </section>
         <?php endforeach; ?>

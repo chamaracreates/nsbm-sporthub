@@ -769,7 +769,7 @@
 .tournaments-page :is(.tournament-card,.tournament-form,.tournament-view-card) {
     border: 1px solid var(--color-border); border-radius: var(--ui-radius-card); background: var(--color-surface);
 }
-.tournaments-page :is(input:not([type="hidden"]),select,textarea) {
+.tournaments-page :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),select,textarea) {
     min-height: var(--ui-field-height); border-color: var(--color-border); border-radius: var(--ui-radius-control);
     background: var(--color-surface-alt); color: var(--color-text); font-family: inherit; font-size: 14px; color-scheme: inherit;
 }
@@ -1219,11 +1219,139 @@
 .tournaments-page.sports-hub-workflow:not(.tournament-management-page) .tournaments-container { max-width:1020px; }
 .tournaments-page.sports-hub-workflow .tournaments-heading { margin-bottom:30px; }
 .tournaments-page .tournaments-container > :is(.tournament-form,.tournament-view-panel,.club-admin-table-wrap,.tournaments-notice,.registration-section) + :is(.tournament-form,.tournament-view-panel,.club-admin-table-wrap,.tournaments-notice,.registration-section) { margin-top:20px; }
-.membership-profile-facts { margin:20px 0 24px; }
-.membership-profile-facts dt { margin-bottom:6px; color:var(--color-muted); font-size:13px; }
-.membership-profile-facts dd { margin:0; color:var(--color-text); font-weight:600; overflow-wrap:anywhere; }
-.registration-section > h2 { margin:0 0 14px; }
-.registration-section .tournaments-notice { min-height:0; padding:28px 24px; }
+.membership-workflow {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+    gap: var(--ui-space-4);
+    margin-top: var(--ui-space-4);
+}
+.membership-workflow > .tournament-form {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+.membership-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    margin-top: auto;
+    padding-top: var(--ui-space-4);
+}
+.membership-card-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: var(--ui-space-4);
+}
+.membership-card-heading h2 {
+    margin: 0;
+    font-size: clamp(21px, 2.3vw, 26px);
+    line-height: 1.2;
+    letter-spacing: -.02em;
+}
+.membership-profile-facts { margin: 0; }
+.membership-profile-facts > div { min-width: 0; }
+.membership-profile-facts > div:nth-last-child(n+3) {
+    padding-bottom: var(--ui-space-3);
+    border-bottom: 1px solid var(--color-border);
+}
+.membership-profile-facts dt { margin: 0 0 6px; color: var(--color-muted); font-size: 13px; }
+.membership-profile-facts dd { margin: 0; color: var(--color-text); font-weight: 600; overflow-wrap: anywhere; }
+.registration-section > h2 { margin: 0 0 16px; font-size: clamp(22px, 2.4vw, 28px); }
+.registration-section .tournaments-notice { min-height: 0; padding: 24px; }
+.registration-list { display: grid; gap: 12px; }
+.registration-card {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: clamp(20px, 3vw, 28px);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--ui-radius-card, 22px);
+}
+.registration-card-content { flex: 1 1 260px; min-width: 0; }
+.registration-card-content h3 {
+    margin: 10px 0 6px;
+    color: var(--color-text);
+    font-size: clamp(19px, 2.1vw, 24px);
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+.registration-card-content p { margin: 0; color: var(--color-muted); font-size: 14px; }
+.registration-feedback { margin-top: 24px; }
+.registration-overview > .tournament-view-panel { min-width: 0; margin: 0; }
+.registration-application { margin-top: var(--ui-space-4); }
+.registration-fieldset {
+    min-width: 0;
+    margin: var(--ui-space-4) 0 0;
+    padding: var(--ui-space-4) 0 0;
+    border: 0;
+    border-top: 1px solid var(--color-border);
+}
+.registration-fieldset legend {
+    padding: 0 12px 0 0;
+    color: var(--color-text);
+    font-size: 17px;
+    font-weight: 650;
+}
+.registration-fieldset .tournament-view-muted { margin: 0; }
+.registration-declarations {
+    display: grid;
+    gap: 12px;
+}
+.registration-confirmation {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    color: var(--color-text);
+    font-size: 14px;
+    line-height: 1.6;
+    cursor: pointer;
+}
+.registration-confirmation input {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    margin: 2.2px 0 0;
+    accent-color: var(--color-accent);
+    cursor: pointer;
+}
+.tournament-application-details {
+    padding: 14px 0;
+    border-top: 1px solid var(--color-border);
+    color: var(--color-text);
+    min-width: 0;
+}
+.tournament-application-details summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+}
+.tournament-application-details[open] > dl { margin-top: 18px; }
+.registration-state {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 24px 0 0;
+    padding: 16px 20px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    color: var(--color-text);
+    font-size: 14px;
+    font-weight: 650;
+}
+.registration-status-approved { color: var(--color-accent-text); border-color: var(--color-accent-text); }
+.registration-status-rejected { color: var(--light-red, #ffb8bc); border-color: var(--light-red-line, #704043); }
+@media (max-width: 560px) {
+    .registration-card > .button { width: 100%; }
+}
 .tournaments-page.sports-hub-workflow .tournament-form {
     border-radius:23px; padding:clamp(22px,3.6vw,42px);
     background:var(--light-surface, #111315); border:1px solid rgba(var(--light-ink-rgb, 255, 255, 255), 0.13);

@@ -977,7 +977,8 @@
     height: 16px;
     flex: 0 0 16px;
 }
-.training-directory-page .training-session-schedule-item :is(time, .training-session-time) {
+.training-directory-page .training-session-venue { grid-column: 1 / -1; }
+.training-directory-page .training-session-schedule-item :is(time, .training-session-value) {
     color: var(--color-text, #f5f5f7);
     font-size: 15px;
     font-weight: 600;
